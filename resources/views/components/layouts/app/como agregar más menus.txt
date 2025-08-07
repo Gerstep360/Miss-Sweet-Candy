@@ -1,0 +1,67 @@
+Cómo agregar una nueva categoría al menú:
+1. Para el dropdown principal (Desktop):
+Agrega este código después de los dropdowns existentes:
+
+<!-- Nuevo Dropdown -->
+<div class="dropdown">
+    <button class="nav-item dropdown-toggle">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Aquí va tu ícono SVG -->
+        </svg>
+        Nombre Categoría
+        <svg class="w-3 h-3 dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
+    <div class="dropdown-menu">
+        <a href="#" class="dropdown-item">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Ícono del sub-elemento -->
+            </svg>
+            Sub-elemento 1
+        </a>
+        <a href="#" class="dropdown-item">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Ícono del sub-elemento -->
+            </svg>
+            Sub-elemento 2
+        </a>
+    </div>
+</div>
+
+2. Para el menú móvil:
+Agrega este código en la sección <nav class="p-4 space-y-2">:
+<div class="mobile-dropdown">
+    <button class="mobile-nav-item w-full flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Tu ícono aquí -->
+            </svg>
+            Nombre Categoría
+        </div>
+        <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
+    <div class="mobile-dropdown-content hidden ml-8 mt-2 space-y-2">
+        <a href="#" class="mobile-nav-subitem">Sub-elemento 1</a>
+        <a href="#" class="mobile-nav-subitem">Sub-elemento 2</a>
+    </div>
+</div>
+
+Te ayudo a mejorar el header con el estilo de tu cafetería y hacerlo más compacto con dropdowns. Aquí está la versión mejorada:
+
+Cómo agregar una nueva categoría al menú:
+1. Para el dropdown principal (Desktop):
+Agrega este código después de los dropdowns existentes:
+
+2. Para el menú móvil:
+Agrega este código en la sección <nav class="p-4 space-y-2">:
+
+3. Para elementos individuales (sin dropdown):
+<a href="{{ route('tu.ruta') }}" class="nav-item {{ request()->routeIs('tu.ruta') ? 'active' : '' }}">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Tu ícono aquí -->
+    </svg>
+    Nombre del Elemento
+</a>
