@@ -1,4 +1,4 @@
-{{-- filepath: c:\Users\German\Documents\Proyectos\PHP\Cafeteria\cafeteria\resources\views\cajero\pedido_mostrador\index.blade.php --}}
+{{--resources\views\cajero\pedido_mostrador\index.blade.php --}}
 <x-layouts.app :title="__('Pedidos Mostrador')">
     <div x-data="{ showModal: false, modalAction: '', modalUrl: '', modalMsg: '' }" class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

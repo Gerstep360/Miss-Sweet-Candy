@@ -1,4 +1,4 @@
-{{-- filepath: c:\Users\German\Documents\Proyectos\PHP\Cafeteria\cafeteria\resources\views\cajero\cobro_caja\create.blade.php --}}
+{{-- resources\views\cajero\cobro_caja\create.blade.php --}}
 <x-layouts.app :title="__('Registrar Cobro')">
     <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800">
         <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

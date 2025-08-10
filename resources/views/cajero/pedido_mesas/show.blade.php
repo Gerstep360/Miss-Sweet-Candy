@@ -1,4 +1,4 @@
-{{-- filepath: c:\Users\German\Documents\Proyectos\PHP\Cafeteria\cafeteria\resources\views\cajero\pedido_mesas\show.blade.php --}}
+{{--resources\views\cajero\pedido_mesas\show.blade.php --}}
 <x-layouts.app :title="__('Detalle del Pedido')">
     <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

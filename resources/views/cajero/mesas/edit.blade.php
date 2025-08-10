@@ -1,4 +1,4 @@
-{{-- filepath: resources/views/cajero/mesas/edit.blade.php --}}
+{{-- resources/views/cajero/mesas/edit.blade.php --}}
 <x-layouts.app :title="__('Editar Mesa')">
     <div class="max-w-xl mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold text-white mb-6">Editar Mesa</h1>

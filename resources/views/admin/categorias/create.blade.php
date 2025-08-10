@@ -1,4 +1,4 @@
-{{-- filepath: resources/views/admin/categorias/create.blade.php --}}
+{{-- resources/views/admin/categorias/create.blade.php --}}
 <x-layouts.app :title="__('Nueva Categoría - Café Aroma')">
     <div class="max-w-xl mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold text-white mb-6">Nueva Categoría</h1>

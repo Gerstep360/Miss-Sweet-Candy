@@ -1,10 +1,10 @@
-{{-- filepath: resources/views/emails/user-created.blade.php --}}
+{{-- resources/views/emails/user-created.blade.php --}}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bienvenido a Café Aroma</title>
+    <title>Bienvenido a Miss Sweet Candy</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f3f4f6; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
@@ -17,15 +17,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>¡Bienvenido a Café Aroma!</h1>
+            <h1>¡Bienvenido a Miss Sweet Candy!</h1>
             <p>Tu cuenta ha sido creada exitosamente</p>
         </div>
         
         <div class="content">
             <h2>Hola {{ $user->name }},</h2>
-            
-            <p>Te damos la bienvenida a <strong>Café Aroma</strong>. Una cuenta ha sido creada para ti con los siguientes datos:</p>
-            
+
+            <p>Te damos la bienvenida a <strong>Miss Sweet Candy</strong>. Una cuenta ha sido creada para ti con los siguientes datos:</p>
+
             <div style="background: #f9fafb; padding: 20px; border-radius: 6px; margin: 20px 0;">
                 <p><strong>Nombre:</strong> {{ $user->name }}</p>
                 <p><strong>Email:</strong> {{ $user->email }}</p>
@@ -48,12 +48,12 @@
             
             <p style="margin-top: 30px;">
                 Saludos,<br>
-                <strong>El equipo de Café Aroma</strong>
+                <strong>El equipo de Miss Sweet Candy</strong>
             </p>
         </div>
         
         <div class="footer">
-            <p>&copy; {{ date('Y') }} Café Aroma. Todos los derechos reservados.</p>
+            <p>&copy; {{ date('Y') }} Miss Sweet Candy. Todos los derechos reservados.</p>
             <p>Si no solicitaste esta cuenta, puedes ignorar este mensaje.</p>
         </div>
     </div>

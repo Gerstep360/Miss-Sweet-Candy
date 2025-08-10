@@ -1,4 +1,4 @@
-{{-- filepath: resources/views/admin/users/edit.blade.php --}}
+{{-- resources/views/admin/users/edit.blade.php --}}
 <x-layouts.app :title="__('Editar Usuario - Café Aroma')">
     <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

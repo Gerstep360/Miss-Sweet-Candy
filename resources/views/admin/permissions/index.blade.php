@@ -1,4 +1,4 @@
-{{-- filepath: resources/views/admin/permissions/index.blade.php --}}
+{{-- resources/views/admin/permissions/index.blade.php --}}
 <x-layouts.app :title="__('Gestión de Permisos - Café Aroma')">
     <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

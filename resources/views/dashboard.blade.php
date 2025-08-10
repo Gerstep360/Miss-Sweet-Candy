@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Dashboard - Café Aroma')">
+<x-layouts.app :title="__('Dashboard - Miss Sweet Candy')">
     <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800">
         <!-- Contenido principal con padding responsive -->
         <div class="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">

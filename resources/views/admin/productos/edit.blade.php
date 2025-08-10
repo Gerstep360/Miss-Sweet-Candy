@@ -1,4 +1,4 @@
-{{-- filepath: resources/views/admin/productos/edit.blade.php --}}
+{{-- resources/views/admin/productos/edit.blade.php --}}
 <x-layouts.app :title="__('Editar Producto - Café Aroma')">
     <div class="max-w-2xl mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold text-white mb-6">Editar Producto</h1>

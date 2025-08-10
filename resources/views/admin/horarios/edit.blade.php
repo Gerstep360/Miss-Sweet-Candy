@@ -1,4 +1,4 @@
-{{-- filepath: resources/views/admin/horarios/edit.blade.php --}}
+{{--resources/views/admin/horarios/edit.blade.php --}}
 <x-layouts.app :title="__('Editar Horario - Café Aroma')">
     <div class="max-w-xl mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold text-white mb-6">Editar Horario</h1>

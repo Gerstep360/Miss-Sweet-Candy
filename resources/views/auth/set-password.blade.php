@@ -1,4 +1,4 @@
-{{-- filepath: resources/views/auth/set-password.blade.php --}}
+{{-- resources/views/auth/set-password.blade.php --}}
 <x-layouts.guest :title="__('Configurar Contraseña - Café Aroma')">
     <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 flex items-center justify-center p-4">
         <div class="w-full max-w-md">

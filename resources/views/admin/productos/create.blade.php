@@ -1,4 +1,4 @@
-{{-- filepath: resources/views/admin/productos/create.blade.php --}}
+{{--resources/views/admin/productos/create.blade.php --}}
 <x-layouts.app :title="__('Nuevo Producto - Café Aroma')">
     <div class="max-w-2xl mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold text-white mb-6">Nuevo Producto</h1>
