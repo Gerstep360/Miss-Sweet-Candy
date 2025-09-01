@@ -81,7 +81,10 @@ class RolePermissionSeeder extends Seeder
             'generar-qr', 'procesar-pago-qr',
 
             // Menú público y perfil cliente (CU27‑CU28‑CU29)
-            'ver-menu-publico', 'editar-perfil-cliente', 'ver-historial-pedidos'
+            'ver-menu-publico', 'editar-perfil-cliente', 'ver-historial-pedidos',
+
+            // Especial del Dia
+            'crear-especiales', 'ver-especiales', 'editar-especiales', 'eliminar-especiales'
         ];
 
         /* -----------------------------------------------------------------
