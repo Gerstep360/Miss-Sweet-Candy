@@ -20,7 +20,7 @@ class RoleMiddleware
         }
 
         if (!auth()->user()->hasRole($role)) {
-            abort(403, 'No tienes permisos para acceder a esta página.');
+            return redirect()->route('403');
         }
 
         return $next($request);

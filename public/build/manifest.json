@@ -1,0 +1,37 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-CIsyKqH-.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BsmyfA_y.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "resources/js/modal-store.js"
+    ]
+  },
+  "resources/js/dashboard.js": {
+    "file": "assets/dashboard-boixcphZ.js",
+    "name": "dashboard",
+    "src": "resources/js/dashboard.js",
+    "isEntry": true
+  },
+  "resources/js/modal-store.js": {
+    "file": "assets/modal-store-XFpNzzCP.js",
+    "name": "modal-store",
+    "src": "resources/js/modal-store.js",
+    "isEntry": true
+  },
+  "resources/js/welcome.js": {
+    "file": "assets/welcome-Fp50iEO_.js",
+    "name": "welcome",
+    "src": "resources/js/welcome.js",
+    "isEntry": true
+  }
+}

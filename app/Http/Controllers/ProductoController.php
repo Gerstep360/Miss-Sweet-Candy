@@ -6,13 +6,24 @@ use Illuminate\Http\Request;
 use App\Models\Producto;
 use App\Models\Categoria;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Auth\Access\AuthorizationException;
 
-class ProductoController extends Controller
+class ProductoController extends BaseController
 {
+    use AuthorizesRequests;
+
     // Mostrar todos los productos
     public function index()
     {
-        $productos = Producto::with('categoria')->orderBy('nombre')->get();
+        try {
+            $this->authorize('ver-productos');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
+        $productos  = Producto::with('categoria')->orderBy('nombre')->get();
         $categorias = Categoria::orderBy('nombre')->get();
         return view('admin.productos.index', compact('productos', 'categorias'));
     }
@@ -20,6 +31,12 @@ class ProductoController extends Controller
     // Mostrar formulario de creación
     public function create()
     {
+        try {
+            $this->authorize('crear-productos');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $categorias = Categoria::orderBy('nombre')->get();
         return view('admin.productos.create', compact('categorias'));
     }
@@ -27,12 +44,18 @@ class ProductoController extends Controller
     // Guardar nuevo producto
     public function store(Request $request)
     {
+        try {
+            $this->authorize('crear-productos');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $request->validate([
-            'nombre' => 'required|string|max:100',
+            'nombre'       => 'required|string|max:100',
             'categoria_id' => 'required|exists:categorias,id',
-            'unidad' => 'nullable|string|max:30',
-            'precio' => 'required|numeric|min:0',
-            'imagen' => 'nullable|image|max:2048',
+            'unidad'       => 'nullable|string|max:30',
+            'precio'       => 'required|numeric|min:0',
+            'imagen'       => 'nullable|image|max:2048',
         ]);
 
         $data = $request->only(['nombre', 'categoria_id', 'unidad', 'precio']);
@@ -49,6 +72,12 @@ class ProductoController extends Controller
     // Mostrar un producto específico
     public function show($id)
     {
+        try {
+            $this->authorize('ver-productos');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $producto = Producto::with('categoria')->findOrFail($id);
         return view('admin.productos.show', compact('producto'));
     }
@@ -56,7 +85,13 @@ class ProductoController extends Controller
     // Mostrar formulario de edición
     public function edit($id)
     {
-        $producto = Producto::findOrFail($id);
+        try {
+            $this->authorize('editar-productos');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
+        $producto   = Producto::findOrFail($id);
         $categorias = Categoria::orderBy('nombre')->get();
         return view('admin.productos.edit', compact('producto', 'categorias'));
     }
@@ -64,14 +99,20 @@ class ProductoController extends Controller
     // Actualizar un producto
     public function update(Request $request, $id)
     {
+        try {
+            $this->authorize('editar-productos');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $producto = Producto::findOrFail($id);
 
         $request->validate([
-            'nombre' => 'required|string|max:100',
+            'nombre'       => 'required|string|max:100',
             'categoria_id' => 'required|exists:categorias,id',
-            'unidad' => 'nullable|string|max:30',
-            'precio' => 'required|numeric|min:0',
-            'imagen' => 'nullable|image|max:2048',
+            'unidad'       => 'nullable|string|max:30',
+            'precio'       => 'required|numeric|min:0',
+            'imagen'       => 'nullable|image|max:2048',
         ]);
 
         $data = $request->only(['nombre', 'categoria_id', 'unidad', 'precio']);
@@ -92,6 +133,12 @@ class ProductoController extends Controller
     // Eliminar un producto
     public function destroy($id)
     {
+        try {
+            $this->authorize('eliminar-productos');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $producto = Producto::findOrFail($id);
 
         // Elimina la imagen asociada si existe

@@ -9,8 +9,7 @@ use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\MesaController;
-use App\Http\Controllers\PedidoMesaController;
-use App\Http\Controllers\PedidoMostradorController;
+use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\CobroCajaController;
 use App\Http\Controllers\MenuPublicoController;
 use App\Http\Controllers\EspecialDelDiaController;
@@ -117,33 +116,36 @@ Route::middleware(['auth', 'permission:ver-mesas'])->prefix('cajero')->group(fun
 
 // Operaciones de caja y pedidos
 Route::middleware(['auth'])->prefix('cajero')->group(function () {
-    // Pedidos para mesas
-    Route::resource('pedido-mesas', PedidoMesaController::class);
-    Route::post('pedido-mesas/{pedido}/completar', [PedidoMesaController::class, 'completar'])
-        ->name('pedido-mesas.completar');
-    Route::post('pedido-mesas/{pedido}/procesar', [PedidoMesaController::class, 'procesar'])
-        ->name('pedido-mesas.procesar');
+    // Pedidos unificados (Mesa, Mostrador, Web)
+    Route::get('pedidos', [PedidoController::class, 'index'])->name('pedidos.index');
+    Route::get('pedidos/mesa/create', [PedidoController::class, 'createMesa'])->name('pedidos.mesa.create');
+    Route::post('pedidos/mesa', [PedidoController::class, 'storeMesa'])->name('pedidos.mesa.store');
+    Route::get('pedidos/mostrador/create', [PedidoController::class, 'createMostrador'])->name('pedidos.mostrador.create');
+    Route::post('pedidos/mostrador', [PedidoController::class, 'storeMostrador'])->name('pedidos.mostrador.store');
+    Route::get('pedidos/{pedido}', [PedidoController::class, 'show'])->name('pedidos.show');
+    Route::get('pedidos/{pedido}/edit', [PedidoController::class, 'edit'])->name('pedidos.edit');
+    Route::put('pedidos/{pedido}', [PedidoController::class, 'update'])->name('pedidos.update');
+    Route::delete('pedidos/{pedido}', [PedidoController::class, 'destroy'])->name('pedidos.destroy');
+    Route::patch('pedidos/{pedido}/estado', [PedidoController::class, 'cambiarEstado'])->name('pedidos.cambiar-estado');
+    Route::delete('pedidos/items/{item}/anular', [PedidoController::class, 'anularItem'])->name('pedidos.anular-item');
     
-    // Pedidos para mostrador
-    Route::resource('pedido_mostrador', PedidoMostradorController::class);
-    Route::post('pedido_mostrador/{pedido}/procesar', [PedidoMostradorController::class, 'procesar'])
-        ->name('pedido_mostrador.procesar');
-    Route::post('pedido_mostrador/{pedido}/confirmar-retiro', [PedidoMostradorController::class, 'confirmarRetiro'])
-        ->name('pedido_mostrador.confirmarRetiro');
+    // Selector de productos para pedidos
+    Route::get('selector-productos', [\App\Http\Controllers\PedidoSelectorController::class, 'index'])->name('selector.productos.index');
+    Route::post('selector-productos/confirmar', [\App\Http\Controllers\PedidoSelectorController::class, 'confirmar'])->name('selector.productos.confirmar');
     
-    // Selector de pedidos
-    Route::get('pedido/selector', [App\Http\Controllers\PedidoSelectorController::class, 'index'])
-        ->name('pedido.selector');
-    Route::post('pedido/selector/confirmar', [App\Http\Controllers\PedidoSelectorController::class, 'confirmar'])
-        ->name('pedido.selector.confirmar');
-    
-    // Cobros y facturación
-    Route::get('cobros', [CobroCajaController::class, 'index'])->name('cobro_caja.index');
-    Route::get('cobros/{tipo}/{id}/create', [CobroCajaController::class, 'create'])->name('cobro_caja.create');
-    Route::post('cobros', [CobroCajaController::class, 'store'])->name('cobro_caja.store');
-    Route::get('cobros/{tipo}/{id}', [CobroCajaController::class, 'show'])->name('cobro_caja.show');
 });
-
+Route::middleware(['auth'])->prefix('cajero')->name('cobro_caja.')->group(function () {
+    Route::get('/cobros', [CobroCajaController::class, 'index'])->name('index');
+    Route::get('/reporte-diario', [CobroCajaController::class, 'reporteDiario'])->name('reporte_diario');
+    Route::get('/cobros/{pedido}/cobrar', [CobroCajaController::class, 'create'])->name('create');
+    Route::get('/cobros/{pedido}', [CobroCajaController::class, 'show'])->name('show');
+    Route::post('/cobros', [CobroCajaController::class, 'store'])->name('store');
+    Route::get('/comprobante/{cobro}', [CobroCajaController::class, 'comprobante'])->name('comprobante');
+    Route::get('/comprobante/{cobro}/pdf', [CobroCajaController::class, 'comprobantePdf'])->name('comprobante.pdf');
+    Route::post('/cobros/{cobro}/cancelar', [CobroCajaController::class, 'cancelar'])->name('cancelar');
+    Route::post('/cobros/{cobro}/confirmar-qr', [CobroCajaController::class, 'confirmarQr'])->name('confirmar_qr');
+    Route::post('/cobros/{cobro}/rechazar-qr', [CobroCajaController::class, 'rechazarQr'])->name('rechazar_qr');
+});
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -177,5 +179,5 @@ Route::prefix('api')->group(function () {
 | Autenticación
 |--------------------------------------------------------------------------
 */
-
+require __DIR__.'/error/403.php';
 require __DIR__.'/auth.php';

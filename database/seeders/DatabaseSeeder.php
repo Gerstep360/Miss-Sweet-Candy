@@ -20,10 +20,8 @@ public function run(): void
         CategoriaSeeder::class,
         ProductoSeeder::class,
         MesaSeeder::class,
-        PedidoMesaSeeder::class,
-        PedidoMesaItemSeeder::class,
-        PedidoMostradorSeeder::class,
-        CobroCajaSeeder::class, 
+        PedidoSeeder::class,
+        CobroCajaSeeder::class,
     ]);
 }
 }

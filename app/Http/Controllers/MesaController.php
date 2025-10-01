@@ -4,11 +4,21 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Mesa;
-class MesaController extends Controller
+use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
+class MesaController extends BaseController
 {
+    use AuthorizesRequests;
     // Listar todas las mesas
     public function index()
     {
+        try {
+            $this->authorize('ver-mesas');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $mesas = Mesa::with('fusionadas')->get();
         return view('cajero.mesas.index', compact('mesas'));
     }
@@ -16,6 +26,12 @@ class MesaController extends Controller
     // Mostrar formulario de creación
     public function create()
     {
+        try {
+            $this->authorize('crear-mesas');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $mesas = Mesa::all();
         return view('cajero.mesas.create', compact('mesas'));
     }
@@ -23,9 +39,15 @@ class MesaController extends Controller
     // Guardar nueva mesa
     public function store(Request $request)
     {
+        try {
+            $this->authorize('crear-mesas');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $request->validate([
-            'nombre' => 'required|unique:mesas,nombre|max:30',
-            'estado' => 'required|in:libre,ocupada,reservada,fusionada',
+            'nombre'    => 'required|unique:mesas,nombre|max:30',
+            'estado'    => 'required|in:libre,ocupada,reservada,fusionada',
             'capacidad' => 'required|integer|min:1',
             'fusion_id' => 'nullable|exists:mesas,id',
         ]);
@@ -47,9 +69,12 @@ class MesaController extends Controller
     // Mostrar formulario de edición
     public function edit(Mesa $mesa)
     {
-        if (!auth()->user()->can('editar-mesas')) {
-            abort(403);
+        try {
+            $this->authorize('editar-mesas');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
         }
+
         $mesas = Mesa::where('id', '!=', $mesa->id)->get();
         return view('cajero.mesas.edit', compact('mesa', 'mesas'));
     }
@@ -57,9 +82,15 @@ class MesaController extends Controller
     // Actualizar mesa
     public function update(Request $request, Mesa $mesa)
     {
+        try {
+            $this->authorize('editar-mesas');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $request->validate([
-            'nombre' => 'required|max:30|unique:mesas,nombre,' . $mesa->id,
-            'estado' => 'required|in:libre,ocupada,reservada,fusionada',
+            'nombre'    => 'required|max:30|unique:mesas,nombre,' . $mesa->id,
+            'estado'    => 'required|in:libre,ocupada,reservada,fusionada',
             'capacidad' => 'required|integer|min:1',
             'fusion_id' => 'nullable|exists:mesas,id',
         ]);
@@ -71,7 +102,7 @@ class MesaController extends Controller
             // Si la mesa ya estaba fusionada, mantenemos su estado y fusion_id
             if ($mesa->estado === 'fusionada') {
                 $data['fusion_id'] = $mesa->fusion_id;
-                $data['estado'] = $mesa->estado;
+                $data['estado']    = $mesa->estado;
             } else {
                 $data['fusion_id'] = null;
                 if ($data['estado'] === 'fusionada') {
@@ -87,6 +118,12 @@ class MesaController extends Controller
     // Eliminar mesa
     public function destroy(Mesa $mesa)
     {
+        try {
+            $this->authorize('eliminar-mesas');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $mesa->delete();
         return redirect()->route('mesas.index')->with('success', 'Mesa eliminada correctamente.');
     }
@@ -94,19 +131,29 @@ class MesaController extends Controller
     // Cambiar estado de la mesa
     public function cambiarEstado(Request $request, Mesa $mesa)
     {
+        try {
+            $this->authorize('cambiar-estado-mesas');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $request->validate([
             'estado' => 'required|in:libre,ocupada,reservada,fusionada',
         ]);
+
         $mesa->estado = $request->estado;
         $mesa->save();
+
         return redirect()->route('mesas.index')->with('success', 'Estado de la mesa actualizado.');
     }
 
     // Fusión de mesas
     public function fusionar(Request $request)
     {
-        if (!auth()->user()->can('fusionar-mesas')) {
-            abort(403);
+        try {
+            $this->authorize('fusionar-mesas');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
         }
 
         $request->validate([
@@ -118,13 +165,13 @@ class MesaController extends Controller
         $mesaFusionada = Mesa::findOrFail($request->mesa_fusionada_id);
 
         // Cambia estado y referencia de la fusionada
-        $mesaFusionada->estado = 'fusionada';
+        $mesaFusionada->estado    = 'fusionada';
         $mesaFusionada->fusion_id = $mesaPrincipal->id;
         $mesaFusionada->save();
 
-        // Suma la capacidad a la principal
+        // Suma capacidad a la principal
         $mesaPrincipal->capacidad += $mesaFusionada->capacidad;
-        $mesaPrincipal->estado = 'ocupada'; // o 'fusionada' si prefieres
+        $mesaPrincipal->estado     = 'ocupada'; // o 'fusionada' si prefieres
         $mesaPrincipal->save();
 
         return redirect()->route('mesas.index')->with('success', 'Mesas fusionadas correctamente.');

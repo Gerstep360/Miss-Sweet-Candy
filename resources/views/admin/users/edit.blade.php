@@ -1,5 +1,5 @@
-{{-- resources/views/admin/users/edit.blade.php --}}
-<x-layouts.app :title="__('Editar Usuario - Café Aroma')">
+{{-- filepath: c:\Users\German\Documents\Proyectos\PHP\Cafeteria\cafeteria\resources\views\admin\users\edit.blade.php --}}
+<x-layouts.app :title="__('Editar Usuario')">
     <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header -->
@@ -23,6 +23,7 @@
             </div>
 
             <!-- Formulario -->
+            @can('editar-usuarios')
             <div class="dashboard-card">
                 <form action="{{ route('users.update', $user) }}" method="POST">
                     @csrf
@@ -96,6 +97,12 @@
                     </div>
                 </form>
             </div>
+            @else
+                <div class="dashboard-card text-center py-12">
+                    <span class="text-4xl text-red-400 mb-4 block">⛔</span>
+                    <p class="text-white text-lg font-bold">No tienes permiso para editar usuarios.</p>
+                </div>
+            @endcan
         </div>
     </div>
 </x-layouts.app>

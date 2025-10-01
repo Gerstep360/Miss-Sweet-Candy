@@ -87,4 +87,18 @@ class User extends Authenticatable
     {
         return $this->password_set && is_null($this->temporal_token);
     }
+    public function cobrosRealizados()
+    {
+        return $this->hasMany(\App\Models\CobroCaja::class, 'cajero_id');
+    }
+
+    public function pedidosAtendidos()
+    {
+        return $this->hasMany(\App\Models\Pedido::class, 'atendido_por');
+    }
+
+    public function misPedidos()
+    {
+        return $this->hasMany(\App\Models\Pedido::class, 'cliente_id');
+    }
 }

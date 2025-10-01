@@ -9,12 +9,14 @@
                         <h1 class="text-2xl font-bold text-white mb-2">Gestión de Permisos</h1>
                         <p class="text-zinc-300">Administra los permisos del sistema</p>
                     </div>
+                    @can('gestionar-permisos')
                     <a href="{{ route('permissions.create') }}" class="bg-amber-500 hover:bg-amber-400 text-black font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
                         Nuevo Permiso
                     </a>
+                    @endcan
                 </div>
             </div>
 
@@ -32,6 +34,7 @@
                             <h3 class="text-white font-medium">{{ $permission->name }}</h3>
                         </div>
                         <div class="flex items-center gap-1">
+                            @can('gestionar-permisos')
                             <a href="{{ route('permissions.edit', $permission) }}" class="bg-zinc-700 hover:bg-zinc-600 text-white p-2 rounded-lg transition-colors">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -46,6 +49,7 @@
                                     </svg>
                                 </button>
                             </form>
+                            @endcan
                         </div>
                     </div>
                 </div>

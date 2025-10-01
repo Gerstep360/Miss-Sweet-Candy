@@ -28,4 +28,8 @@ class Producto extends Model
 
         return asset($ruta);
     }
+    public function pedidoItems()
+{
+    return $this->hasMany(\App\Models\PedidoItem::class);
+}
 }

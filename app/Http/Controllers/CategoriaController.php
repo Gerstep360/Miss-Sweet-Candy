@@ -4,11 +4,23 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Categoria;
-class CategoriaController extends Controller
+use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Auth\Access\AuthorizationException;
+
+class CategoriaController extends BaseController
 {
+    use AuthorizesRequests;
+
     // Mostrar todas las categorías
     public function index()
     {
+        try {
+            $this->authorize('ver-categorias');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $categorias = Categoria::orderBy('nombre')->get();
         return view('admin.categorias.index', compact('categorias'));
     }
@@ -16,12 +28,24 @@ class CategoriaController extends Controller
     // Mostrar formulario de creación
     public function create()
     {
+        try {
+            $this->authorize('crear-categorias');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         return view('admin.categorias.create');
     }
 
     // Guardar nueva categoría
     public function store(Request $request)
     {
+        try {
+            $this->authorize('crear-categorias');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $request->validate([
             'nombre' => 'required|string|max:50|unique:categorias,nombre',
         ]);
@@ -36,6 +60,12 @@ class CategoriaController extends Controller
     // Mostrar una categoría específica
     public function show($id)
     {
+        try {
+            $this->authorize('ver-categorias');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $categoria = Categoria::findOrFail($id);
         return view('admin.categorias.show', compact('categoria'));
     }
@@ -43,6 +73,12 @@ class CategoriaController extends Controller
     // Mostrar formulario de edición
     public function edit($id)
     {
+        try {
+            $this->authorize('editar-categorias');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $categoria = Categoria::findOrFail($id);
         return view('admin.categorias.edit', compact('categoria'));
     }
@@ -50,6 +86,12 @@ class CategoriaController extends Controller
     // Actualizar una categoría
     public function update(Request $request, $id)
     {
+        try {
+            $this->authorize('editar-categorias');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $categoria = Categoria::findOrFail($id);
 
         $request->validate([
@@ -66,6 +108,12 @@ class CategoriaController extends Controller
     // Eliminar una categoría
     public function destroy($id)
     {
+        try {
+            $this->authorize('eliminar-categorias');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $categoria = Categoria::findOrFail($id);
         $categoria->delete();
 

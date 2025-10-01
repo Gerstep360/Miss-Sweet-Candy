@@ -80,7 +80,7 @@
                     <div class="text-center lg:text-left">
                         <div class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-6">
                             <span class="w-2 h-2 bg-amber-400 rounded-full mr-2"></span>
-                            Desde 1995
+                            Desde 2024
                         </div>
                         
                         <h1 class="text-4xl lg:text-6xl font-bold mb-6 leading-tight text-white">
@@ -352,7 +352,7 @@
                         <span class="text-xl font-semibold text-white">Miss Sweet Candy</span>
                     </div>
                     <p class="text-zinc-400 mb-6">
-                        El mejor café artesanal desde 1995
+                        El mejor café desde 2024
                     </p>
                     <div class="flex justify-center space-x-6 text-sm text-zinc-400">
                         <span>&copy; 2025 Miss Sweet Candy. Todos los derechos reservados.</span>

@@ -4,14 +4,25 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Horario;
+use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Auth\Access\AuthorizationException;
 
-class HorarioController extends Controller
+class HorarioController extends BaseController
 {
+    use AuthorizesRequests;
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
+        try {
+            $this->authorize('ver-horarios');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $horarios = Horario::orderByRaw("FIELD(dia, 'lunes','martes','miércoles','jueves','viernes','sábado','domingo')")->get();
         return view('admin.horarios.index', compact('horarios'));
     }
@@ -21,6 +32,12 @@ class HorarioController extends Controller
      */
     public function create()
     {
+        try {
+            $this->authorize('configurar-horarios');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         return view('admin.horarios.create');
     }
 
@@ -29,9 +46,15 @@ class HorarioController extends Controller
      */
     public function store(Request $request)
     {
+        try {
+            $this->authorize('configurar-horarios');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $request->validate([
-            'dia' => 'required|string|max:15|unique:horarios,dia',
-            'abre' => 'required|date_format:H:i',
+            'dia'    => 'required|string|max:15|unique:horarios,dia',
+            'abre'   => 'required|date_format:H:i',
             'cierra' => 'required|date_format:H:i|after:abre',
         ]);
 
@@ -45,6 +68,12 @@ class HorarioController extends Controller
      */
     public function show($id)
     {
+        try {
+            $this->authorize('ver-horarios');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $horario = Horario::findOrFail($id);
         return view('horarios.show', compact('horario'));
     }
@@ -54,6 +83,12 @@ class HorarioController extends Controller
      */
     public function edit($id)
     {
+        try {
+            $this->authorize('configurar-horarios');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $horario = Horario::findOrFail($id);
         return view('admin.horarios.edit', compact('horario'));
     }
@@ -63,11 +98,17 @@ class HorarioController extends Controller
      */
     public function update(Request $request, $id)
     {
+        try {
+            $this->authorize('configurar-horarios');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $horario = Horario::findOrFail($id);
 
         $request->validate([
-            'dia' => 'required|string|max:15|unique:horarios,dia,' . $horario->id,
-            'abre' => 'required|date_format:H:i',
+            'dia'    => 'required|string|max:15|unique:horarios,dia,' . $horario->id,
+            'abre'   => 'required|date_format:H:i',
             'cierra' => 'required|date_format:H:i|after:abre',
         ]);
 
@@ -81,6 +122,12 @@ class HorarioController extends Controller
      */
     public function destroy($id)
     {
+        try {
+            $this->authorize('configurar-horarios');
+        } catch (AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
         $horario = Horario::findOrFail($id);
         $horario->delete();
 
