@@ -22,7 +22,7 @@ class CobroCajaController extends Controller
 
         // Query base para pedidos pendientes de cobro
         $queryPendientes = Pedido::with(['cliente', 'mesa', 'items.producto', 'atendidoPor'])
-            ->whereIn('estado', ['preparado', 'servido', 'retirado', 'entregado'])
+            ->whereIn('estado', ['preparado',  'retirado', 'entregado'])
             ->whereDoesntHave('cobros', function($query) {
                 $query->where('estado', 'cobrado');
             });
@@ -64,7 +64,7 @@ class CobroCajaController extends Controller
     public function create(Pedido $pedido)
     {
         // Verificar que el pedido esté en un estado válido para cobrar
-        if (!in_array($pedido->estado, ['preparado', 'servido', 'retirado', 'entregado'])) {
+        if (!in_array($pedido->estado, ['preparado','retirado', 'entregado'])) {
             return back()->with('error', 'Este pedido no está listo para ser cobrado.');
         }
 
@@ -99,7 +99,7 @@ class CobroCajaController extends Controller
             $pedido = Pedido::with('items')->findOrFail($validated['pedido_id']);
 
             // Verificar estado del pedido
-            if (!in_array($pedido->estado, ['preparado', 'servido', 'retirado', 'entregado'])) {
+            if (!in_array($pedido->estado, ['preparado', 'retirado', 'entregado'])) {
                 throw new \Exception('Este pedido no está listo para ser cobrado.');
             }
 
@@ -138,10 +138,10 @@ class CobroCajaController extends Controller
 
             // Actualizar estado del pedido según el tipo
             $nuevoEstado = match($pedido->tipo) {
-                'mesa' => 'servido',
-                'mostrador' => 'retirado',
+                'mesa' => 'cancelado',
+                'mostrador' => 'cancelado',
                 'web' => $pedido->modalidad === 'entrega' ? 'entregado' : 'retirado',
-                default => 'servido'
+                default => 'cancelado',
             };
 
             $pedido->update(['estado' => $nuevoEstado]);
@@ -149,6 +149,9 @@ class CobroCajaController extends Controller
             // Liberar mesa si aplica y el pedido está completado
             if ($pedido->tipo === 'mesa' && $pedido->mesa) {
                 $pedido->mesa->update(['estado' => 'libre']);
+                
+                // Liberar mesas fusionadas
+                $pedido->mesa->fusionadas()->update(['estado' => 'libre', 'fusion_id' => null]);
             }
 
             // Marcar todos los items como completados
