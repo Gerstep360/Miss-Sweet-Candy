@@ -1,4 +1,4 @@
-<x-layouts.app title="Ubicación - Café Aroma">
+<x-layouts.app title="Ubicación">
     <div class="min-h-screen bg-gray-900 py-12">
         <div class="max-w-6xl mx-auto px-8">
             <!-- Header de la página -->

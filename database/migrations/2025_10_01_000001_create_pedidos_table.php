@@ -18,15 +18,10 @@ return new class extends Migration
             $table->enum('modalidad', ['click_collect', 'delivery'])->nullable();
             $table->enum('estado', [
                 'pendiente',
-                'confirmado',
                 'en_preparacion',
                 'preparado',
-                'en_reparto',
-                'entregado',
-                'servido',
-                'retirado',
-                'anulado',
-                'cancelado'
+                'cancelado',
+                'anulado'
             ])->default('pendiente');
             $table->dateTime('programado_para')->nullable();
             $table->string('direccion_entrega', 200)->nullable();

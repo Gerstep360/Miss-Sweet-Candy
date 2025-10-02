@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Auth\Access\AuthorizationException;
-
+use App\Http\Controllers\BitacoraController;
 class ProductoController extends BaseController
 {
     use AuthorizesRequests;
@@ -25,6 +25,7 @@ class ProductoController extends BaseController
 
         $productos  = Producto::with('categoria')->orderBy('nombre')->get();
         $categorias = Categoria::orderBy('nombre')->get();
+            BitacoraController::registrar('ver lista', 'Producto', null);
         return view('admin.productos.index', compact('productos', 'categorias'));
     }
 
@@ -38,6 +39,7 @@ class ProductoController extends BaseController
         }
 
         $categorias = Categoria::orderBy('nombre')->get();
+            BitacoraController::registrar('crear', 'Producto', null);
         return view('admin.productos.create', compact('categorias'));
     }
 
@@ -66,6 +68,7 @@ class ProductoController extends BaseController
 
         Producto::create($data);
 
+        BitacoraController::registrar('creado', 'Producto', null);
         return redirect()->route('productos.index')->with('success', 'Producto creado correctamente');
     }
 
@@ -79,6 +82,7 @@ class ProductoController extends BaseController
         }
 
         $producto = Producto::with('categoria')->findOrFail($id);
+        BitacoraController::registrar('ver', 'Producto', $producto->id);
         return view('admin.productos.show', compact('producto'));
     }
 
@@ -93,6 +97,7 @@ class ProductoController extends BaseController
 
         $producto   = Producto::findOrFail($id);
         $categorias = Categoria::orderBy('nombre')->get();
+        BitacoraController::registrar('editar', 'Producto', $producto->id);
         return view('admin.productos.edit', compact('producto', 'categorias'));
     }
 
@@ -126,7 +131,7 @@ class ProductoController extends BaseController
         }
 
         $producto->update($data);
-
+        BitacoraController::registrar('actualizado', 'Producto', $producto->id);
         return redirect()->route('productos.index')->with('success', 'Producto actualizado correctamente');
     }
 
@@ -147,7 +152,7 @@ class ProductoController extends BaseController
         }
 
         $producto->delete();
-
+        BitacoraController::registrar('eliminado', 'Producto', $producto->id);
         return redirect()->route('productos.index')->with('success', 'Producto eliminado correctamente');
     }
 }

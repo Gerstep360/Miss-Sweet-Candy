@@ -18,7 +18,7 @@
                             <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
                         </svg>
                     </div>
-                    <span class="text-2xl font-bold text-white">Café Aroma</span>
+                    <span class="text-2xl font-bold text-white">Miss Sweet Candy</span>
                 </a>
             </div>
         </header>
@@ -47,7 +47,7 @@
         <footer class="relative z-10 py-6">
             <div class="max-w-md mx-auto px-4">
                 <div class="text-center text-sm text-zinc-400">
-                    <p>&copy; 2025 Café Aroma. El mejor café artesanal desde 1995.</p>
+                    <p>&copy; 2025 Miss Sweet Candy. El mejor café artesanal desde 1995.</p>
                 </div>
             </div>
         </footer>

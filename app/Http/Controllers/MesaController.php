@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Mesa;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-
+use App\Http\Controllers\BitacoraController;
 class MesaController extends BaseController
 {
     use AuthorizesRequests;
@@ -20,6 +20,7 @@ class MesaController extends BaseController
         }
 
         $mesas = Mesa::with('fusionadas')->get();
+         BitacoraController::registrar('ver lista', 'Mesa', null);
         return view('cajero.mesas.index', compact('mesas'));
     }
 
@@ -33,6 +34,7 @@ class MesaController extends BaseController
         }
 
         $mesas = Mesa::all();
+        BitacoraController::registrar('crear', 'Mesa', null);
         return view('cajero.mesas.create', compact('mesas'));
     }
 
@@ -63,6 +65,7 @@ class MesaController extends BaseController
         }
 
         Mesa::create($data);
+            BitacoraController::registrar('creado', 'Mesa', null);
         return redirect()->route('mesas.index')->with('success', 'Mesa creada correctamente.');
     }
 
@@ -76,6 +79,7 @@ class MesaController extends BaseController
         }
 
         $mesas = Mesa::where('id', '!=', $mesa->id)->get();
+        BitacoraController::registrar('editar', 'Mesa', $mesa->id);
         return view('cajero.mesas.edit', compact('mesa', 'mesas'));
     }
 
@@ -112,6 +116,7 @@ class MesaController extends BaseController
         }
 
         $mesa->update($data);
+        BitacoraController::registrar('actualizado', 'Mesa', $mesa->id);
         return redirect()->route('mesas.index')->with('success', 'Mesa actualizada correctamente.');
     }
 
@@ -125,6 +130,7 @@ class MesaController extends BaseController
         }
 
         $mesa->delete();
+        BitacoraController::registrar('eliminado', 'Mesa', $mesa->id);
         return redirect()->route('mesas.index')->with('success', 'Mesa eliminada correctamente.');
     }
 
@@ -144,6 +150,7 @@ class MesaController extends BaseController
         $mesa->estado = $request->estado;
         $mesa->save();
 
+        BitacoraController::registrar('cambiado estado', 'Mesa', $mesa->id);
         return redirect()->route('mesas.index')->with('success', 'Estado de la mesa actualizado.');
     }
 
@@ -173,7 +180,8 @@ class MesaController extends BaseController
         $mesaPrincipal->capacidad += $mesaFusionada->capacidad;
         $mesaPrincipal->estado     = 'ocupada'; // o 'fusionada' si prefieres
         $mesaPrincipal->save();
-
+        BitacoraController::registrar('fusionado', 'Mesa', $mesaPrincipal->id);
+         BitacoraController::registrar('fusionado', 'Mesa', $mesaFusionada->id);
         return redirect()->route('mesas.index')->with('success', 'Mesas fusionadas correctamente.');
     }
 }

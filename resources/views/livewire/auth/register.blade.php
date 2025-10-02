@@ -48,7 +48,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
 }; ?>
 
 <div class="flex flex-col gap-6">
-    <x-auth-header title="Únete a Café Aroma" description="Crea tu cuenta para gestionar tu experiencia en nuestra cafetería" />
+    <x-auth-header title="Únete a Miss Sweet Candy" description="Crea tu cuenta para gestionar tu experiencia en nuestra cafetería" />
 
     <!-- Session Status -->
     <x-auth-session-status class="text-center" :status="session('status')" />

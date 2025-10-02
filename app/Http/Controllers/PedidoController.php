@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Http\Controllers\BitacoraController;
 class PedidoController extends BaseController
 {
      use AuthorizesRequests;
@@ -43,7 +44,7 @@ class PedidoController extends BaseController
         }
 
         $pedidos = $query->latest()->paginate(15);
-
+        BitacoraController::registrar('ver lista', 'Pedido', null);
         return view('admin.pedidos.index', compact('pedidos', 'tipo', 'estado'));
     }
 
@@ -72,6 +73,7 @@ class PedidoController extends BaseController
             ->get();
             
         $categorias = Categoria::orderBy('nombre')->get();
+        BitacoraController::registrar('crear', 'Pedido', null);
 
         return view('admin.pedidos.create-mesa', compact('mesas', 'clientes', 'productos', 'categorias'));
     }
@@ -95,7 +97,7 @@ class PedidoController extends BaseController
             ->get();
             
         $categorias = Categoria::orderBy('nombre')->get();
-
+        BitacoraController::registrar('crear', 'Pedido', null);
         return view('admin.pedidos.create-mostrador', compact('clientes', 'productos', 'categorias'));
     }
 
@@ -175,6 +177,7 @@ class PedidoController extends BaseController
                 ->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
+        BitacoraController::registrar('crear', 'Pedido', $pedido->id);
     }
 
     /**
@@ -244,6 +247,7 @@ class PedidoController extends BaseController
                 ->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
+        BitacoraController::registrar('crear', 'Pedido', $pedido->id);
     }
 
     /**
@@ -257,7 +261,7 @@ class PedidoController extends BaseController
         }
 
         $pedido->load(['cliente', 'atendidoPor', 'mesa', 'items.producto']);
-
+            BitacoraController::registrar('ver', 'Pedido', $pedido->id);
         return view('admin.pedidos.show', compact('pedido'));
     }
 
@@ -311,6 +315,7 @@ class PedidoController extends BaseController
         } else {
             return view('admin.pedidos.edit-mostrador', compact('pedido', 'productos', 'categorias', 'clientes', 'itemsJson'));
         }
+        BitacoraController::registrar('editar', 'Pedido', $pedido->id);
     }
 
     /**
@@ -418,6 +423,7 @@ class PedidoController extends BaseController
                 ->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
+        BitacoraController::registrar('editado', 'Pedido', $pedido->id);
     }
 
     /**
@@ -475,6 +481,7 @@ class PedidoController extends BaseController
             DB::rollBack();
             return back()->with('error', 'Error al cambiar el estado: ' . $e->getMessage());
         }
+        BitacoraController::registrar('cambiar estado', 'Pedido', $pedido->id);
     }
 
     /**
@@ -523,6 +530,7 @@ class PedidoController extends BaseController
             DB::rollBack();
             return back()->with('error', 'Error al anular el item: ' . $e->getMessage());
         }
+        BitacoraController::registrar('anular item', 'PedidoItem', $item->id);
     }
 
     /**
@@ -562,5 +570,6 @@ class PedidoController extends BaseController
             DB::rollBack();
             return back()->with('error', 'Error al eliminar el pedido: ' . $e->getMessage());
         }
+        BitacoraController::registrar('eliminado', 'Pedido', $pedido->id);
     }
 }

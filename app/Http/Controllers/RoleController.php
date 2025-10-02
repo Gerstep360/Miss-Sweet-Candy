@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Permission;
 use App\Models\User;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-
+use App\Http\Controllers\BitacoraController;
 class RoleController extends BaseController
 {
     use AuthorizesRequests;
@@ -33,7 +33,7 @@ class RoleController extends BaseController
         }
 
         $roles = $query->get();
-
+            BitacoraController::registrar('ver lista', 'Role', null);
         return view('admin.roles.index', compact('roles'));
     }
 
@@ -51,6 +51,7 @@ class RoleController extends BaseController
         }
 
         $permissions = Permission::orderBy('name')->get();
+        BitacoraController::registrar('crear', 'Role', null);
         return view('admin.roles.create', compact('permissions'));
     }
 
@@ -92,6 +93,7 @@ class RoleController extends BaseController
             $role->syncPermissions($toSync);
         }
 
+        BitacoraController::registrar('creado', 'Role', $role->id);
         return redirect()->route('roles.index')->with('success', 'Rol creado exitosamente');
     }
 
@@ -109,6 +111,7 @@ class RoleController extends BaseController
         }
 
         $users = User::role($role->name)->get();
+            BitacoraController::registrar('ver', 'Role', $role->id);
         return view('admin.roles.show', compact('role', 'users'));
     }
 
@@ -122,6 +125,7 @@ class RoleController extends BaseController
         }
 
         $permissions = Permission::orderBy('name')->get();
+            BitacoraController::registrar('editar', 'Role', $role->id);
         return view('admin.roles.edit', compact('role', 'permissions'));
     }
 
@@ -164,7 +168,7 @@ class RoleController extends BaseController
         if ($wantsSync) {
             $role->syncPermissions($request->input('permissions', []));
         }
-
+        BitacoraController::registrar('actualizado', 'Role', $role->id);
         return redirect()->route('roles.index')->with('success', 'Rol actualizado exitosamente');
     }
 
@@ -182,6 +186,7 @@ class RoleController extends BaseController
         }
 
         $role->delete();
+        BitacoraController::registrar('eliminado', 'Role', $role->id);
         return redirect()->route('roles.index')->with('success', 'Rol eliminado exitosamente');
     }
 

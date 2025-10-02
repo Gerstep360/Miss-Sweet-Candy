@@ -23,7 +23,11 @@ class RolePermissionSeeder extends Seeder
             
             // CU02 - Cerrar sesión (gestionado por Laravel Auth)
             // No requiere permisos específicos
-
+            //Bitacora
+            'ver-bitacora',
+            'ver-detalle-bitacora',
+            //Barista
+            'gestionar-pedidos-barista',
             // CU03 - Gestión de Usuarios (ADMIN)
             'crear-usuarios',
             'ver-usuarios',
@@ -176,7 +180,7 @@ class RolePermissionSeeder extends Seeder
         // 4) BARISTA (por el momento no tiene muchos permisos, pero se deja para los proximos casos de uso)
         $barista->syncPermissions([
             'ver-productos',
-            'ver-pedidos',
+            'gestionar-pedidos-barista',
         ]);
     }
 }

@@ -7,7 +7,7 @@ use Spatie\Permission\Models\Permission;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Auth\Access\AuthorizationException;
-
+use App\Http\Controllers\BitacoraController;
 class PermissionController extends BaseController
 {
     use AuthorizesRequests;
@@ -21,6 +21,7 @@ class PermissionController extends BaseController
         }
 
         $permissions = Permission::orderBy('name')->get();
+            BitacoraController::registrar('ver lista', 'Permission', null);
         return view('admin.permissions.index', compact('permissions'));
     }
 
@@ -31,7 +32,7 @@ class PermissionController extends BaseController
         } catch (AuthorizationException $e) {
             return redirect()->route('403');
         }
-
+            BitacoraController::registrar('crear', 'Permission', null);
         return view('admin.permissions.create');
     }
 
@@ -48,7 +49,7 @@ class PermissionController extends BaseController
         ]);
 
         Permission::create(['name' => $request->name]);
-
+        BitacoraController::registrar('creado', 'Permission', null);
         return redirect()->route('permissions.index')->with('success', 'Permiso creado');
     }
 
@@ -59,7 +60,7 @@ class PermissionController extends BaseController
         } catch (AuthorizationException $e) {
             return redirect()->route('403');
         }
-
+            BitacoraController::registrar('editar', 'Permission', $permission->id);
         return view('admin.permissions.edit', compact('permission'));
     }
 
@@ -76,7 +77,7 @@ class PermissionController extends BaseController
         ]);
 
         $permission->update(['name' => $request->name]);
-
+        BitacoraController::registrar('actualizado', 'Permission', $permission->id);
         return redirect()->route('permissions.index')->with('success', 'Permiso actualizado');
     }
 
@@ -89,6 +90,7 @@ class PermissionController extends BaseController
         }
 
         $permission->delete();
+        BitacoraController::registrar('eliminado', 'Permission', $permission->id);
         return redirect()->route('permissions.index')->with('success', 'Permiso eliminado');
     }
 }

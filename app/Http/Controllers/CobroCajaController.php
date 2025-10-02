@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\CobroCaja;
 use App\Models\Pedido;
 use Carbon\Carbon;
+use App\Http\Controllers\BitacoraController;
 class CobroCajaController extends Controller
 {
     /**
@@ -40,7 +41,7 @@ class CobroCajaController extends Controller
 
         $pedidosPendientes = $queryPendientes->latest()->get();
         $pedidosPagados = $queryPagados->latest()->take(50)->get();
-
+        BitacoraController::registrar('ver', 'CobroCaja', null);
         return view('admin.cobro_caja.index', compact('pedidosPendientes', 'pedidosPagados', 'tipo', 'estado'));
     }
 
@@ -53,7 +54,7 @@ class CobroCajaController extends Controller
 
         // Verificar si ya tiene cobro registrado
         $cobroExistente = $pedido->cobros()->where('estado', 'cobrado')->first();
-
+        BitacoraController::registrar('ver', 'CobroCaja', $pedido->id);
         return view('admin.cobro_caja.show', compact('pedido', 'cobroExistente'));
     }
 
@@ -74,7 +75,7 @@ class CobroCajaController extends Controller
         }
 
         $pedido->load(['cliente', 'mesa', 'items.producto']);
-
+        BitacoraController::registrar('crear', 'CobroCaja', $pedido->id);
         return view('admin.cobro_caja.create', compact('pedido'));
     }
 
@@ -165,6 +166,7 @@ class CobroCajaController extends Controller
                 ->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
+        BitacoraController::registrar('creado', 'CobroCaja', $pedido->id);
     }
 
     /**
@@ -173,7 +175,7 @@ class CobroCajaController extends Controller
     public function comprobante(CobroCaja $cobro)
     {
         $cobro->load(['pedido.cliente', 'pedido.mesa', 'pedido.items.producto', 'cajero']);
-
+        BitacoraController::registrar('ver comprobante', 'CobroCaja', $cobro->id);
         return view('admin.cobro_caja.comprobante', compact('cobro'));
     }
 
@@ -209,7 +211,7 @@ class CobroCajaController extends Controller
             $cobro->pedido->update(['estado' => 'preparado']);
 
             DB::commit();
-
+            BitacoraController::registrar('cancelado', 'CobroCaja', $cobro->id);
             return back()->with('success', 'Cobro cancelado exitosamente. El pedido está disponible para un nuevo cobro.');
 
         } catch (\Exception $e) {
@@ -310,7 +312,7 @@ class CobroCajaController extends Controller
         $cantidadEfectivo = $cobros->where('metodo', 'efectivo')->count();
         $cantidadPos = $cobros->where('metodo', 'pos')->count();
         $cantidadQr = $cobros->where('metodo', 'qr')->count();
-
+        BitacoraController::registrar('ver reporte', 'CobroCaja', null);
         return view('admin.cobro_caja.reporte_diario', compact(
             'cobros',
             'fecha',

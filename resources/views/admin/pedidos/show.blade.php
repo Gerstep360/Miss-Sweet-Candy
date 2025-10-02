@@ -277,40 +277,7 @@
                             </div>
                         </div>
 
-                        <!-- Cambiar estado -->
-                        @if(!in_array($pedido->estado, ['anulado', 'cancelado', 'entregado', 'servido', 'retirado']))
-                            <div>
-                                <h3 class="text-base font-semibold text-white mb-3">Cambiar Estado</h3>
-                                <form action="{{ route('pedidos.cambiar-estado', $pedido) }}" method="POST">
-                                    @csrf
-                                    @method('PATCH')
-                                    
-                                    <select name="estado" 
-                                            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all mb-3">
-                                        <option value="pendiente" {{ $pedido->estado === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                                        <option value="confirmado" {{ $pedido->estado === 'confirmado' ? 'selected' : '' }}>Confirmado</option>
-                                        <option value="en_preparacion" {{ $pedido->estado === 'en_preparacion' ? 'selected' : '' }}>En Preparación</option>
-                                        <option value="preparado" {{ $pedido->estado === 'preparado' ? 'selected' : '' }}>Preparado</option>
-                                        @if($pedido->tipo === 'mesa')
-                                            <option value="servido">Servido</option>
-                                        @else
-                                            <option value="retirado">Retirado</option>
-                                            <option value="entregado">Entregado</option>
-                                        @endif
-                                        <option value="anulado">Anulado</option>
-                                        <option value="cancelado">Cancelado</option>
-                                    </select>
 
-                                    <button type="submit" 
-                                            class="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-green-500/30 hover:scale-105 active:scale-95 font-semibold">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                        Actualizar Estado
-                                    </button>
-                                </form>
-                            </div>
-                        @endif
 
                         <!-- Info adicional -->
                         <div class="

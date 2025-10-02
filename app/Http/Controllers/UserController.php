@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\UserCreated;
-
+use App\Http\Controllers\BitacoraController;
 class UserController extends Controller
 {
     public function index(Request $request)
@@ -33,13 +33,14 @@ class UserController extends Controller
         
         $users = $query->paginate(10);
         $roles = Role::all();
-        
+            BitacoraController::registrar('ver lista', 'User', null);
         return view('admin.users.index', compact('users', 'roles'));
     }
 
     public function create()
     {
         $roles = Role::all();
+            BitacoraController::registrar('crear', 'User', null);
         return view('admin.users.create', compact('roles'));
     }
 
@@ -67,7 +68,7 @@ class UserController extends Controller
 
         // Enviar email de bienvenida
         Mail::to($user->email)->send(new UserCreated($user, $temporalToken));
-
+            BitacoraController::registrar('creado', 'User', $user->id);
         return redirect()->route('users.index')->with('success', 'Usuario creado exitosamente. Se ha enviado un email de bienvenida.');
     }
 
@@ -80,6 +81,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = Role::all();
+            BitacoraController::registrar('editar', 'User', $user->id);
         return view('admin.users.edit', compact('user', 'roles'));
     }
 
@@ -98,13 +100,14 @@ class UserController extends Controller
 
         // Actualizar rol
         $user->syncRoles([$request->role]);
-
+            BitacoraController::registrar('actualizado', 'User', $user->id);
         return redirect()->route('users.show', $user)->with('success', 'Usuario actualizado exitosamente');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
+            BitacoraController::registrar('eliminado', 'User', $user->id);
         return redirect()->route('users.index')->with('success', 'Usuario eliminado exitosamente');
     }
 
@@ -116,7 +119,7 @@ class UserController extends Controller
         if (!$user) {
             return redirect()->route('login')->with('error', 'Token inválido o expirado');
         }
-
+        BitacoraController::registrar('activar cuenta', 'User', $user->id);
         return view('auth.set-password', compact('user', 'token'));
     }
 
@@ -139,7 +142,7 @@ class UserController extends Controller
             'password_set' => true,
             'email_verified_at' => now(),
         ]);
-
+        BitacoraController::registrar('establecer contraseña', 'User', $user->id);
         return redirect()->route('login')->with('success', 'Contraseña establecida exitosamente. Ya puedes iniciar sesión.');
     }
 }

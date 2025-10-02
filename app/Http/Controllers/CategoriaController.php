@@ -7,7 +7,7 @@ use App\Models\Categoria;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Auth\Access\AuthorizationException;
-
+use App\Http\Controllers\BitacoraController;
 class CategoriaController extends BaseController
 {
     use AuthorizesRequests;
@@ -22,6 +22,7 @@ class CategoriaController extends BaseController
         }
 
         $categorias = Categoria::orderBy('nombre')->get();
+        BitacoraController::registrar('ver', 'Categoria', null);
         return view('admin.categorias.index', compact('categorias'));
     }
 
@@ -33,6 +34,7 @@ class CategoriaController extends BaseController
         } catch (AuthorizationException $e) {
             return redirect()->route('403');
         }
+        BitacoraController::registrar('crear', 'Categoria', null);
 
         return view('admin.categorias.create');
     }
@@ -53,7 +55,7 @@ class CategoriaController extends BaseController
         Categoria::create([
             'nombre' => $request->nombre,
         ]);
-
+        BitacoraController::registrar('creado', 'Categoria', null);
         return redirect()->route('categorias.index')->with('success', 'Categoría creada correctamente');
     }
 
@@ -67,6 +69,7 @@ class CategoriaController extends BaseController
         }
 
         $categoria = Categoria::findOrFail($id);
+        BitacoraController::registrar('ver', 'Categoria', $categoria->id);
         return view('admin.categorias.show', compact('categoria'));
     }
 
@@ -80,6 +83,7 @@ class CategoriaController extends BaseController
         }
 
         $categoria = Categoria::findOrFail($id);
+        BitacoraController::registrar('editar', 'Categoria', $categoria->id);
         return view('admin.categorias.edit', compact('categoria'));
     }
 
@@ -101,7 +105,7 @@ class CategoriaController extends BaseController
         $categoria->update([
             'nombre' => $request->nombre,
         ]);
-
+        BitacoraController::registrar('actualizado', 'Categoria', $categoria->id);
         return redirect()->route('categorias.index')->with('success', 'Categoría actualizada correctamente');
     }
 
@@ -116,7 +120,7 @@ class CategoriaController extends BaseController
 
         $categoria = Categoria::findOrFail($id);
         $categoria->delete();
-
+        BitacoraController::registrar('eliminado', 'Categoria', $categoria->id);
         return redirect()->route('categorias.index')->with('success', 'Categoría eliminada correctamente');
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use App\Http\Controllers\BitacoraController;
 class ImagenController extends Controller
 {
     public function store(Request $request)
@@ -15,7 +15,7 @@ class ImagenController extends Controller
         $ruta = $request->file('imagen')->store('img/productos', 'public');
 
         // Aquí puedes guardar la ruta en la base de datos si lo necesitas
-
+        BitacoraController::registrar('subido imagen', 'Producto', null);
         return back()->with('success', 'Imagen subida correctamente')->with('ruta', $ruta);
     }
 
@@ -36,7 +36,7 @@ class ImagenController extends Controller
         $ruta = $request->file('imagen')->store('img/productos', 'public');
         $producto->imagen = $ruta;
         $producto->save();
-
+        BitacoraController::registrar('actualizado imagen', 'Producto', $producto->id);
         return back()->with('success', 'Imagen actualizada correctamente')->with('ruta', $ruta);
     }
 }

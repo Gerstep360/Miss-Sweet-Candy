@@ -149,11 +149,6 @@
                 Mesas
               </flux:navlist.item>
               @endcan
-              @can('ver-pedidos')
-              <flux:navlist.item icon="shopping-cart" :href="route('pedidos.index')" :current="request()->routeIs('pedidos.*')" wire:navigate class="nav-item-child">
-                Pedidos
-              </flux:navlist.item>
-              @endcan
             </flux:navlist>
           </div>
         </div>
@@ -180,13 +175,13 @@
             <flux:navlist variant="outline" class="space-y-1 mt-2">
               @can('ver-pedidos')
               <flux:navlist.item icon="plus-circle" :href="route('pedidos.index')" :current="request()->routeIs('pedidos.index')" wire:navigate class="nav-item-child">
-                Ventas
+                Pedidos
               </flux:navlist.item>
               @endcan
 
               @can('ver-cobros')
               <flux:navlist.item icon="document-text" :href="route('cobro_caja.index')" :current="request()->routeIs('cobro_caja.*')" wire:navigate class="nav-item-child">
-                Historial de Cobros
+                Cobrar
               </flux:navlist.item>
               @endcan
 
@@ -199,7 +194,60 @@
           </div>
         </div>
         @endcanany
-
+        {{-- ===== Barista ===== --}}
+        @can('gestionar-pedidos-barista')
+        <div class="nav-group">
+          <button class="nav-group-header"
+                  onclick="toggleSection('barista')"
+                  aria-controls="barista-section"
+                  aria-expanded="false">
+            <div class="flex items-center gap-2 flex-1">
+              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4-4-4-4m8 8V7a4 4 0 00-4-4H8a4 4 0 00-4 4v10a4 4 0 004 4h4a4 4 0 004-4z"/>
+              </svg>
+              <span>Barista</span>
+            </div>
+            <svg id="barista-icon" class="w-4 h-4 nav-group-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div id="barista-section" class="nav-group-content" hidden>
+            <flux:navlist variant="outline" class="space-y-1 mt-2">
+              <flux:navlist.item icon="beaker" :href="route('barista.pedidos.index')" :current="request()->routeIs('barista.pedidos.*')" wire:navigate class="nav-item-child">
+                Pedidos Barista
+              </flux:navlist.item>
+            </flux:navlist>
+          </div>
+        </div>
+        @endcan
+        {{-- ===== Bitácora ===== --}}
+        @canany(['ver-bitacora', 'ver-detalle-bitacora'])
+        <div class="nav-group">
+          <button class="nav-group-header"
+                  onclick="toggleSection('bitacora')"
+                  aria-controls="bitacora-section"
+                  aria-expanded="false">
+            <div class="flex items-center gap-2 flex-1">
+              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h2a4 4 0 014 4v2M9 17a4 4 0 01-4-4V7a4 4 0 014-4h6a4 4 0 014 4v6a4 4 0 01-4 4M9 17h6"/>
+              </svg>
+              <span>Bitácora</span>
+            </div>
+            <svg id="bitacora-icon" class="w-4 h-4 nav-group-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div id="bitacora-section" class="nav-group-content" hidden>
+            <flux:navlist variant="outline" class="space-y-1 mt-2">
+              @can('ver-bitacora')
+              <flux:navlist.item icon="clipboard-document-list" :href="route('bitacora.index')" :current="request()->routeIs('bitacora.*')" wire:navigate class="nav-item-child">
+                Bitácora
+              </flux:navlist.item>
+              @endcan
+            </flux:navlist>
+          </div>
+        </div>
+        @endcanany
         <div class="border-t border-zinc-800 my-3"></div>
 
         {{-- Menú Público --}}

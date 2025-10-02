@@ -1,4 +1,4 @@
-<x-layouts.guest :title="__('401 — No autorizado | Miss Sweet Candy')">
+<x-layouts.guest :title="__('403 — No autorizado | Miss Sweet Candy')">
     <div class="min-h-screen bg-zinc-950 text-white flex flex-col">
         <!-- Header -->
         <header class="sticky top-0 z-30 bg-zinc-950/80 backdrop-blur border-b border-zinc-800">
@@ -116,7 +116,7 @@
     </div>
 
     <!-- Audio local -->
-    <audio id="taco-audio" src="{{ asset('storage/assets/error/401/tacos.mp3') }}" preload="auto"></audio>
+    <audio id="taco-audio" src="{{ asset('storage/assets/error/403/tacos.mp3') }}" preload="auto"></audio>
 
     <!-- Overlay global lluvia + FAB + Panel -->
     <div id="taco-rain-root" class="pointer-events-none fixed inset-0 z-[10000]"></div>
@@ -248,7 +248,7 @@
             }
 
             // Egg ON/OFF
-            function startEgg() { startRain(); playAudio(); document.title = "🌮 It’s Raining Tacos — 401"; }
+            function startEgg() { startRain(); playAudio(); document.title = "🌮 It’s Raining Tacos — 403"; }
             function stopEgg()  { stopRain();  stopAudio(); }
 
             // FAB comportamiento

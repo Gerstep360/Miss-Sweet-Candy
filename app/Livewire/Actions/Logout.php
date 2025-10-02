@@ -4,7 +4,7 @@ namespace App\Livewire\Actions;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-
+use App\Http\Controllers\BitacoraController;
 class Logout
 {
     /**
@@ -16,7 +16,7 @@ class Logout
 
         Session::invalidate();
         Session::regenerateToken();
-
+        BitacoraController::registrar('logout', 'User', Auth::id());
         return redirect('/');
     }
 }

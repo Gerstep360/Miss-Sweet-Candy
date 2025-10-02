@@ -18,11 +18,9 @@ return new class extends Migration
             $table->decimal('subtotal_item', 12, 2);
             $table->enum('estado_item', [
                 'pendiente',
-                'enviado',
+                'en_preparacion',
                 'preparado',
-                'servido',
-                'retirado',
-                'entregado',
+                'cancelado',
                 'anulado'
             ])->default('pendiente');
             $table->enum('destino', ['barra', 'cocina'])->nullable();

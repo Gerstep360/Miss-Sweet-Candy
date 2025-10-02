@@ -45,7 +45,7 @@ class PedidoSeeder extends Seeder
             'precio_unitario' => 50.00,
             'descuento_item' => 0.00,
             'subtotal_item' => 100.00,
-            'estado_item' => 'enviado',
+            'estado_item' => 'preparado',
             'destino' => 'cocina',
             'notas' => 'Sin cebolla',
         ]);
@@ -57,7 +57,7 @@ class PedidoSeeder extends Seeder
             'precio_unitario' => 50.00,
             'descuento_item' => 0.00,
             'subtotal_item' => 50.00,
-            'estado_item' => 'enviado',
+            'estado_item' => 'preparado',
             'destino' => 'barra',
         ]);
 
