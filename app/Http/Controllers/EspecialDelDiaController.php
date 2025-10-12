@@ -37,29 +37,39 @@ class EspecialDelDiaController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validated($request, false);
+            // 1. Validar datos
+            $data = $this->validated($request, false);
 
-        if ($this->hayConflictoDiaSemana($request)) {
-            return back()->withInput()->withErrors(['dia_semana' => 'Ya existe un especial activo para este día.']);
-        }
+            // 2. Verificar conflictos
+            if ($this->hayConflictoDiaSemana($request)) {
+                return back()->withInput()->withErrors([
+                    'dia_semana' => 'Ya existe un especial activo para este día.'
+                ]);
+            }
 
-        EspecialDelDia::create($this->normalizar($data, $request));
-        $this->clearCache();
+            // 3. Crear registro
+            EspecialDelDia::create($this->normalizar($data, $request));
+            $this->clearCache();
 
-        return redirect()->route('especial_dia.index')->with('success', 'Especial del día creado.');
+            // 4. Redirigir con éxito
+            return redirect()->route('especial_dia.index')
+                ->with('success', 'Especial del día creado correctamente.');
     }
 
-    public function show(EspecialDelDia $especial)
-    {
-        $especial->load('producto.categoria');
-        return view('admin.especial_dia.show', compact('especial'));
-    }
+    public function show(EspecialDelDia $especiale)
+{
+    // Cargar relación producto + categoría
+    $especiale->load(['producto.categoria']);
+
+    // Pasamos el modelo a la vista con la variable 'especial'
+    return view('admin.especial_dia.show', ['especial' => $especiale]);
+}
 
     public function edit(EspecialDelDia $especial)
     {
         $productos  = Producto::with('categoria')->orderBy('nombre')->get();
         $diasSemana = $this->diasSemana();
-        return view('admin.especial_dia.edit', compact('especial', 'productos', 'diasSemana'));
+        return view('admin.especial_dia.show', compact('especial', 'productos', 'diasSemana'));
     }
 
     public function update(Request $request, EspecialDelDia $especial)
@@ -76,33 +86,35 @@ class EspecialDelDiaController extends Controller
         return redirect()->route('especial_dia.index')->with('success', 'Especial del día actualizado.');
     }
 
-    public function destroy(EspecialDelDia $especial)
+  public function destroy(EspecialDelDia $especiale)
     {
-        $especial->delete();
-        $this->clearCache();
-        return redirect()->route('especial_dia.index')->with('success', 'Especial del día eliminado.');
+        try {
+            \Log::info('Destroy method called for especial: ' . $especiale->id);
+
+            $especiale->delete();
+
+            return redirect()->route('especial_dia.index')
+                ->with('success', 'Especial eliminado correctamente');
+        } catch (\Exception $e) {
+            \Log::error('Error deleting especial: ' . $e->getMessage());
+            return back()->with('error', 'Error al eliminar el especial: ' . $e->getMessage());
+        }
     }
 
-    public function toggle(EspecialDelDia $especial)
+
+
+    public function toggle(EspecialDelDia $especiale)
     {
-        $nuevoEstado = !$especial->activo;
+        try {
+            $especiale->activo = !$especiale->activo;
+            $especiale->save();
 
-        if ($nuevoEstado && $especial->dia_semana) {
-            $existe = EspecialDelDia::where('dia_semana', $especial->dia_semana)
-                ->where('activo', true)
-                ->where('id', '!=', $especial->id)
-                ->exists();
-
-            if ($existe) {
-                return back()->withErrors(['error' => 'Ya existe un especial activo para este día.']);
-            }
+            return redirect()->route('especial_dia.index')
+                ->with('success', 'Estado del especial actualizado correctamente');
+        } catch (\Exception $e) {
+            \Log::error('Error al cambiar el estado: ' . $e->getMessage());
+            return back()->with('error', 'No se pudo cambiar el estado');
         }
-
-        $especial->update(['activo' => $nuevoEstado]);
-        $this->clearCache();
-
-        return redirect()->route('especial_dia.index')
-            ->with('success', $nuevoEstado ? 'Especial activado.' : 'Especial desactivado.');
     }
 
     // ------- API sencillas -------
@@ -122,34 +134,41 @@ class EspecialDelDiaController extends Controller
         return response()->json(['success' => true, 'especiales' => $payload]);
     }
 
-    // ------- Helpers privados compactos -------
-
+    // ------- Helpers privados compactos ------
     private function validated(Request $request, bool $isUpdate): array
-    {
-        $rules = [
-            'producto_id'          => 'required|exists:productos,id',
-            'tipo_especial'        => 'required|in:dia_semana,fecha_especifica,rango_fechas',
-            'dia_semana'           => 'required_if:tipo_especial,dia_semana|in:lunes,martes,miercoles,jueves,viernes,sabado,domingo',
-            'fecha_especifica'     => ($isUpdate ? 'nullable|date' : 'required_if:tipo_especial,fecha_especifica|date|after_or_equal:today'),
-            'fecha_inicio'         => ($isUpdate ? 'nullable|date' : 'required_if:tipo_especial,rango_fechas|date|after_or_equal:today'),
-            'fecha_fin'            => 'required_if:tipo_especial,rango_fechas|date|after_or_equal:fecha_inicio',
-            'descuento_porcentaje' => 'nullable|numeric|min:1|max:99',
-            'precio_especial'      => 'nullable|numeric|min:0',
-            'descripcion_especial' => 'nullable|string|max:500',
-            'prioridad'            => 'nullable|integer|min:1|max:10',
-            'activo'               => 'nullable|boolean',
-            'tipo_descuento'       => 'nullable|in:porcentaje,precio_fijo',
-        ];
+{
+    $rules = [
+        'producto_id'          => 'required|exists:productos,id',
+        'tipo_especial'        => 'required|in:dia_semana,fecha_especifica,rango_fechas',
+        'dia_semana'           => 'required_if:tipo_especial,dia_semana|in:lunes,martes,miercoles,jueves,viernes,sabado,domingo',
+        'fecha_especifica'     => 'nullable|date',
+        'fecha_inicio'         => 'nullable|date',
+        'fecha_fin'            => 'nullable|date',
+        'descuento_porcentaje' => 'nullable|numeric|min:1|max:99',
+        'precio_especial'      => 'nullable|numeric|min:0',
+        'descripcion_especial' => 'nullable|string|max:500',
+        'prioridad'            => 'nullable|integer|min:1|max:10',
+        'activo'               => 'nullable|boolean',
+        'tipo_descuento'       => 'required|in:porcentaje,precio_fijo',
+    ];
 
-        $data = $request->validate($rules);
+    $data = $request->validate($rules);
 
-        // Al menos un tipo de descuento
-        if (!$request->filled('descuento_porcentaje') && !$request->filled('precio_especial')) {
-            back()->withInput()->throwResponse();
-        }
-
-        return $data;
+    // Validación manual para descuento
+    if ($request->tipo_descuento === 'porcentaje' && !$request->filled('descuento_porcentaje')) {
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'descuento_porcentaje' => 'El descuento porcentual es requerido.'
+        ]);
     }
+
+    if ($request->tipo_descuento === 'precio_fijo' && !$request->filled('precio_especial')) {
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'precio_especial' => 'El precio especial es requerido.'
+        ]);
+    }
+
+    return $data;
+}
 
     private function normalizar(array $data, Request $request): array
     {

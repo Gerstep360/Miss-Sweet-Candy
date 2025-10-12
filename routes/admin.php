@@ -87,9 +87,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::put('/{especiale}',         'update')->middleware('permission:editar-productos')->name('update');
         Route::delete('/{especiale}',      'destroy')->middleware('permission:eliminar-productos')->name('destroy');
 
-        Route::post('/{especiale}/toggle', 'toggleActive')
-            ->middleware('permission:editar-productos')
-            ->name('toggle');
+        Route::post('/{especiale}/toggle', 'toggle')
+        ->middleware('permission:editar-productos')
+        ->name('toggle');
     });
 
 });
