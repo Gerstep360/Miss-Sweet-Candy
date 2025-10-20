@@ -97,6 +97,14 @@ class RolePermissionSeeder extends Seeder
             // Permisos generales
             'ver-pedidos',
             'cambiar-estado-pedidos',
+            
+            // CU15 - Inventario de Producto Terminado (ADMIN, ALMACENERO)
+            'ver-inventario',
+            'editar-inventario',
+            
+            // Notificaciones
+            'crear-notificacion',
+            'ver-todas-notificaciones',
         ];
 
         /* -----------------------------------------------------------------
@@ -157,6 +165,9 @@ class RolePermissionSeeder extends Seeder
             
             // CU12 - Menú Público
             'ver-menu-publico',
+            
+            // CU15 - Inventario (solo ver)
+            'ver-inventario',
             
             // Generales
             'ver-pedidos',

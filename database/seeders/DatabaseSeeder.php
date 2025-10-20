@@ -22,6 +22,7 @@ public function run(): void
         MesaSeeder::class,
         PedidoSeeder::class,
         CobroCajaSeeder::class,
+        NotificacionSeeder::class,
     ]);
 }
 }

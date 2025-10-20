@@ -112,12 +112,37 @@
                             <div class="p-2 sm:p-3 md:p-6 pt-2 sm:pt-3 md:pt-4">
                                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
                                     <template x-for="producto in productosFiltrados" :key="producto.id">
-                                        <div @click.stop="toggleProducto(producto)"
-                                             :class="esSeleccionado(producto.id) ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/30' : 'border-zinc-700 hover:border-amber-500/50'"
-                                             class="bg-zinc-800/40 border rounded-lg md:rounded-xl transition-all duration-300 cursor-pointer group hover:shadow-lg hover:-translate-y-1 relative">
+                                        <div @click.stop="productoDisponible(producto) && toggleProducto(producto)"
+                                             :class="[
+                                                 esSeleccionado(producto.id) ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/30' : 'border-zinc-700',
+                                                 productoDisponible(producto) ? 'hover:border-amber-500/50 cursor-pointer hover:shadow-lg hover:-translate-y-1' : 'opacity-60 cursor-not-allowed',
+                                             ]"
+                                             class="bg-zinc-800/40 border rounded-lg md:rounded-xl transition-all duration-300 group relative">
+                                            
+                                            <!-- Badge de agotado -->
+                                            <div x-show="!productoDisponible(producto)" 
+                                                 class="absolute top-1 left-1 sm:top-2 sm:left-2 z-10">
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 text-[10px] sm:text-xs font-bold bg-red-500 text-white rounded-full shadow-lg">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    AGOTADO
+                                                </span>
+                                            </div>
+
+                                            <!-- Badge de stock bajo -->
+                                            <div x-show="productoDisponible(producto) && esStockBajo(producto)" 
+                                                 class="absolute top-1 left-1 sm:top-2 sm:left-2 z-10">
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 text-[10px] sm:text-xs font-bold bg-yellow-500/90 text-black rounded-full shadow-lg">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    BAJO
+                                                </span>
+                                            </div>
                                             
                                             <!-- Badge de selección -->
-                                            <div x-show="esSeleccionado(producto.id)" 
+                                            <div x-show="esSeleccionado(producto.id) && productoDisponible(producto)" 
                                                  x-transition.scale.opacity.duration.200ms
                                                  class="absolute top-1 right-1 sm:top-2 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 bg-amber-500 rounded-full flex items-center justify-center z-10 shadow-lg">
                                                 <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-black" fill="currentColor" viewBox="0 0 20 20">
@@ -127,11 +152,17 @@
 
                                             <!-- Imagen -->
                                             <div class="p-2 sm:p-3">
-                                                <div class="aspect-square rounded-md md:rounded-lg overflow-hidden bg-zinc-800 border border-zinc-600">
+                                                <div class="aspect-square rounded-md md:rounded-lg overflow-hidden bg-zinc-800 border border-zinc-600 relative">
                                                     <img :src="producto.imagen ? `/storage/${producto.imagen}` : '/storage/img/none/none.png'" 
                                                          :alt="producto.nombre" 
-                                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                         :class="productoDisponible(producto) ? 'group-hover:scale-110' : 'grayscale'"
+                                                         class="w-full h-full object-cover transition-transform duration-300"
                                                          onerror="this.src='/storage/img/none/none.png'">
+                                                    <!-- Overlay de agotado -->
+                                                    <div x-show="!productoDisponible(producto)" 
+                                                         class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                                        <span class="text-white font-bold text-lg sm:text-xl">✗</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             
@@ -139,25 +170,39 @@
                                             <div class="p-2 sm:p-3 pt-0">
                                                 <h4 class="text-white font-medium mb-1 text-xs sm:text-sm line-clamp-2" x-text="producto.nombre"></h4>
                                                 <p class="text-zinc-400 text-[10px] sm:text-xs mb-1 sm:mb-2 line-clamp-1" x-text="producto.categoria?.nombre || 'Sin categoría'"></p>
-                                                <div class="flex items-center justify-between gap-1">
-                                                    <span class="text-amber-400 font-bold text-xs sm:text-sm md:text-base">$<span x-text="parseFloat(producto.precio || 0).toFixed(2)"></span></span>
-                                                    <div x-show="esSeleccionado(producto.id)" 
-                                                         x-transition.scale.opacity.duration.200ms
-                                                         class="flex items-center gap-0.5 sm:gap-1">
-                                                        <button @click.stop="cambiarCantidad(producto.id, -1)"
-                                                                class="w-5 h-5 sm:w-6 sm:h-6 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded flex items-center justify-center transition-all">
-                                                            <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                                                            </svg>
-                                                        </button>
-                                                        <span class="text-white font-medium text-xs sm:text-sm w-6 sm:w-8 text-center" x-text="getCantidad(producto.id)"></span>
-                                                        <button @click.stop="cambiarCantidad(producto.id, 1)"
-                                                                class="w-5 h-5 sm:w-6 sm:h-6 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded flex items-center justify-center transition-all">
-                                                            <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                                            </svg>
-                                                        </button>
-                                                    </div>
+                                                
+                                                <!-- Stock info -->
+                                                <div class="flex items-center justify-between gap-1 mb-1">
+                                                    <span :class="productoDisponible(producto) ? 'text-amber-400' : 'text-zinc-500 line-through'" 
+                                                          class="font-bold text-xs sm:text-sm md:text-base">
+                                                        $<span x-text="parseFloat(producto.precio || 0).toFixed(2)"></span>
+                                                    </span>
+                                                    <span x-show="producto.inventario" 
+                                                          :class="getStockColorClass(producto)"
+                                                          class="text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded">
+                                                        Stock: <span x-text="producto.inventario?.stock_actual || 0"></span>
+                                                    </span>
+                                                </div>
+                                                
+                                                <!-- Controles de cantidad -->
+                                                <div x-show="esSeleccionado(producto.id) && productoDisponible(producto)" 
+                                                     x-transition.scale.opacity.duration.200ms
+                                                     class="flex items-center gap-0.5 sm:gap-1 justify-center">
+                                                    <button @click.stop="cambiarCantidad(producto.id, -1)"
+                                                            class="w-6 h-6 sm:w-7 sm:h-7 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded flex items-center justify-center transition-all">
+                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                                        </svg>
+                                                    </button>
+                                                    <span class="text-white font-medium text-xs sm:text-sm w-8 sm:w-10 text-center" x-text="getCantidad(producto.id)"></span>
+                                                    <button @click.stop="cambiarCantidad(producto.id, 1)"
+                                                            :disabled="!puedeAgregarMas(producto)"
+                                                            :class="!puedeAgregarMas(producto) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-500/30'"
+                                                            class="w-6 h-6 sm:w-7 sm:h-7 bg-green-500/20 text-green-400 rounded flex items-center justify-center transition-all">
+                                                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                                        </svg>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -279,7 +324,53 @@ function productSelector(productos, categorias, selectedItems) {
             return item ? item.cantidad : 0;
         },
 
+        productoDisponible(producto) {
+            // Si no tiene inventario, asumir que está disponible
+            if (!producto.inventario) {
+                return true;
+            }
+            // Disponible si hay stock
+            return producto.inventario.stock_actual > 0;
+        },
+
+        esStockBajo(producto) {
+            if (!producto.inventario) return false;
+            const stock = producto.inventario.stock_actual;
+            const minimo = producto.inventario.stock_minimo || 5;
+            return stock > 0 && stock <= minimo;
+        },
+
+        getStockColorClass(producto) {
+            if (!producto.inventario) return 'bg-zinc-700 text-zinc-300';
+            
+            const stock = producto.inventario.stock_actual;
+            const minimo = producto.inventario.stock_minimo || 5;
+            
+            if (stock <= 0) {
+                return 'bg-red-500/20 text-red-400';
+            } else if (stock <= minimo) {
+                return 'bg-yellow-500/20 text-yellow-400';
+            } else {
+                return 'bg-green-500/20 text-green-400';
+            }
+        },
+
+        puedeAgregarMas(producto) {
+            if (!producto.inventario) return true;
+            
+            const cantidadEnCarrito = this.getCantidad(producto.id);
+            const stockDisponible = producto.inventario.stock_actual;
+            
+            return cantidadEnCarrito < stockDisponible;
+        },
+
         toggleProducto(producto) {
+            // No permitir agregar si está agotado
+            if (!this.productoDisponible(producto)) {
+                alert('⚠️ Este producto está agotado');
+                return;
+            }
+            
             const existe = this.items.find(item => item.producto_id === producto.id);
             
             if (existe) {
@@ -290,13 +381,20 @@ function productSelector(productos, categorias, selectedItems) {
         },
 
         agregarProducto(producto) {
+            // Verificar stock disponible
+            if (!this.productoDisponible(producto)) {
+                alert('⚠️ Este producto está agotado');
+                return;
+            }
+            
             this.items.push({
                 producto_id: producto.id,
                 nombre: producto.nombre,
                 precio: parseFloat(producto.precio),
                 imagen: producto.imagen,
                 cantidad: 1,
-                notas: ''
+                notas: '',
+                stock_disponible: producto.inventario?.stock_actual || null
             });
             
             console.log('✅ Producto agregado:', producto.nombre);
@@ -314,7 +412,18 @@ function productSelector(productos, categorias, selectedItems) {
         cambiarCantidad(productoId, cambio) {
             const item = this.items.find(item => item.producto_id === productoId);
             if (item) {
-                item.cantidad += cambio;
+                const nuevaCantidad = item.cantidad + cambio;
+                
+                // Verificar si hay stock suficiente al incrementar
+                if (cambio > 0 && item.stock_disponible !== null) {
+                    if (nuevaCantidad > item.stock_disponible) {
+                        alert(`⚠️ Stock insuficiente. Disponible: ${item.stock_disponible}`);
+                        return;
+                    }
+                }
+                
+                item.cantidad = nuevaCantidad;
+                
                 if (item.cantidad <= 0) {
                     this.eliminarProducto(productoId);
                 } else {

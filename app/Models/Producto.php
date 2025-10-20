@@ -29,7 +29,31 @@ class Producto extends Model
         return asset($ruta);
     }
     public function pedidoItems()
-{
-    return $this->hasMany(\App\Models\PedidoItem::class);
-}
+    {
+        return $this->hasMany(\App\Models\PedidoItem::class);
+    }
+
+    /**
+     * Relación con Inventario (1:1)
+     */
+    public function inventario()
+    {
+        return $this->hasOne(InventarioProducto::class, 'producto_id');
+    }
+
+    /**
+     * Obtiene el stock actual del producto
+     */
+    public function getStockActualAttribute()
+    {
+        return $this->inventario ? $this->inventario->stock_actual : 0;
+    }
+
+    /**
+     * Obtiene el estado del stock
+     */
+    public function getEstadoStockAttribute()
+    {
+        return $this->inventario ? $this->inventario->estado_stock : 'SIN_INVENTARIO';
+    }
 }

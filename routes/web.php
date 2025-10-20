@@ -16,8 +16,13 @@ require __DIR__.'/cajero/cobro_caja.php';
 // API
 require __DIR__.'/api.php';
 
+// Notificaciones
+require __DIR__.'/notificaciones.php';
+
+// Inventario
+require __DIR__.'/inventario.php';
 
 require __DIR__.'/auth.php';
-require __DIR__.'/error/403.php';
+//require __DIR__.'/error/error.php';
 require __DIR__.'/bitacora/bitacora.php';
 require __DIR__.'/barista/barista.php';
