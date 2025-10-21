@@ -13,6 +13,9 @@ require __DIR__.'/cajero/mesas.php';
 require __DIR__.'/cajero/pedidos.php';
 require __DIR__.'/cajero/cobro_caja.php';
 
+// Cierres de caja
+require __DIR__.'/cierres_caja.php';
+
 // API
 require __DIR__.'/api.php';
 
@@ -21,6 +24,9 @@ require __DIR__.'/notificaciones.php';
 
 // Inventario
 require __DIR__.'/inventario.php';
+
+// Reportes
+require __DIR__.'/reportes.php';
 
 require __DIR__.'/auth.php';
 //require __DIR__.'/error/error.php';

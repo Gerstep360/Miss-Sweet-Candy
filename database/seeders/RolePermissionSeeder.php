@@ -105,6 +105,16 @@ class RolePermissionSeeder extends Seeder
             // Notificaciones
             'crear-notificacion',
             'ver-todas-notificaciones',
+
+            //reportes
+            'ver-reportes',
+
+            // arqueos
+            'realizar-arqueo',
+            'ver-arqueos',
+            //cierre de caja
+            'cerrar-caja',
+            'ver-cierres',
         ];
 
         /* -----------------------------------------------------------------
@@ -165,6 +175,10 @@ class RolePermissionSeeder extends Seeder
             
             // CU12 - Menú Público
             'ver-menu-publico',
+            
+            // CU13 - Cierres de Caja
+            'cerrar-caja',
+            'ver-cierres',
             
             // CU15 - Inventario (solo ver)
             'ver-inventario',
