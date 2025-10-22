@@ -134,7 +134,7 @@
       </x-sidebar.group>
       @endcanany
 
-      @canany(['ver-cobros','ver-reporte-caja','ver-pedidos'])
+      @canany(['ver-cobros','ver-reporte-caja','ver-pedidos','iniciar-turno','cerrar-caja','ver-cierres'])
       <x-sidebar.group id="ventas" icon="banknotes" text="Ventas & Caja">
         @can('ver-pedidos')
         <flux:navlist.item icon="plus-circle" :href="route('pedidos.index')" :current="request()->routeIs('pedidos.index')" wire:navigate class="nav-item-child">
@@ -149,6 +149,46 @@
         @can('ver-reporte-caja')
         <flux:navlist.item icon="chart-bar" :href="route('cobro_caja.reporte_diario')" :current="request()->routeIs('cobro_caja.reporte_diario')" wire:navigate class="nav-item-child">
           Reporte Diario
+        </flux:navlist.item>
+        @endcan
+        @can('iniciar-turno')
+        <flux:navlist.item icon="clock" :href="route('turnos_caja.index')" :current="request()->routeIs('turnos_caja.*')" wire:navigate class="nav-item-child">
+          Turnos de Caja
+        </flux:navlist.item>
+        @endcan
+        @can('cerrar-caja')
+        <flux:navlist.item icon="calculator" :href="route('cierres_caja.index')" :current="request()->routeIs('cierres_caja.*')" wire:navigate class="nav-item-child">
+          Cierres de Caja
+        </flux:navlist.item>
+        @endcan
+      </x-sidebar.group>
+      @endcanany
+
+      @canany(['ver-reportes'])
+      <x-sidebar.group id="reportes" icon="chart-pie" text="Reportes">
+        @can('ver-reportes')
+        <flux:navlist.item icon="currency-dollar" :href="route('reportes.ventas.index')" :current="request()->routeIs('reportes.ventas.*')" wire:navigate class="nav-item-child">
+          Reportes de Ventas
+        </flux:navlist.item>
+        @endcan
+      </x-sidebar.group>
+      @endcanany
+
+      @canany(['ver-especiales','crear-especial'])
+      <x-sidebar.group id="especiales" icon="star" text="Especiales del Día">
+        @can('ver-especiales')
+        <flux:navlist.item icon="sparkles" :href="route('especial_dia.index')" :current="request()->routeIs('especial_dia.*')" wire:navigate class="nav-item-child">
+          Gestionar Especiales
+        </flux:navlist.item>
+        @endcan
+      </x-sidebar.group>
+      @endcanany
+
+      @canany(['ver-inventario'])
+      <x-sidebar.group id="inventario" icon="cube-transparent" text="Inventario">
+        @can('ver-inventario')
+        <flux:navlist.item icon="archive-box" :href="route('inventario.index')" :current="request()->routeIs('inventario.*')" wire:navigate class="nav-item-child">
+          Inventario Productos
         </flux:navlist.item>
         @endcan
       </x-sidebar.group>
@@ -321,7 +361,7 @@
       localStorage.setItem(`sidebar-group-${id}`, isOpen?'1':'0');
     }
     document.addEventListener('DOMContentLoaded',()=>{
-      const groups=['admin','cafeteria','operaciones','ventas','bitacora','cuenta'];
+      const groups=['admin','cafeteria','operaciones','ventas','reportes','especiales','inventario','bitacora','cuenta'];
       groups.forEach(id=>{
         const sec=document.getElementById(`${id}-section`);
         const icn=document.getElementById(`${id}-icon`);

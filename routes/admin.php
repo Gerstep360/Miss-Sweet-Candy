@@ -77,19 +77,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::delete('/{horario}', 'destroy')->middleware('permission:configurar-horarios')->name('destroy');
     });
 
-    // ===== Especial del día (usa permisos de productos) =====
-    Route::controller(EspecialDelDiaController::class)->prefix('especial_dia')->name('especial_dia.')->group(function () {
-        Route::get('/',                    'index')->middleware('permission:ver-productos')->name('index');
-        Route::get('/create',              'create')->middleware('permission:crear-productos')->name('create');
-        Route::post('/',                   'store')->middleware('permission:crear-productos')->name('store');
-        Route::get('/{especiale}',         'show')->middleware('permission:ver-productos')->name('show');
-        Route::get('/{especiale}/edit',    'edit')->middleware('permission:editar-productos')->name('edit');
-        Route::put('/{especiale}',         'update')->middleware('permission:editar-productos')->name('update');
-        Route::delete('/{especiale}',      'destroy')->middleware('permission:eliminar-productos')->name('destroy');
-
-        Route::post('/{especiale}/toggle', 'toggleActive')
-            ->middleware('permission:editar-productos')
-            ->name('toggle');
-    });
+    // ===== Especial del día =====
+    // Las rutas de especial del día están en routes/especial_dia.php
 
 });

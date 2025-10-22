@@ -26,11 +26,13 @@
                     </div>
                     
                     <!-- BOTÓN DE CREAR -->
-                    <a href="{{ route('especial_dia.create') }}" 
-                    class="bg-amber-500 hover:bg-amber-400 text-black font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-lg hover:shadow-amber-500/25">
-                        <i class="fas fa-plus"></i>
-                        Crear Especial
-                    </a>
+                    @can('crear-especial')
+                        <a href="{{ route('especial_dia.create') }}" 
+                        class="bg-amber-500 hover:bg-amber-400 text-black font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-lg hover:shadow-amber-500/25">
+                            <i class="fas fa-plus"></i>
+                            Crear Especial
+                        </a>
+                    @endcan
                 </div>
             </div>
 
@@ -228,45 +230,53 @@
                                 <!-- BOTONES DE ACCIÓN - EDICIÓN Y ELIMINACIÓN -->
                                 <div class="flex flex-col gap-2 flex-shrink-0">
                                     <!-- Botón Ver -->
-                                    <a href="{{ route('especial_dia.show', $especial) }}" 
-                                    class="bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center min-w-[100px] group"
-                                    title="Ver detalles">
-                                        <i class="fas fa-eye group-hover:scale-110 transition-transform"></i> 
-                                        <span>Ver</span>
-                                    </a>
+                                    @can('ver-especiales')
+                                        <a href="{{ route('especial_dia.show', $especial) }}" 
+                                        class="bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center min-w-[100px] group"
+                                        title="Ver detalles">
+                                            <i class="fas fa-eye group-hover:scale-110 transition-transform"></i> 
+                                            <span>Ver</span>
+                                        </a>
+                                    @endcan
                                     
                                     <!-- Botón Editar -->
-                                    <a href="{{ route('especial_dia.edit', $especial) }}" 
-                                    class="bg-amber-600 hover:bg-amber-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center min-w-[100px] group"
-                                    title="Editar especial">
-                                        <i class="fas fa-edit group-hover:scale-110 transition-transform"></i> 
-                                        <span>Editar</span>
-                                    </a>
+                                    @can('editar-especial')
+                                        <a href="{{ route('especial_dia.edit', $especial) }}" 
+                                        class="bg-amber-600 hover:bg-amber-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center min-w-[100px] group"
+                                        title="Editar especial">
+                                            <i class="fas fa-edit group-hover:scale-110 transition-transform"></i> 
+                                            <span>Editar</span>
+                                        </a>
+                                    @endcan
 
                                     <!-- Botón Activar/Desactivar -->
-                                    <button type="button"
-                                            @click="showModal = true; 
-                                                    modalAction = 'toggle'; 
-                                                    modalUrl = '{{ route('especial_dia.toggle', $especial) }}'; 
-                                                    modalMsg = '¿{{ $especial->activo ? 'Desactivar' : 'Activar' }} el especial de {{ $especial->producto->nombre }}?'; 
-                                                    modalEspecial = {{ $especial->id }};"
-                                            class="py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center {{ $especial->activo ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-green-600 hover:bg-green-500' }} text-white min-w-[100px] group"
-                                            title="{{ $especial->activo ? 'Desactivar' : 'Activar' }} especial">
-                                        <i class="fas fa-{{ $especial->activo ? 'pause' : 'play' }} group-hover:scale-110 transition-transform"></i> 
-                                        <span>{{ $especial->activo ? 'Desactivar' : 'Activar' }}</span>
-                                    </button>
+                                    @can('activar-especial')
+                                        <button type="button"
+                                                @click="showModal = true; 
+                                                        modalAction = 'toggle'; 
+                                                        modalUrl = '{{ route('especial_dia.toggle', $especial) }}'; 
+                                                        modalMsg = '¿{{ $especial->activo ? 'Desactivar' : 'Activar' }} el especial de {{ $especial->producto->nombre }}?'; 
+                                                        modalEspecial = {{ $especial->id }};"
+                                                class="py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center {{ $especial->activo ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-green-600 hover:bg-green-500' }} text-white min-w-[100px] group"
+                                                title="{{ $especial->activo ? 'Desactivar' : 'Activar' }} especial">
+                                            <i class="fas fa-{{ $especial->activo ? 'pause' : 'play' }} group-hover:scale-110 transition-transform"></i> 
+                                            <span>{{ $especial->activo ? 'Desactivar' : 'Activar' }}</span>
+                                        </button>
+                                    @endcan
 
                                     <!-- Botón Eliminar -->
-                                    <button type="button"
-                                            @click="showModal = true; 
-                                                    modalAction = 'eliminar'; 
-                                                    modalUrl = '{{ route('especial_dia.destroy', $especial) }}'; 
-                                                    modalMsg = '¿Eliminar permanentemente el especial de {{ $especial->producto->nombre }}? Esta acción no se puede deshacer.';"
-                                            class="bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center min-w-[100px] group"
-                                            title="Eliminar especial">
-                                        <i class="fas fa-trash group-hover:scale-110 transition-transform"></i> 
-                                        <span>Eliminar</span>
-                                    </button>
+                                    @can('eliminar-especial')
+                                        <button type="button"
+                                                @click="showModal = true; 
+                                                        modalAction = 'eliminar'; 
+                                                        modalUrl = '{{ route('especial_dia.destroy', $especial) }}'; 
+                                                        modalMsg = '¿Eliminar permanentemente el especial de {{ $especial->producto->nombre }}? Esta acción no se puede deshacer.';"
+                                                class="bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center min-w-[100px] group"
+                                                title="Eliminar especial">
+                                            <i class="fas fa-trash group-hover:scale-110 transition-transform"></i> 
+                                            <span>Eliminar</span>
+                                        </button>
+                                    @endcan
                                 </div>
                             </div>
                         </div>
@@ -282,10 +292,12 @@
                     <p class="text-zinc-400 mb-6 max-w-md mx-auto">
                         Aún no has creado ningún especial del día. Comienza agregando tu primera oferta especial.
                     </p>
-                    <a href="{{ route('especial_dia.create') }}" 
-                       class="bg-amber-600 hover:bg-amber-500 text-white py-3 px-6 rounded-lg transition-colors inline-flex items-center gap-2 font-medium">
-                        <i class="fas fa-plus"></i> Crear Primer Especial
-                    </a>
+                    @can('crear-especial')
+                        <a href="{{ route('especial_dia.create') }}" 
+                           class="bg-amber-600 hover:bg-amber-500 text-white py-3 px-6 rounded-lg transition-colors inline-flex items-center gap-2 font-medium">
+                            <i class="fas fa-plus"></i> Crear Primer Especial
+                        </a>
+                    @endcan
                 </div>
                 @endforelse
             </div>

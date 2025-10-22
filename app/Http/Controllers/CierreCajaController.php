@@ -20,6 +20,10 @@ class CierreCajaController extends Controller
      */
     public function index(Request $request)
     {
+        if (!auth()->user()->can('ver-cierres')) {
+            abort(403, 'No tienes permiso para ver los cierres de caja.');
+        }
+
         $fechaInicio = $request->input('fecha_inicio', now()->startOfMonth()->format('Y-m-d'));
         $fechaFin = $request->input('fecha_fin', now()->format('Y-m-d'));
         $cajeroId = $request->input('cajero_id', 'todos');
@@ -49,6 +53,9 @@ class CierreCajaController extends Controller
         // Cajeros para el filtro
         $cajeros = User::role(['cajero', 'administrador'])->orderBy('name')->get();
 
+        // Registrar en bitácora
+        BitacoraController::registrar('Ver', 'CierreCaja');
+
         return view('cierres_caja.index', compact(
             'cierres',
             'estadisticas',
@@ -65,6 +72,10 @@ class CierreCajaController extends Controller
      */
     public function create()
     {
+        if (!auth()->user()->can('cerrar-caja')) {
+            abort(403, 'No tienes permiso para crear cierres de caja.');
+        }
+
         // Verificar que existe un turno activo
         $turnoActivo = TurnoCaja::turnoActivo();
         
@@ -91,6 +102,9 @@ class CierreCajaController extends Controller
         // Calcular totales del sistema por método de pago
         $totalesSistema = $this->calcularTotalesSistema(Auth::id(), $inicio, $fin);
 
+        // Registrar en bitácora
+        BitacoraController::registrar('Crear formulario', 'CierreCaja');
+
         return view('cierres_caja.create', compact('inicio', 'fin', 'totalesSistema', 'turnoActivo'));
     }
 
@@ -99,6 +113,10 @@ class CierreCajaController extends Controller
      */
     public function store(Request $request)
     {
+        if (!auth()->user()->can('cerrar-caja')) {
+            abort(403, 'No tienes permiso para registrar cierres de caja.');
+        }
+
         $request->validate([
             'inicio' => 'required|date',
             'fin' => 'required|date|after:inicio',
@@ -195,12 +213,10 @@ class CierreCajaController extends Controller
             DB::commit();
 
             // Registrar en bitácora
-            app(\App\Http\Controllers\BitacoraController::class)->registrar(
-                'Cierre de Caja',
+            BitacoraController::registrar(
+                'Crear',
                 'CierreCaja',
-                $cierre->id,
-                Auth::id(),
-                $request
+                $cierre->id
             );
 
             return redirect()->route('cierres_caja.show', $cierre->id)
@@ -219,6 +235,10 @@ class CierreCajaController extends Controller
      */
     public function show($id)
     {
+        if (!auth()->user()->can('ver-cierres')) {
+            abort(403, 'No tienes permiso para ver los cierres de caja.');
+        }
+
         $cierre = CierreCaja::with(['cajero', 'detalles'])->findOrFail($id);
 
         // Verificar permisos (solo puede ver su propio cierre o ser admin)
@@ -236,6 +256,9 @@ class CierreCajaController extends Controller
 
         $totalCobros = $cobros->count();
 
+        // Registrar en bitácora
+        BitacoraController::registrar('Ver detalle', 'CierreCaja', $cierre->id);
+
         return view('cierres_caja.show', compact('cierre', 'cobros', 'totalCobros'));
     }
 
@@ -244,6 +267,10 @@ class CierreCajaController extends Controller
      */
     public function exportarPDF($id)
     {
+        if (!auth()->user()->can('ver-cierres')) {
+            abort(403, 'No tienes permiso para exportar cierres de caja.');
+        }
+
         $cierre = CierreCaja::with(['cajero', 'detalles'])->findOrFail($id);
 
         // Verificar permisos
@@ -263,6 +290,9 @@ class CierreCajaController extends Controller
         $pdf->setPaper('letter', 'portrait');
 
         $nombreArchivo = 'cierre-caja-' . $cierre->id . '-' . $cierre->fin->format('Y-m-d') . '.pdf';
+
+        // Registrar en bitácora
+        BitacoraController::registrar('Exportar PDF', 'CierreCaja', $cierre->id);
 
         return $pdf->download($nombreArchivo);
     }
@@ -366,12 +396,10 @@ class CierreCajaController extends Controller
             DB::commit();
 
             // Registrar en bitácora
-            app(\App\Http\Controllers\BitacoraController::class)->registrar(
-                'Anulación de Cierre',
+            BitacoraController::registrar(
+                'Anular',
                 'CierreCaja',
-                $cierre->id,
-                Auth::id(),
-                $request
+                $cierre->id
             );
 
             return redirect()->route('cierres_caja.index')

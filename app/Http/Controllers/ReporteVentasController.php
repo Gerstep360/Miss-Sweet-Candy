@@ -19,6 +19,10 @@ class ReporteVentasController extends Controller
      */
     public function index(Request $request)
     {
+        if (!auth()->user()->can('ver-reportes')) {
+            abort(403, 'No tienes permiso para ver los reportes de ventas.');
+        }
+
         // Parámetros de filtro
         $fechaInicio = $request->input('fecha_inicio', now()->startOfMonth()->format('Y-m-d'));
         $fechaFin = $request->input('fecha_fin', now()->format('Y-m-d'));
@@ -66,6 +70,9 @@ class ReporteVentasController extends Controller
 
         // Cajeros
         $cajeros = User::role(['cajero', 'administrador'])->orderBy('name')->get();
+
+        // Registrar en bitácora
+        BitacoraController::registrar('Ver', 'ReporteVentas');
 
         return view('reportes.ventas.index', compact(
             'ventas',
@@ -197,6 +204,10 @@ class ReporteVentasController extends Controller
      */
     public function porCajero(Request $request)
     {
+        if (!auth()->user()->can('ver-reportes')) {
+            abort(403, 'No tienes permiso para ver los reportes de ventas.');
+        }
+
         $fechaInicio = $request->input('fecha_inicio', now()->startOfMonth()->format('Y-m-d'));
         $fechaFin = $request->input('fecha_fin', now()->format('Y-m-d'));
 
@@ -228,6 +239,10 @@ class ReporteVentasController extends Controller
      */
     public function porProducto(Request $request)
     {
+        if (!auth()->user()->can('ver-reportes')) {
+            abort(403, 'No tienes permiso para ver los reportes de ventas.');
+        }
+
         $fechaInicio = $request->input('fecha_inicio', now()->startOfMonth()->format('Y-m-d'));
         $fechaFin = $request->input('fecha_fin', now()->format('Y-m-d'));
         $categoriaId = $request->input('categoria_id', 'todos');
@@ -275,6 +290,10 @@ class ReporteVentasController extends Controller
      */
     public function ventasDiarias(Request $request)
     {
+        if (!auth()->user()->can('ver-reportes')) {
+            abort(403, 'No tienes permiso para ver los reportes de ventas.');
+        }
+
         $fechaInicio = $request->input('fecha_inicio', now()->subDays(30)->format('Y-m-d'));
         $fechaFin = $request->input('fecha_fin', now()->format('Y-m-d'));
 
@@ -304,6 +323,10 @@ class ReporteVentasController extends Controller
      */
     public function exportarPDF(Request $request)
     {
+        if (!auth()->user()->can('ver-reportes')) {
+            abort(403, 'No tienes permiso para exportar reportes de ventas.');
+        }
+
         $fechaInicio = $request->input('fecha_inicio', now()->startOfMonth()->format('Y-m-d'));
         $fechaFin = $request->input('fecha_fin', now()->format('Y-m-d'));
         $tipoVenta = $request->input('tipo_venta', 'todos');
@@ -352,6 +375,9 @@ class ReporteVentasController extends Controller
 
         $nombreArchivo = 'reporte-ventas-' . $fechaInicio . '-al-' . $fechaFin . '.pdf';
 
+        // Registrar en bitácora
+        BitacoraController::registrar('Exportar PDF', 'ReporteVentas');
+
         return $pdf->download($nombreArchivo);
     }
 
@@ -360,6 +386,13 @@ class ReporteVentasController extends Controller
      */
     public function exportarExcel(Request $request)
     {
+        if (!auth()->user()->can('ver-reportes')) {
+            abort(403, 'No tienes permiso para exportar reportes de ventas.');
+        }
+
+        // Registrar en bitácora
+        BitacoraController::registrar('Exportar Excel', 'ReporteVentas');
+
         $fechaInicio = $request->input('fecha_inicio', now()->startOfMonth()->format('Y-m-d'));
         $fechaFin = $request->input('fecha_fin', now()->format('Y-m-d'));
         $tipoVenta = $request->input('tipo_venta', 'todos');
