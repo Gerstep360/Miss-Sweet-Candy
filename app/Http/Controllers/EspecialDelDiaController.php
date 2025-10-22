@@ -134,7 +134,10 @@ class EspecialDelDiaController extends Controller
         return response()->json(['success' => true, 'especiales' => $payload]);
     }
 
-    // ------- Helpers privados compactos ------
+    
+
+
+    
     private function validated(Request $request, bool $isUpdate): array
 {
     $rules = [
