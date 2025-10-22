@@ -112,9 +112,22 @@ class RolePermissionSeeder extends Seeder
             // arqueos
             'realizar-arqueo',
             'ver-arqueos',
+            
             //cierre de caja
             'cerrar-caja',
             'ver-cierres',
+
+            //turnos de caja
+            'iniciar-turno',
+            'cerrar-turno',
+            'ver-turnos',
+
+            //especial del día
+            'ver-especiales',
+            'crear-especial',
+            'editar-especial',
+            'eliminar-especial',
+            'activar-especial',
         ];
 
         /* -----------------------------------------------------------------
@@ -179,6 +192,11 @@ class RolePermissionSeeder extends Seeder
             // CU13 - Cierres de Caja
             'cerrar-caja',
             'ver-cierres',
+            
+            // Turnos de Caja
+            'iniciar-turno',
+            'cerrar-turno',
+            'ver-turnos',
             
             // CU15 - Inventario (solo ver)
             'ver-inventario',

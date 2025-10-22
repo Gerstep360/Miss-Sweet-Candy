@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CierreCaja;
 use App\Models\CierreCajaDetalle;
 use App\Models\CobroCaja;
+use App\Models\TurnoCaja;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -64,30 +65,33 @@ class CierreCajaController extends Controller
      */
     public function create()
     {
-        // Verificar si el cajero tiene un cierre pendiente hoy
-        $cierreHoy = CierreCaja::where('cajero_id', Auth::id())
-            ->whereDate('fin', today())
-            ->first();
-
-        if ($cierreHoy) {
-            return redirect()->route('cierres_caja.show', $cierreHoy->id)
-                ->with('info', 'Ya existe un cierre de caja registrado para el día de hoy.');
+        // Verificar que existe un turno activo
+        $turnoActivo = TurnoCaja::turnoActivo();
+        
+        if (!$turnoActivo) {
+            return redirect()->route('dashboard')->with('error', 'No hay ningún turno activo. Debes iniciar un turno primero.');
         }
 
-        // Obtener la hora de inicio del turno (primer cobro del día o inicio de jornada)
-        $primerCobroHoy = CobroCaja::where('cajero_id', Auth::id())
-            ->whereDate('created_at', today())
-            ->where('estado', 'cobrado')
-            ->orderBy('created_at', 'asc')
-            ->first();
+        // Verificar que el turno es del cajero actual
+        if ($turnoActivo->cajero_id !== Auth::id()) {
+            return redirect()->route('dashboard')->with('error', 
+                "{$turnoActivo->cajero->name} está de turno actualmente. Solo él puede realizar el cierre de caja."
+            );
+        }
 
-        $inicio = $primerCobroHoy ? $primerCobroHoy->created_at : now()->startOfDay();
+        // Verificar si el cajero ya tiene un cierre para este turno
+        if ($turnoActivo->cierre) {
+            return redirect()->route('cierres_caja.show', $turnoActivo->cierre->id)
+                ->with('info', 'Ya existe un cierre de caja para este turno.');
+        }
+
+        $inicio = $turnoActivo->inicio;
         $fin = now();
 
         // Calcular totales del sistema por método de pago
         $totalesSistema = $this->calcularTotalesSistema(Auth::id(), $inicio, $fin);
 
-        return view('cierres_caja.create', compact('inicio', 'fin', 'totalesSistema'));
+        return view('cierres_caja.create', compact('inicio', 'fin', 'totalesSistema', 'turnoActivo'));
     }
 
     /**
@@ -111,17 +115,26 @@ class CierreCajaController extends Controller
             'qr_declarado.required' => 'El monto de QR es obligatorio.',
         ]);
 
-        // Verificar que no exista un cierre en el mismo período
-        $cierreExistente = CierreCaja::where('cajero_id', Auth::id())
-            ->where(function ($query) use ($request) {
-                $query->whereBetween('inicio', [$request->inicio, $request->fin])
-                    ->orWhereBetween('fin', [$request->inicio, $request->fin]);
-            })
-            ->first();
-
-        if ($cierreExistente) {
+        // Verificar que existe un turno activo
+        $turnoActivo = TurnoCaja::turnoActivo();
+        
+        if (!$turnoActivo) {
             return back()->withErrors([
-                'mensaje' => 'Ya existe un cierre de caja en este período de tiempo.'
+                'mensaje' => 'No hay ningún turno activo.'
+            ])->withInput();
+        }
+
+        // Verificar que el turno es del cajero actual
+        if ($turnoActivo->cajero_id !== Auth::id()) {
+            return back()->withErrors([
+                'mensaje' => 'Solo puedes cerrar tu propio turno.'
+            ])->withInput();
+        }
+
+        // Verificar que el turno no tenga un cierre ya registrado
+        if ($turnoActivo->cierre) {
+            return back()->withErrors([
+                'mensaje' => 'Este turno ya tiene un cierre registrado.'
             ])->withInput();
         }
 
@@ -144,6 +157,7 @@ class CierreCajaController extends Controller
 
             // Crear el cierre de caja
             $cierre = CierreCaja::create([
+                'turno_id' => $turnoActivo->id,
                 'cajero_id' => Auth::id(),
                 'inicio' => $inicio,
                 'fin' => $fin,
@@ -175,6 +189,9 @@ class CierreCajaController extends Controller
                 'monto_declarado' => $qrDeclarado,
             ]);
 
+            // Cerrar el turno
+            $turnoActivo->cerrarTurno($request->observaciones);
+
             DB::commit();
 
             // Registrar en bitácora
@@ -187,7 +204,7 @@ class CierreCajaController extends Controller
             );
 
             return redirect()->route('cierres_caja.show', $cierre->id)
-                ->with('success', 'Cierre de caja registrado exitosamente.');
+                ->with('success', 'Cierre de caja registrado exitosamente. Tu turno ha finalizado.');
 
         } catch (\Exception $e) {
             DB::rollBack();

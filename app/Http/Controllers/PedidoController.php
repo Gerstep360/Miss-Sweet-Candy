@@ -69,9 +69,11 @@ class PedidoController extends BaseController
             
         $clientes = User::role('cliente')->get();
         
-        $productos = Producto::with(['categoria', 'inventario'])
+        $productos = Producto::with(['categoria', 'inventario', 'especialVigente'])
             ->orderBy('nombre')
-            ->get();
+            ->get()
+            ->each->append(['imagen_url','precio_vigente','tiene_oferta','porcentaje_oferta','ahorro_oferta']);
+
             
         $categorias = Categoria::orderBy('nombre')->get();
         BitacoraController::registrar('crear', 'Pedido', null);
@@ -93,9 +95,11 @@ class PedidoController extends BaseController
 
         $clientes = User::role('cliente')->get();
         
-        $productos = Producto::with(['categoria', 'inventario'])
+        $productos = Producto::with(['categoria', 'inventario', 'especialVigente'])
             ->orderBy('nombre')
-            ->get();
+            ->get()
+            ->each->append(['imagen_url','precio_vigente','tiene_oferta','porcentaje_oferta','ahorro_oferta']);
+
             
         $categorias = Categoria::orderBy('nombre')->get();
         BitacoraController::registrar('crear', 'Pedido', null);
@@ -130,15 +134,26 @@ class PedidoController extends BaseController
             }
 
             // Crear el pedido
-            $pedido = Pedido::create([
-                'tipo' => 'mesa',
-                'cliente_id' => $validated['cliente_id'] ?? null,
-                'atendido_por' => Auth::id(),
-                'mesa_id' => $validated['mesa_id'],
-                'estado' => 'pendiente',
-                'canal' => 'local',
-                'notas' => $validated['notas'] ?? null,
+            $producto = Producto::with('especialVigente')->findOrFail($productoData['producto_id']);
+
+            $precioBase      = (float) $producto->precio;
+            $precioUnitario  = (float) $producto->precio_vigente;   // <— aquí la magia
+            $descuentoItem   = max(0, $precioBase - $precioUnitario);
+            $cantidad        = (int) $productoData['cantidad'];
+            $subtotalItem    = $precioUnitario * $cantidad;
+
+            PedidoItem::create([
+                'pedido_id'       => $pedido->id,
+                'producto_id'     => $producto->id,
+                'cantidad'        => $cantidad,
+                'precio_unitario' => $precioUnitario,
+                'descuento_item'  => $descuentoItem,
+                'subtotal_item'   => $subtotalItem,
+                'estado_item'     => 'pendiente',
+                'destino'         => $producto->categoria->destino ?? 'cocina',
+                'notas'           => $productoData['notas'] ?? null,
             ]);
+
 
             // Crear los items del pedido
             foreach ($validated['productos'] as $productoData) {
@@ -214,16 +229,25 @@ class PedidoController extends BaseController
 
         try {
             // Crear el pedido
-            $pedido = Pedido::create([
-                'tipo' => 'mostrador',
-                'cliente_id' => $validated['cliente_id'] ?? null,
-                'atendido_por' => Auth::id(),
-                'estado' => 'pendiente',
-                'canal' => 'local',
-                'telefono_contacto' => $validated['telefono_contacto'] ?? null,
-                'notas' => $validated['notas'] ?? null,
-            ]);
+            $producto = Producto::with('especialVigente')->findOrFail($productoData['producto_id']);
 
+            $precioBase      = (float) $producto->precio;
+            $precioUnitario  = (float) $producto->precio_vigente;   // <— aquí la magia
+            $descuentoItem   = max(0, $precioBase - $precioUnitario);
+            $cantidad        = (int) $productoData['cantidad'];
+            $subtotalItem    = $precioUnitario * $cantidad;
+
+            PedidoItem::create([
+                'pedido_id'       => $pedido->id,
+                'producto_id'     => $producto->id,
+                'cantidad'        => $cantidad,
+                'precio_unitario' => $precioUnitario,
+                'descuento_item'  => $descuentoItem,
+                'subtotal_item'   => $subtotalItem,
+                'estado_item'     => 'pendiente',
+                'destino'         => $producto->categoria->destino ?? 'cocina',
+                'notas'           => $productoData['notas'] ?? null,
+            ]);
             // Crear los items del pedido
             foreach ($validated['productos'] as $productoData) {
                 $producto = Producto::findOrFail($productoData['producto_id']);
@@ -309,7 +333,11 @@ class PedidoController extends BaseController
         }
 
         $pedido->load(['items.producto.categoria']);
-        $productos = Producto::with(['categoria', 'inventario'])->orderBy('nombre')->get();
+        $productos = Producto::with(['categoria', 'inventario', 'especialVigente'])
+            ->orderBy('nombre')
+            ->get()
+            ->each->append(['imagen_url','precio_vigente','tiene_oferta','porcentaje_oferta','ahorro_oferta']);
+
         $categorias = Categoria::orderBy('nombre')->get();
         $clientes = User::role('cliente')->get();
 

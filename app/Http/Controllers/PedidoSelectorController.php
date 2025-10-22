@@ -10,9 +10,11 @@ class PedidoSelectorController extends Controller
     public function index(Request $request)
     {
         // Obtener todos los productos con su categoría, ordenados por nombre
-        $productos = Producto::with('categoria')
+        $productos = Producto::with(['categoria','especialVigente'])
             ->orderBy('nombre')
-            ->get();
+            ->get()
+            ->each->append(['imagen_url','precio_vigente','tiene_oferta','porcentaje_oferta','ahorro_oferta']);
+
 
         // Obtener todas las categorías que tengan al menos un producto y cargar la relación productos
         $categorias = Categoria::with('productos')

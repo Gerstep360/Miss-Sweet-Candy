@@ -3,6 +3,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
 <head>
   @include('partials.head')
+  @livewireStyles
 </head>
 <body class="min-h-screen bg-zinc-950 text-white">
   {{-- Overlay móvil para cerrar al tocar fuera --}}
@@ -381,5 +382,6 @@
 
   @vite(['resources/js/app.js'])
   @fluxScripts
+  @livewireScripts
 </body>
 </html>

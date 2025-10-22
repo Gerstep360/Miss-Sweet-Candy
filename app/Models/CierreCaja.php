@@ -13,6 +13,7 @@ class CierreCaja extends Model
     protected $table = 'cierres_caja';
 
     protected $fillable = [
+        'turno_id',
         'cajero_id',
         'inicio',
         'fin',
@@ -36,6 +37,14 @@ class CierreCaja extends Model
     public function cajero(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cajero_id');
+    }
+
+    /**
+     * Relación con el turno
+     */
+    public function turno(): BelongsTo
+    {
+        return $this->belongsTo(TurnoCaja::class, 'turno_id');
     }
 
     /**

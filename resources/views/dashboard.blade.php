@@ -29,6 +29,9 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <!-- Estado del Turno -->
+      <x-turno-status />
+
       <!-- Métricas del Cajero -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-6">

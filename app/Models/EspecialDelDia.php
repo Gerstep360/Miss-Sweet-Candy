@@ -50,21 +50,26 @@ class EspecialDelDia extends Model
     public function scopeParaHoy($query)
     {
         $hoy = Carbon::now('America/La_Paz');
-        $diaSemana = $this->getNombreDiaEs($hoy->dayOfWeek);
-        
-        return $query->where(function ($q) use ($hoy, $diaSemana) {
-            // Especiales por día de la semana
-            $q->where('dia_semana', $diaSemana)
-              ->whereNull('fecha_especifica');
-        })->orWhere(function ($q) use ($hoy) {
-            // Especiales por fecha específica
-            $q->where('fecha_especifica', $hoy->toDateString());
-        })->orWhere(function ($q) use ($hoy) {
-            // Especiales por rango de fechas
-            $q->whereNotNull('fecha_inicio')
-              ->whereNotNull('fecha_fin')
-              ->where('fecha_inicio', '<=', $hoy)
-              ->where('fecha_fin', '>=', $hoy);
+        $dia = $this->getNombreDiaEs($hoy->dayOfWeek);
+
+        // Agrupamos TODAS las opciones válidas de "hoy" en un mismo bloque
+        return $query->where(function ($q) use ($hoy, $dia) {
+            // (a) día de la semana (sin fecha específica)
+            $q->where(function ($q) use ($dia) {
+                $q->where('dia_semana', $dia)
+                ->whereNull('fecha_especifica');
+            })
+            // (b) fecha específica exacta
+            ->orWhere(function ($q) use ($hoy) {
+                $q->whereDate('fecha_especifica', $hoy->toDateString());
+            })
+            // (c) rango de fechas
+            ->orWhere(function ($q) use ($hoy) {
+                $q->whereNotNull('fecha_inicio')
+                ->whereNotNull('fecha_fin')
+                ->where('fecha_inicio', '<=', $hoy)
+                ->where('fecha_fin', '>=', $hoy);
+            });
         });
     }
 
@@ -146,12 +151,13 @@ class EspecialDelDia extends Model
     // Método estático para obtener el especial de hoy
     public static function getEspecialHoy()
     {
+        // activo + vigente + paraHoy, con relaciones cargadas
         return static::activo()
-                    ->vigente()
-                    ->paraHoy()
-                    ->with(['producto.categoria'])
-                    ->orderBy('prioridad', 'desc')
-                    ->first();
+            ->vigente()
+            ->paraHoy()
+            ->with(['producto.categoria'])
+            ->orderByDesc('prioridad')
+            ->first();
     }
 
     // Método estático para obtener especiales de la semana

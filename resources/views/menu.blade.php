@@ -8,7 +8,7 @@
                     <div class="flex items-center space-x-3">
                         <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 01-1-1h-2z"/>
                             </svg>
                         </div>
                         <span class="text-xl font-semibold text-white">Miss Sweet Candy</span>
@@ -82,11 +82,11 @@
                         <span class="w-2 h-2 bg-amber-400 rounded-full mr-2"></span>
                         Menú Completo
                     </div>
-                    
+
                     <h1 class="text-4xl lg:text-6xl font-bold mb-6 leading-tight text-white">
                         Nuestro <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Menú</span> Completo
                     </h1>
-                    
+
                     <p class="text-xl text-zinc-300 mb-8 leading-relaxed max-w-3xl mx-auto">
                         Descubre todos nuestros productos artesanales preparados con los mejores ingredientes y años de experiencia
                     </p>
@@ -98,7 +98,9 @@
                             <div class="text-sm text-zinc-400">Categorías</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-amber-400">{{ $categorias->sum(function($cat) { return $cat->productos->count(); }) }}</div>
+                            <div class="text-2xl font-bold text-amber-400">
+                                {{ $categorias->sum(fn($cat) => $cat->productos->count()) }}
+                            </div>
                             <div class="text-sm text-zinc-400">Productos</div>
                         </div>
                     </div>
@@ -109,13 +111,14 @@
         <!-- Sección de Categorías y Productos -->
         <section id="categorias" class="py-16 lg:py-24 bg-zinc-900/30">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
                 @forelse($categorias as $categoria)
                     <div class="mb-16 last:mb-0">
                         <!-- Header de Categoría -->
                         <div class="flex items-center gap-4 mb-8">
                             <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center">
                                 <svg class="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 01-1-1h-2z"/>
                                 </svg>
                             </div>
                             <div class="flex-1">
@@ -130,41 +133,105 @@
                         <!-- Grid de Productos -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             @forelse($categoria->productos as $producto)
+                                @php
+                                    $stock = $producto->inventario->stock_actual ?? null;
+                                    $min   = $producto->inventario->stock_minimo ?? 5;
+
+                                    $stockClass = 'bg-zinc-700 text-zinc-300';
+                                    if (!is_null($stock)) {
+                                        if ($stock <= 0) {
+                                            $stockClass = 'bg-red-500/20 text-red-400';
+                                        } elseif ($stock <= $min) {
+                                            $stockClass = 'bg-yellow-500/20 text-yellow-400';
+                                        } else {
+                                            $stockClass = 'bg-green-500/20 text-green-400';
+                                        }
+                                    }
+                                @endphp
+
                                 <div class="group product-card hover:scale-105 transition-all duration-300">
-                                    <div class="bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-2xl p-5 h-full flex flex-col hover:border-amber-400/40 hover:shadow-lg hover:shadow-amber-400/10">
-                                        <!-- Imagen del producto -->
-                                        <div class="aspect-square bg-zinc-800 rounded-xl mb-4 overflow-hidden relative">
-                                                <img
-                                                    src="{{ $producto->imagen ? asset('storage/'.$producto->imagen) : asset('storage/img/none/none.png') }}"
-                                                    alt="{{ $producto->nombre }}"
-                                                    class="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
-                                                    onerror="this.onerror=null;this.src='{{ asset('storage/img/none/none.png') }}';"
-                                                />
+                                    <div class="bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-2xl p-5 h-full flex flex-col hover:border-amber-400/40 hover:shadow-lg hover:shadow-amber-400/10 relative">
+
+                                        <!-- Badge Especial -->
+                                        @if($producto->tiene_oferta)
+                                            <div class="absolute top-3 left-3">
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold bg-green-500/20 text-green-400 rounded-full">
+                                                    Especial -{{ $producto->porcentaje_oferta }}%
+                                                </span>
+                                            </div>
+                                        @endif
+
+                                        <!-- Imagen -->
+                                        <div class="aspect-square bg-zinc-800 rounded-xl mb-4 overflow-hidden relative border border-zinc-700">
+                                            <img
+                                                src="{{ $producto->imagen_url }}"
+                                                alt="{{ $producto->nombre }}"
+                                                class="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
+                                                onerror="this.onerror=null;this.src='{{ asset('storage/img/none/none.png') }}';"
+                                            />
+
+                                            <!-- Overlay AGOTADO -->
+                                            @if(!is_null($stock) && $stock <= 0)
+                                                <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                                    <span class="text-white text-sm sm:text-base font-bold tracking-wider">AGOTADO</span>
+                                                </div>
+                                            @endif
+
+                                            <!-- Precio “chip” arriba a la derecha -->
                                             <div class="absolute top-3 right-3 bg-black/50 backdrop-blur rounded-full px-2 py-1">
-                                                <span class="text-amber-400 text-xs font-bold">${{ number_format($producto->precio, 0) }}</span>
+                                                @if($producto->tiene_oferta)
+                                                    <div class="flex items-end gap-2">
+                                                        <span class="text-zinc-400 text-[11px] line-through">${{ number_format($producto->precio, 2) }}</span>
+                                                        <span class="text-amber-400 text-xs font-bold">${{ number_format($producto->precio_vigente, 2) }}</span>
+                                                    </div>
+                                                @else
+                                                    <span class="text-amber-400 text-xs font-bold">${{ number_format($producto->precio, 2) }}</span>
+                                                @endif
                                             </div>
                                         </div>
-                                        
+
                                         <!-- Información del producto -->
                                         <div class="flex-1 flex flex-col">
                                             <h3 class="text-lg font-bold mb-2 text-white group-hover:text-amber-400 transition-colors">
                                                 {{ $producto->nombre }}
                                             </h3>
-                                            
+
                                             <p class="text-zinc-400 text-sm mb-4 flex-1 leading-relaxed">
                                                 {{ $producto->descripcion ?? 'Delicioso producto preparado con ingredientes frescos y de la mejor calidad.' }}
                                             </p>
-                                            
+
                                             <!-- Footer del producto -->
-                                            <div class="flex items-center justify-between mt-auto pt-3 border-t border-zinc-800">
-                                                <span class="text-amber-400 font-bold text-xl">
-                                                    ${{ number_format($producto->precio, 2) }}
-                                                </span>
-                                                <span class="bg-amber-400/10 text-amber-400 text-xs px-3 py-1 rounded-full">
-                                                    {{ $categoria->nombre }}
-                                                </span>
+                                            <div class="mt-auto pt-3 border-t border-zinc-800 flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    @if($producto->tiene_oferta)
+                                                        <div class="flex items-end gap-2">
+                                                            <span class="text-zinc-500 line-through text-sm">${{ number_format($producto->precio, 2) }}</span>
+                                                            <span class="text-amber-400 font-bold text-lg">${{ number_format($producto->precio_vigente, 2) }}</span>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-amber-400 font-bold text-lg">
+                                                            ${{ number_format($producto->precio, 2) }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-xs px-2 py-1 rounded {{ $stockClass }}">
+                                                        @if(is_null($stock))
+                                                            Sin control
+                                                        @elseif($stock <= 0)
+                                                            Sin stock
+                                                        @else
+                                                            Stock: {{ $stock }}
+                                                        @endif
+                                                    </span>
+                                                    <span class="bg-amber-400/10 text-amber-400 text-xs px-3 py-1 rounded-full">
+                                                        {{ $categoria->nombre }}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
+
                                     </div>
                                 </div>
                             @empty
@@ -230,7 +297,7 @@
                     <div class="flex items-center justify-center space-x-3 mb-4">
                         <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 01-1 1h2a1 1 0 001-1v-6a1 1 0 01-1-1h-2z"/>
                             </svg>
                         </div>
                         <span class="text-xl font-semibold text-white">Miss Sweet Candy</span>
@@ -250,7 +317,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
             const mobileMenu = document.querySelector('.mobile-menu');
-            
             if (mobileMenuBtn && mobileMenu) {
                 mobileMenuBtn.addEventListener('click', function() {
                     mobileMenu.classList.toggle('hidden');
