@@ -8,6 +8,7 @@ use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\EspecialDelDiaController;
+use App\Http\Controllers\PromocionController;
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
 
@@ -64,6 +65,17 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::get('/{producto}/edit','edit')->middleware('permission:editar-productos')->name('edit');
         Route::put('/{producto}',     'update')->middleware('permission:editar-productos')->name('update');
         Route::delete('/{producto}',  'destroy')->middleware('permission:eliminar-productos')->name('destroy');
+    });
+
+        // ===== Promociones =====
+        Route::controller(PromocionController::class)->prefix('promociones')->name('promociones.')->group(function () {
+        Route::get('/',                 'index')->middleware('permission:ver-promociones')->name('index');
+        Route::get('/create',           'create')->middleware('permission:crear-promociones')->name('create');
+        Route::post('/',                'store')->middleware('permission:crear-promociones')->name('store');
+        Route::get('/{promocion}',      'show')->middleware('permission:ver-promociones')->name('show');
+        Route::get('/{promocion}/edit', 'edit')->middleware('permission:editar-promociones')->name('edit');
+        Route::put('/{promocion}',      'update')->middleware('permission:editar-promociones')->name('update');
+        Route::delete('/{promocion}',   'destroy')->middleware('permission:eliminar-promociones')->name('destroy');
     });
 
     // ===== Horarios =====

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->time('hora_fin')->nullable();
             $table->integer('prioridad')->default(1);
             $table->boolean('activo')->default(true);
+            $table->timestamp();
             
             $table->index(['activo', 'fecha_inicio', 'fecha_fin', 'prioridad'], 'idx_promo_vigencia');
         });

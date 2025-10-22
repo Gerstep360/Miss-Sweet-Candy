@@ -23,11 +23,14 @@ class RolePermissionSeeder extends Seeder
             
             // CU02 - Cerrar sesión (gestionado por Laravel Auth)
             // No requiere permisos específicos
+            
             //Bitacora
             'ver-bitacora',
             'ver-detalle-bitacora',
+            
             //Barista
             'gestionar-pedidos-barista',
+
             // CU03 - Gestión de Usuarios (ADMIN)
             'crear-usuarios',
             'ver-usuarios',
@@ -54,6 +57,12 @@ class RolePermissionSeeder extends Seeder
             'ver-productos',
             'editar-productos',
             'eliminar-productos',
+
+            // CU17 - Gestión de Promociones y Descuentos (ADMIN, CAJERO) <- NUEVO CU
+            'crear-promociones',
+            'ver-promociones',
+            'editar-promociones',
+            'eliminar-promociones',
 
             // CU07 - Gestión de Horarios (ADMIN)
             'configurar-horarios',
@@ -88,7 +97,7 @@ class RolePermissionSeeder extends Seeder
 
             // CU12 - Consulta de Menú Público (CLIENTE, TODOS)
             'ver-menu-publico',
-
+            
             // Dashboards
             'ver-dashboard-admin',
             'ver-dashboard-cajero',
@@ -113,6 +122,7 @@ class RolePermissionSeeder extends Seeder
         $cajero  = Role::firstOrCreate(['name' => 'cajero']);
         $cliente = Role::firstOrCreate(['name' => 'cliente']);
         $barista = Role::firstOrCreate(['name' => 'barista']);
+
         /* -----------------------------------------------------------------
          | Asignar permisos por rol
          -----------------------------------------------------------------*/
@@ -125,6 +135,9 @@ class RolePermissionSeeder extends Seeder
             // CU06 - Productos (solo ver y editar, no eliminar)
             'ver-productos',
             'editar-productos',
+            
+            // CU17 - Promociones (solo ver) <- NUEVO
+            'ver-promociones',
             
             // CU07 - Horarios (solo ver)
             'ver-horarios',
@@ -177,10 +190,12 @@ class RolePermissionSeeder extends Seeder
             'ver-pedidos',
         ]);
 
-        // 4) BARISTA (por el momento no tiene muchos permisos, pero se deja para los proximos casos de uso)
+        // 4) BARISTA
         $barista->syncPermissions([
             'ver-productos',
             'gestionar-pedidos-barista',
+            // CU17 - Promociones (solo ver) <- NUEVO
+            'ver-promociones',
         ]);
     }
 }

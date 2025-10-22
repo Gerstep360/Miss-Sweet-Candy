@@ -87,7 +87,7 @@
         @endcanany
 
         {{-- ===== Cafetería ===== --}}
-        @canany(['ver-productos', 'ver-categorias', 'ver-horarios'])
+        @canany(['ver-productos', 'ver-categorias', 'ver-horarios', 'ver-promociones']) {{-- AGREGADO ver-promociones --}}
         <div class="nav-group">
           <button class="nav-group-header"
                   onclick="toggleSection('cafeteria')"
@@ -110,6 +110,14 @@
                 Productos
               </flux:navlist.item>
               @endcan
+              
+              {{-- NUEVO: Promociones --}}
+              @can('ver-promociones')
+              <flux:navlist.item icon="gift" :href="route('promociones.index')" :current="request()->routeIs('promociones.*')" wire:navigate class="nav-item-child">
+                Promociones
+              </flux:navlist.item>
+              @endcan
+              
               @can('ver-categorias')
               <flux:navlist.item icon="tag" :href="route('categorias.index')" :current="request()->routeIs('categorias.*')" wire:navigate class="nav-item-child">
                 Categorías
@@ -194,6 +202,7 @@
           </div>
         </div>
         @endcanany
+        
         {{-- ===== Barista ===== --}}
         @can('gestionar-pedidos-barista')
         <div class="nav-group">
@@ -220,6 +229,7 @@
           </div>
         </div>
         @endcan
+        
         {{-- ===== Bitácora ===== --}}
         @canany(['ver-bitacora', 'ver-detalle-bitacora'])
         <div class="nav-group">
@@ -248,6 +258,7 @@
           </div>
         </div>
         @endcanany
+        
         <div class="border-t border-zinc-800 my-3"></div>
 
         {{-- Menú Público --}}
@@ -328,7 +339,7 @@
         </div>
       </div>
 
-      {{-- ===== Asa para “slider” (resize ancho en desktop) ===== --}}
+      {{-- ===== Asa para "slider" (resize ancho en desktop) ===== --}}
       <div id="sidebar-resizer" class="hidden lg:block absolute top-0 -right-1 h-full w-2 cursor-col-resize bg-transparent"></div>
     </flux:sidebar>
 
@@ -439,7 +450,7 @@
 
       // --------- Restaurar estado de grupos y abrir si hay item activo ----------
       document.addEventListener('DOMContentLoaded', ()=>{
-        const groups = ['admin','cafeteria','operaciones','ventas','cuenta'];
+        const groups = ['admin','cafeteria','operaciones','ventas','cuenta']; // AGREGADO 'cafeteria'
         groups.forEach(id=>{
           const sec = document.getElementById(`${id}-section`);
           const icon = document.getElementById(`${id}-icon`);
@@ -469,7 +480,7 @@
         }
       });
 
-      // --------- “Slider” de ancho: arrastrar el asa en desktop ----------
+      // --------- "Slider" de ancho: arrastrar el asa en desktop ----------
       (function(){
         const handle = document.getElementById('sidebar-resizer');
         const sidebar = document.querySelector('[data-flux-sidebar]');

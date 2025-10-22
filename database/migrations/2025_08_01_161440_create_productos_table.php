@@ -19,6 +19,7 @@ return new class extends Migration
         $table->decimal('precio', 8, 2);
         $table->string('imagen')->nullable();
         $table->timestamps();
+       // $table->boolean('activo')->default(true)->after('imagen');
     });
     }
 
