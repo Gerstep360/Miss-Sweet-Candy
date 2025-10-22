@@ -189,7 +189,11 @@ class RolePermissionSeeder extends Seeder
             // CU12 - Menú Público
             'ver-menu-publico',
             
-            // CU13 - Cierres de Caja
+            // Arqueos de Caja
+            'realizar-arqueo',
+            'ver-arqueos',
+            
+            // Cierres de Caja
             'cerrar-caja',
             'ver-cierres',
             
@@ -197,6 +201,12 @@ class RolePermissionSeeder extends Seeder
             'iniciar-turno',
             'cerrar-turno',
             'ver-turnos',
+            
+            // Reportes (del turno/caja)
+            'ver-reportes',
+            
+            // Especiales del Día (solo ver)
+            'ver-especiales',
             
             // CU15 - Inventario (solo ver)
             'ver-inventario',

@@ -34,7 +34,7 @@ require __DIR__.'/reportes.php';
 
 require __DIR__.'/auth.php';
 //require __DIR__.'/error/error.php';
-require __DIR__.'/bitacora/bitacora.php';
+require __DIR__.'/Bitacora/bitacora.php';
 require __DIR__.'/barista/barista.php';
 
 require __DIR__.'/especial_dia.php';
