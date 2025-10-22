@@ -7,6 +7,7 @@ use App\Models\InventarioProducto;
 use App\Models\Producto;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class InventarioProductoSeeder extends Seeder
 {
@@ -26,30 +27,46 @@ class InventarioProductoSeeder extends Seeder
             return;
         }
 
-        $inventarios = [];
-        $movimientos = [];
+        $movimientosCreados = 0;
+        $inventariosCreados = 0;
 
         foreach ($productos as $producto) {
-            // Stock inicial (hace 60 días)
-            $stockInicial = rand(20, 100);
+            // Stock inicial aleatorio
+            $stockActual = rand(20, 100);
             
-            $inventarios[] = [
+            // Crear UN SOLO registro en inventario_productos por producto
+            InventarioProducto::updateOrCreate(
+                ['producto_id' => $producto->id],
+                [
+                    'stock_actual' => $stockActual,
+                    'stock_minimo' => rand(5, 15),
+                    'punto_reposicion' => rand(20, 30),
+                    'ubicacion' => 'Almacén Principal',
+                ]
+            );
+            $inventariosCreados++;
+
+            // Registrar movimiento inicial en movimientos_producto
+            DB::table('movimientos_producto')->insert([
                 'producto_id' => $producto->id,
-                'cantidad' => $stockInicial,
-                'tipo_movimiento' => 'entrada',
+                'tipo' => 'entrada',
+                'cantidad' => $stockActual,
+                'saldo_anterior' => 0,
+                'saldo_nuevo' => $stockActual,
                 'motivo' => 'Stock inicial',
                 'usuario_id' => $adminUser->id,
-            ];
+                'created_at' => Carbon::now()->subDays(60),
+            ]);
+            $movimientosCreados++;
 
             // Simular movimientos de los últimos 60 días
-            $stockActual = $stockInicial;
-            
             for ($i = 59; $i >= 0; $i--) {
                 $fecha = Carbon::now()->subDays($i);
                 
                 // Entradas (compras/producción) - 2-3 veces por semana
                 if ($i % 3 == 0 && rand(0, 10) > 3) {
                     $cantidad = rand(10, 50);
+                    $saldoAnterior = $stockActual;
                     $stockActual += $cantidad;
                     
                     $motivos = [
@@ -59,13 +76,17 @@ class InventarioProductoSeeder extends Seeder
                         'Pedido a proveedor',
                     ];
                     
-                    $inventarios[] = [
+                    DB::table('movimientos_producto')->insert([
                         'producto_id' => $producto->id,
+                        'tipo' => 'entrada',
                         'cantidad' => $cantidad,
-                        'tipo_movimiento' => 'entrada',
+                        'saldo_anterior' => $saldoAnterior,
+                        'saldo_nuevo' => $stockActual,
                         'motivo' => $motivos[array_rand($motivos)],
                         'usuario_id' => $adminUser->id,
-                    ];
+                        'created_at' => $fecha->copy()->setTime(rand(8, 10), rand(0, 59)),
+                    ]);
+                    $movimientosCreados++;
                 }
 
                 // Salidas (ventas) - diariamente
@@ -77,15 +98,20 @@ class InventarioProductoSeeder extends Seeder
                         $cantidad = max(1, $stockActual);
                     }
                     
+                    $saldoAnterior = $stockActual;
                     $stockActual -= $cantidad;
                     
-                    $inventarios[] = [
+                    DB::table('movimientos_producto')->insert([
                         'producto_id' => $producto->id,
+                        'tipo' => 'venta',
                         'cantidad' => $cantidad,
-                        'tipo_movimiento' => 'salida',
+                        'saldo_anterior' => $saldoAnterior,
+                        'saldo_nuevo' => $stockActual,
                         'motivo' => 'Venta',
                         'usuario_id' => $adminUser->id,
-                    ];
+                        'created_at' => $fecha->copy()->setTime(rand(12, 19), rand(0, 59)),
+                    ]);
+                    $movimientosCreados++;
                 }
 
                 // Ajustes (merma, corrección) - ocasionalmente
@@ -101,6 +127,8 @@ class InventarioProductoSeeder extends Seeder
                         'Degustación',
                     ];
                     
+                    $saldoAnterior = $stockActual;
+                    
                     if ($esPositivo) {
                         $stockActual += $cantidad;
                         $tipo = 'entrada';
@@ -109,29 +137,30 @@ class InventarioProductoSeeder extends Seeder
                             $cantidad = max(1, $stockActual);
                         }
                         $stockActual -= $cantidad;
-                        $tipo = 'salida';
+                        $tipo = 'ajuste';
                     }
                     
-                    $inventarios[] = [
+                    DB::table('movimientos_producto')->insert([
                         'producto_id' => $producto->id,
+                        'tipo' => $tipo,
                         'cantidad' => $cantidad,
-                        'tipo_movimiento' => $tipo,
+                        'saldo_anterior' => $saldoAnterior,
+                        'saldo_nuevo' => $stockActual,
                         'motivo' => $motivos[array_rand($motivos)],
                         'usuario_id' => $adminUser->id,
-                    ];
+                        'created_at' => $fecha->copy()->setTime(rand(8, 20), rand(0, 59)),
+                    ]);
+                    $movimientosCreados++;
                 }
             }
 
-            // Actualizar stock actual del producto
-            $producto->update(['stock' => max(0, $stockActual)]);
+            // Actualizar stock final en inventario_productos
+            DB::table('inventario_productos')
+                ->where('producto_id', $producto->id)
+                ->update(['stock_actual' => max(0, $stockActual)]);
         }
 
-        // Insertar todos los movimientos
-        foreach ($inventarios as $inventario) {
-            InventarioProducto::create($inventario);
-        }
-
-        $this->command->info('✅ Movimientos de inventario creados: ' . count($inventarios));
-        $this->command->info('📦 Productos con stock actualizado: ' . $productos->count());
+        $this->command->info('✅ Registros de inventario creados: ' . $inventariosCreados);
+        $this->command->info('✅ Movimientos de producto creados: ' . $movimientosCreados);
     }
 }
