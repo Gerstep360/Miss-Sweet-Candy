@@ -315,13 +315,8 @@ class DashboardController extends Controller
 
         // ========== PEDIDOS PENDIENTES PARA BARRA ==========
         $pedidosPendientesBarra = Pedido::whereIn('estado', ['pendiente', 'en_preparacion'])
-            ->whereHas('items', function($q) {
-                $q->where('destino', 'barra')
-                  ->whereIn('estado_item', ['pendiente', 'en_preparacion']);
-            })
             ->with(['items' => function($q) {
-                $q->where('destino', 'barra')
-                  ->whereIn('estado_item', ['pendiente', 'en_preparacion'])
+                $q->whereIn('estado_item', ['pendiente', 'en_preparacion'])
                   ->with('producto');
             }, 'mesa', 'cliente'])
             ->latest()
@@ -351,17 +346,17 @@ class DashboardController extends Controller
         $itemsCompletadosHoy = DB::table('pedido_items')
             ->join('productos', 'pedido_items.producto_id', '=', 'productos.id')
             ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
-            ->where('pedido_items.destino', 'barra')
             ->where('pedido_items.estado_item', 'preparado')
             ->whereBetween('pedido_items.updated_at', [$start, $end])
             ->count();
 
-        // ========== PRODUCTOS MÁS PREPARADOS HOY ==========
+        // ========== PRODUCTOS MÁS PREPARADOS (Últimos 7 días) ==========
+        $hace7Dias = $now->copy()->subDays(7);
         $topProductosBarra = DB::table('pedido_items')
             ->join('productos', 'pedido_items.producto_id', '=', 'productos.id')
             ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
-            ->where('pedido_items.destino', 'barra')
-            ->whereBetween('pedidos.created_at', [$start, $end])
+            ->whereIn('pedidos.estado', ['pendiente', 'en_preparacion', 'preparado', 'entregado', 'pagado'])
+            ->where('pedidos.created_at', '>=', $hace7Dias)
             ->select(
                 'productos.nombre',
                 DB::raw('SUM(pedido_items.cantidad) as total_preparado')
@@ -371,11 +366,11 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // ========== PEDIDOS POR HORA (barra) ==========
+        // ========== PEDIDOS POR HORA (Últimos 7 días) ==========
         $pedidosPorHora = DB::table('pedido_items')
             ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
-            ->where('pedido_items.destino', 'barra')
-            ->whereBetween('pedidos.created_at', [$start, $end])
+            ->whereIn('pedidos.estado', ['pendiente', 'en_preparacion', 'preparado', 'entregado', 'pagado'])
+            ->where('pedidos.created_at', '>=', $hace7Dias)
             ->select(
                 DB::raw('HOUR(pedidos.created_at) as hora'),
                 DB::raw('COUNT(DISTINCT pedido_items.id) as cantidad')
@@ -387,22 +382,19 @@ class DashboardController extends Controller
         // ========== ITEMS PENDIENTES (contador) ==========
         $itemsPendientes = DB::table('pedido_items')
             ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
-            ->where('pedido_items.destino', 'barra')
             ->whereIn('pedidos.estado', ['pendiente', 'en_preparacion'])
-            ->whereIn('pedido_items.estado_item', ['pendiente', 'en_preparacion'])
+            ->where('pedido_items.estado_item', 'pendiente')
             ->count();
 
         // ========== ITEMS EN PREPARACIÓN (contador) ==========
         $itemsEnPreparacion = DB::table('pedido_items')
             ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
-            ->where('pedido_items.destino', 'barra')
             ->where('pedido_items.estado_item', 'en_preparacion')
             ->count();
 
         // ========== TIEMPO PROMEDIO DE PREPARACIÓN ==========
         $tiempoPromedio = DB::table('pedido_items')
             ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
-            ->where('pedido_items.destino', 'barra')
             ->where('pedido_items.estado_item', 'preparado')
             ->whereBetween('pedido_items.updated_at', [$start, $end])
             ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, pedidos.created_at, pedido_items.updated_at)) as promedio')

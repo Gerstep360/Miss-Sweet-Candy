@@ -140,7 +140,7 @@
         @endcan
       </x-sidebar.group>
       @endcanany
-    @canany(['ver-mesas', 'ver-promociones'])
+    @canany(['ver-mesas', 'ver-promociones', 'gestionar-pedidos-barista'])
       <x-sidebar.group id="operaciones" icon="operaciones" text="Operaciones">
         @can('ver-mesas')
           <flux:navlist.item icon="table-cells" :href="route('mesas.index')" :current="request()->routeIs('mesas.*')" wire:navigate class="nav-item-child">
@@ -150,6 +150,11 @@
         @can('ver-promociones')
           <flux:navlist.item icon="gift" :href="route('promociones.index')" :current="request()->routeIs('promociones.*')" wire:navigate class="nav-item-child">
             Promociones
+          </flux:navlist.item>
+        @endcan
+        @can('gestionar-pedidos-barista')
+          <flux:navlist.item icon="beaker" :href="route('barista.pedidos.index')" :current="request()->routeIs('barista.pedidos.*')" wire:navigate class="nav-item-child">
+            Pedidos Barista
           </flux:navlist.item>
         @endcan
       </x-sidebar.group>

@@ -13,7 +13,7 @@
                         </p>
                     </div>
                     <div class="text-right">
-                        @if($hours->isOpen($now))
+                        @if($hours->isOpenAt($now))
                             <span class="px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm font-bold border border-green-500/30">
                                 🟢 Abierto
                             </span>
@@ -176,7 +176,7 @@
                             <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                             </svg>
-                            Más Preparados Hoy
+                            Más Preparados (7 días)
                         </h2>
                         <div class="space-y-2">
                             @forelse($topProductosBarra->take(5) as $producto)
@@ -196,7 +196,7 @@
                             <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Pedidos por Hora
+                            Pedidos por Hora (7 días)
                         </h2>
                         <div class="space-y-2">
                             @forelse($pedidosPorHora as $hora)
