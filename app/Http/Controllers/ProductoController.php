@@ -155,7 +155,7 @@ class ProductoController extends BaseController
             ->where('producto_id', $producto->id)
             ->exists();
 
-        $tieneEspeciales = \DB::table('especial_del_dias')
+        $tieneEspeciales = \DB::table('especial_del_dia')
             ->where('producto_id', $producto->id)
             ->exists();
 
