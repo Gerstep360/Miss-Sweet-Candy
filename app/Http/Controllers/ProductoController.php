@@ -144,38 +144,43 @@ class ProductoController extends BaseController
             return redirect()->route('403');
         }
 
-        $producto = Producto::findOrFail($id);
+        try {
+            $producto = Producto::findOrFail($id);
 
-        // Verificar si el producto tiene registros relacionados
-        $tieneInventario = \DB::table('inventario_productos')
-            ->where('producto_id', $producto->id)
-            ->exists();
+            // Verificar si el producto tiene registros relacionados
+            $tieneInventario = \DB::table('inventario_productos')
+                ->where('producto_id', $producto->id)
+                ->exists();
 
-        $tienePedidoItems = \DB::table('pedido_items')
-            ->where('producto_id', $producto->id)
-            ->exists();
+            $tienePedidoItems = \DB::table('pedido_items')
+                ->where('producto_id', $producto->id)
+                ->exists();
 
-        $tieneEspeciales = \DB::table('especial_del_dia')
-            ->where('producto_id', $producto->id)
-            ->exists();
+            $tieneEspeciales = \DB::table('especial_del_dia')
+                ->where('producto_id', $producto->id)
+                ->exists();
 
-        if ($tieneInventario || $tienePedidoItems || $tieneEspeciales) {
-            $mensajes = [];
-            if ($tieneInventario) $mensajes[] = 'registros de inventario';
-            if ($tienePedidoItems) $mensajes[] = 'pedidos';
-            if ($tieneEspeciales) $mensajes[] = 'especiales del día';
+            if ($tieneInventario || $tienePedidoItems || $tieneEspeciales) {
+                $mensajes = [];
+                if ($tieneInventario) $mensajes[] = 'registros de inventario';
+                if ($tienePedidoItems) $mensajes[] = 'pedidos';
+                if ($tieneEspeciales) $mensajes[] = 'especiales del día';
+                
+                $mensaje = 'No se puede eliminar el producto porque tiene ' . implode(', ', $mensajes) . ' asociados.';
+                return redirect()->route('productos.index')->with('error', $mensaje);
+            }
+
+            // Elimina la imagen asociada si existe
+            if ($producto->imagen && Storage::disk('public')->exists($producto->imagen)) {
+                Storage::disk('public')->delete($producto->imagen);
+            }
+
+            $producto->delete();
+            BitacoraController::registrar('eliminado', 'Producto', $producto->id);
             
-            $mensaje = 'No se puede eliminar el producto porque tiene ' . implode(', ', $mensajes) . ' asociados.';
-            return redirect()->route('productos.index')->with('error', $mensaje);
+            return redirect()->route('productos.index')->with('success', 'Producto eliminado correctamente');
+        } catch (\Exception $e) {
+            return redirect()->route('productos.index')->with('error', 'Error al eliminar el producto: ' . $e->getMessage());
         }
-
-        // Elimina la imagen asociada si existe
-        if ($producto->imagen && Storage::disk('public')->exists($producto->imagen)) {
-            Storage::disk('public')->delete($producto->imagen);
-        }
-
-        $producto->delete();
-        BitacoraController::registrar('eliminado', 'Producto', $producto->id);
-        return redirect()->route('productos.index')->with('success', 'Producto eliminado correctamente');
     }
 }
