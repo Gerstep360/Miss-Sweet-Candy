@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EspecialDelDiaController;
 use App\Models\Producto;
+use App\Models\Notificacion;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,4 +31,15 @@ Route::prefix('api')->group(function () {
     // Especiales del día
     Route::get('/especial-hoy', [EspecialDelDiaController::class, 'getEspecialHoy']);
     Route::get('/especiales-semana', [EspecialDelDiaController::class, 'getEspecialesSemana']);
+    
+    // Notificaciones
+    Route::middleware('auth')->group(function () {
+        Route::get('/notificaciones/count', function () {
+            $count = Notificacion::where('usuario_destino_id', auth()->id())
+                ->where('leido', false)
+                ->count();
+            
+            return response()->json(['count' => $count]);
+        });
+    });
 });

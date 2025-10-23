@@ -13,7 +13,8 @@
     $unread = \App\Models\Notificacion::where('usuario_destino_id', auth()->id())
       ->where('leido', false)->count();
     $lastNotifs = \App\Models\Notificacion::where('usuario_destino_id', auth()->id())
-      ->latest('id')->limit(5)->get();
+      ->where('leido', false)
+      ->latest('id')->limit(3)->get();
   @endphp
 
   {{-- ===== Sidebar ===== --}}
@@ -44,31 +45,47 @@
         <a href="{{ route('notificaciones.index') }}"
            class="relative inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-zinc-800 transition"
            wire:navigate aria-label="Notificaciones">
-          <svg class="w-5 h-5 {{ $unread ? 'text-amber-400' : 'text-zinc-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 {{ $unread ? 'text-amber-400' : 'text-zinc-300' }}" 
+               data-notif-icon
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
           </svg>
           @if($unread)
-            <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold">
+            <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold"
+                  data-notif-badge>
               {{ $unread > 9 ? '9+' : $unread }}
             </span>
+          @else
+            <span class="absolute -top-1 -right-1 h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold hidden"
+                  data-notif-badge></span>
           @endif
         </a>
       </div>
 
-      {{-- Últimas 3 notifs (compacto) --}}
+      {{-- Últimas 3 notifs no leídas (compacto) --}}
       @if($lastNotifs->count())
-        <div class="mt-3 space-y-1.5">
-          @foreach($lastNotifs->take(3) as $n)
-            <a href="{{ route('notificaciones.show', $n->id) }}" wire:navigate
-               class="block bg-zinc-900/60 rounded-lg px-3 py-2 hover:bg-zinc-900/90 transition">
-              <p class="text-[12px] text-zinc-300 line-clamp-2 {{ !$n->leido ? 'font-semibold' : '' }}">
-                {{ $n->mensaje }}
-              </p>
-            </a>
+        <div class="mt-3 space-y-1.5" id="notificaciones-sidebar">
+          @foreach($lastNotifs as $n)
+            <div class="notificacion-item" data-notif-id="{{ $n->id }}">
+              <a href="#" 
+                 onclick="event.preventDefault(); marcarYEliminar({{ $n->id }})"
+                 class="block bg-zinc-900/60 rounded-lg px-3 py-2 hover:bg-zinc-900/90 transition group">
+                <div class="flex items-start gap-2">
+                  <p class="text-[12px] text-zinc-300 line-clamp-2 font-semibold flex-1">
+                    {{ $n->mensaje }}
+                  </p>
+                  <svg class="w-3.5 h-3.5 text-zinc-500 group-hover:text-red-400 transition flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </div>
+              </a>
+            </div>
           @endforeach
-          @if($lastNotifs->count() > 3)
+          @if($unread > 3)
             <a href="{{ route('notificaciones.index') }}" wire:navigate
-               class="block text-[11px] text-amber-400 hover:text-amber-300 text-right">Ver todas →</a>
+               class="block text-[11px] text-amber-400 hover:text-amber-300 text-right">
+              Ver {{ $unread - 3 }} más →
+            </a>
           @endif
         </div>
       @endif
@@ -104,7 +121,7 @@
       </x-sidebar.group>
       @endcanany
 
-      @canany(['ver-productos','ver-categorias','ver-horarios'])
+      @canany(['ver-productos','ver-categorias','ver-horarios', 'ver-promociones'])
       <x-sidebar.group id="cafeteria" icon="building-storefront" text="Cafetería">
         @can('ver-productos')
         <flux:navlist.item icon="cube" :href="route('productos.index')" :current="request()->routeIs('productos.*')" wire:navigate class="nav-item-child">
@@ -123,17 +140,20 @@
         @endcan
       </x-sidebar.group>
       @endcanany
-
-      @canany(['ver-mesas'])
-      <x-sidebar.group id="operaciones" icon="rectangle-stack" text="Operaciones">
+    @canany(['ver-mesas', 'ver-promociones'])
+      <x-sidebar.group id="operaciones" icon="operaciones" text="Operaciones">
         @can('ver-mesas')
-        <flux:navlist.item icon="table-cells" :href="route('mesas.index')" :current="request()->routeIs('mesas.*')" wire:navigate class="nav-item-child">
-          Mesas
-        </flux:navlist.item>
+          <flux:navlist.item icon="table-cells" :href="route('mesas.index')" :current="request()->routeIs('mesas.*')" wire:navigate class="nav-item-child">
+            Mesas
+          </flux:navlist.item>
+        @endcan
+        @can('ver-promociones')
+          <flux:navlist.item icon="gift" :href="route('promociones.index')" :current="request()->routeIs('promociones.*')" wire:navigate class="nav-item-child">
+            Promociones
+          </flux:navlist.item>
         @endcan
       </x-sidebar.group>
-      @endcanany
-
+    @endcanany
       @canany(['ver-cobros','ver-reporte-caja','ver-pedidos','iniciar-turno','cerrar-caja','ver-cierres'])
       <x-sidebar.group id="ventas" icon="banknotes" text="Ventas & Caja">
         @can('ver-pedidos')
@@ -283,14 +303,22 @@
       </div>
       
       {{-- Notificaciones Móvil --}}
-      <a href="{{ route('notificaciones.index') }}" class="relative flex items-center justify-center w-10 h-10 hover:bg-zinc-800 rounded-lg transition flex-shrink-0" wire:navigate>
-        <svg class="w-5 h-5 {{ $unread > 0 ? 'text-amber-400' : 'text-zinc-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <a href="{{ route('notificaciones.index') }}" 
+         class="relative flex items-center justify-center w-10 h-10 hover:bg-zinc-800 rounded-lg transition flex-shrink-0" 
+         wire:navigate>
+        <svg class="w-5 h-5 {{ $unread > 0 ? 'text-amber-400' : 'text-zinc-300' }}" 
+             data-notif-icon
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
         </svg>
         @if($unread > 0)
-          <span class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white">
+          <span class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white"
+                data-notif-badge>
             {{ $unread > 9 ? '9+' : $unread }}
           </span>
+        @else
+          <span class="absolute top-1 right-1 h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white hidden"
+                data-notif-badge></span>
         @endif
       </a>
       
@@ -349,6 +377,85 @@
 
   {{-- ===== Scripts ===== --}}
   <script>
+    // Marcar notificación como leída y eliminarla del sidebar
+    async function marcarYEliminar(notifId) {
+      try {
+        const response = await fetch(`/notificaciones/${notifId}/marcar-leida`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          // Animar y eliminar el elemento
+          const item = document.querySelector(`[data-notif-id="${notifId}"]`);
+          if (item) {
+            item.style.transition = 'all 0.3s ease';
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-10px)';
+            
+            setTimeout(() => {
+              item.remove();
+              
+              // Actualizar contador
+              const container = document.getElementById('notificaciones-sidebar');
+              if (container && container.querySelectorAll('.notificacion-item').length === 0) {
+                container.remove();
+              }
+              
+              // Actualizar badge de contador
+              actualizarContadorNotificaciones();
+            }, 300);
+          }
+        }
+      } catch (error) {
+        console.error('Error al marcar notificación:', error);
+      }
+    }
+    
+    // Actualizar contador de notificaciones
+    async function actualizarContadorNotificaciones() {
+      try {
+        const response = await fetch('/api/notificaciones/count', {
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const badges = document.querySelectorAll('[data-notif-badge]');
+          
+          badges.forEach(badge => {
+            if (data.count > 0) {
+              badge.textContent = data.count > 9 ? '9+' : data.count;
+              badge.classList.remove('hidden');
+            } else {
+              badge.classList.add('hidden');
+            }
+          });
+          
+          // Actualizar color del icono
+          const icons = document.querySelectorAll('[data-notif-icon]');
+          icons.forEach(icon => {
+            if (data.count > 0) {
+              icon.classList.add('text-amber-400');
+              icon.classList.remove('text-zinc-300');
+            } else {
+              icon.classList.remove('text-amber-400');
+              icon.classList.add('text-zinc-300');
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error al actualizar contador:', error);
+      }
+    }
+
     // Acordeones con persistencia
     function toggleSection(id){
       const sec=document.getElementById(`${id}-section`);

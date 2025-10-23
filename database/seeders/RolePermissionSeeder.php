@@ -128,6 +128,11 @@ class RolePermissionSeeder extends Seeder
             'editar-especial',
             'eliminar-especial',
             'activar-especial',
+            //promociones
+            'ver-promociones',
+            'crear-promociones',
+            'editar-promociones',
+            'eliminar-promociones',
         ];
 
         /* -----------------------------------------------------------------

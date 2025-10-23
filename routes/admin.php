@@ -8,7 +8,7 @@ use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\EspecialDelDiaController;
-
+use App\Http\Controllers\PromocionController;
 Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     // ===== Usuarios =====
@@ -76,8 +76,15 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::put('/{horario}',    'update')->middleware('permission:configurar-horarios')->name('update');
         Route::delete('/{horario}', 'destroy')->middleware('permission:configurar-horarios')->name('destroy');
     });
-
-    // ===== Especial del día =====
-    // Las rutas de especial del día están en routes/especial_dia.php
+        // ===== Promociones =====
+        Route::controller(PromocionController::class)->prefix('promociones')->name('promociones.')->group(function () {
+        Route::get('/',                 'index')->middleware('permission:ver-promociones')->name('index');
+        Route::get('/create',           'create')->middleware('permission:crear-promociones')->name('create');
+        Route::post('/',                'store')->middleware('permission:crear-promociones')->name('store');
+        Route::get('/{promocion}',      'show')->middleware('permission:ver-promociones')->name('show');
+        Route::get('/{promocion}/edit', 'edit')->middleware('permission:editar-promociones')->name('edit');
+        Route::put('/{promocion}',      'update')->middleware('permission:editar-promociones')->name('update');
+        Route::delete('/{promocion}',   'destroy')->middleware('permission:eliminar-promociones')->name('destroy');
+    });
 
 });

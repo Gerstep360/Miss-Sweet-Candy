@@ -134,34 +134,25 @@ class PedidoController extends BaseController
             }
 
             // Crear el pedido
-            $producto = Producto::with('especialVigente')->findOrFail($productoData['producto_id']);
-
-            $precioBase      = (float) $producto->precio;
-            $precioUnitario  = (float) $producto->precio_vigente;   // <— aquí la magia
-            $descuentoItem   = max(0, $precioBase - $precioUnitario);
-            $cantidad        = (int) $productoData['cantidad'];
-            $subtotalItem    = $precioUnitario * $cantidad;
-
-            PedidoItem::create([
-                'pedido_id'       => $pedido->id,
-                'producto_id'     => $producto->id,
-                'cantidad'        => $cantidad,
-                'precio_unitario' => $precioUnitario,
-                'descuento_item'  => $descuentoItem,
-                'subtotal_item'   => $subtotalItem,
-                'estado_item'     => 'pendiente',
-                'destino'         => $producto->categoria->destino ?? 'cocina',
-                'notas'           => $productoData['notas'] ?? null,
+            $pedido = Pedido::create([
+                'cliente_id' => $validated['cliente_id'],
+                'atendido_por_id' => Auth::id(),
+                'mesa_id' => $validated['mesa_id'],
+                'tipo' => 'mesa',
+                'estado' => 'pendiente',
+                'total' => 0, // Se calculará después
+                'notas' => $validated['notas'] ?? null,
             ]);
-
 
             // Crear los items del pedido
             foreach ($validated['productos'] as $productoData) {
-                $producto = Producto::findOrFail($productoData['producto_id']);
+                $producto = Producto::with('especialVigente')->findOrFail($productoData['producto_id']);
 
-                // Calcular subtotal
-                $precioUnitario = $producto->precio;
-                $cantidad = $productoData['cantidad'];
+                // Calcular precios considerando especiales del día
+                $precioBase = (float) $producto->precio;
+                $precioUnitario = (float) $producto->precio_vigente; // Usa el accessor que calcula especiales
+                $descuentoItem = max(0, $precioBase - $precioUnitario);
+                $cantidad = (int) $productoData['cantidad'];
                 $subtotalItem = $precioUnitario * $cantidad;
 
                 // Crear item
@@ -170,10 +161,10 @@ class PedidoController extends BaseController
                     'producto_id' => $producto->id,
                     'cantidad' => $cantidad,
                     'precio_unitario' => $precioUnitario,
-                    'descuento_item' => 0.00,
+                    'descuento_item' => $descuentoItem,
                     'subtotal_item' => $subtotalItem,
                     'estado_item' => 'pendiente',
-                    'destino' => $producto->categoria->destino ?? 'cocina', // barra o cocina
+                    'destino' => $producto->categoria->destino ?? 'cocina',
                     'notas' => $productoData['notas'] ?? null,
                 ]);
 
@@ -189,8 +180,15 @@ class PedidoController extends BaseController
                 }
             }
 
+            // Calcular el total del pedido
+            $totalPedido = $pedido->items()->sum('subtotal_item');
+            $pedido->update(['total' => $totalPedido]);
+
             // Cambiar estado de la mesa a ocupada
             $mesa->update(['estado' => 'ocupada']);
+
+            // Registrar en bitácora
+            BitacoraController::registrar('crear', 'Pedido', $pedido->id);
 
             DB::commit();
 
@@ -204,7 +202,6 @@ class PedidoController extends BaseController
                 ->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
-        BitacoraController::registrar('crear', 'Pedido', $pedido->id);
     }
 
     /**
@@ -229,32 +226,25 @@ class PedidoController extends BaseController
 
         try {
             // Crear el pedido
-            $producto = Producto::with('especialVigente')->findOrFail($productoData['producto_id']);
-
-            $precioBase      = (float) $producto->precio;
-            $precioUnitario  = (float) $producto->precio_vigente;   // <— aquí la magia
-            $descuentoItem   = max(0, $precioBase - $precioUnitario);
-            $cantidad        = (int) $productoData['cantidad'];
-            $subtotalItem    = $precioUnitario * $cantidad;
-
-            PedidoItem::create([
-                'pedido_id'       => $pedido->id,
-                'producto_id'     => $producto->id,
-                'cantidad'        => $cantidad,
-                'precio_unitario' => $precioUnitario,
-                'descuento_item'  => $descuentoItem,
-                'subtotal_item'   => $subtotalItem,
-                'estado_item'     => 'pendiente',
-                'destino'         => $producto->categoria->destino ?? 'cocina',
-                'notas'           => $productoData['notas'] ?? null,
+            $pedido = Pedido::create([
+                'cliente_id' => $validated['cliente_id'],
+                'atendido_por_id' => Auth::id(),
+                'tipo' => 'mostrador',
+                'estado' => 'pendiente',
+                'total' => 0, // Se calculará después
+                'telefono_contacto' => $validated['telefono_contacto'] ?? null,
+                'notas' => $validated['notas'] ?? null,
             ]);
+
             // Crear los items del pedido
             foreach ($validated['productos'] as $productoData) {
-                $producto = Producto::findOrFail($productoData['producto_id']);
+                $producto = Producto::with('especialVigente')->findOrFail($productoData['producto_id']);
 
-                // Calcular subtotal
-                $precioUnitario = $producto->precio;
-                $cantidad = $productoData['cantidad'];
+                // Calcular precios considerando especiales del día
+                $precioBase = (float) $producto->precio;
+                $precioUnitario = (float) $producto->precio_vigente; // Usa el accessor que calcula especiales
+                $descuentoItem = max(0, $precioBase - $precioUnitario);
+                $cantidad = (int) $productoData['cantidad'];
                 $subtotalItem = $precioUnitario * $cantidad;
 
                 // Crear item
@@ -263,7 +253,7 @@ class PedidoController extends BaseController
                     'producto_id' => $producto->id,
                     'cantidad' => $cantidad,
                     'precio_unitario' => $precioUnitario,
-                    'descuento_item' => 0.00,
+                    'descuento_item' => $descuentoItem,
                     'subtotal_item' => $subtotalItem,
                     'estado_item' => 'pendiente',
                     'destino' => $producto->categoria->destino ?? 'cocina',
@@ -282,6 +272,13 @@ class PedidoController extends BaseController
                 }
             }
 
+            // Calcular el total del pedido
+            $totalPedido = $pedido->items()->sum('subtotal_item');
+            $pedido->update(['total' => $totalPedido]);
+
+            // Registrar en bitácora
+            BitacoraController::registrar('crear', 'Pedido', $pedido->id);
+
             DB::commit();
 
             return redirect()
@@ -294,7 +291,6 @@ class PedidoController extends BaseController
                 ->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
-        BitacoraController::registrar('crear', 'Pedido', $pedido->id);
     }
 
     /**
