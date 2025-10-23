@@ -146,6 +146,29 @@ class ProductoController extends BaseController
 
         $producto = Producto::findOrFail($id);
 
+        // Verificar si el producto tiene registros relacionados
+        $tieneInventario = \DB::table('inventario_productos')
+            ->where('producto_id', $producto->id)
+            ->exists();
+
+        $tienePedidoItems = \DB::table('pedido_items')
+            ->where('producto_id', $producto->id)
+            ->exists();
+
+        $tieneEspeciales = \DB::table('especial_del_dias')
+            ->where('producto_id', $producto->id)
+            ->exists();
+
+        if ($tieneInventario || $tienePedidoItems || $tieneEspeciales) {
+            $mensajes = [];
+            if ($tieneInventario) $mensajes[] = 'registros de inventario';
+            if ($tienePedidoItems) $mensajes[] = 'pedidos';
+            if ($tieneEspeciales) $mensajes[] = 'especiales del día';
+            
+            $mensaje = 'No se puede eliminar el producto porque tiene ' . implode(', ', $mensajes) . ' asociados.';
+            return redirect()->route('productos.index')->with('error', $mensaje);
+        }
+
         // Elimina la imagen asociada si existe
         if ($producto->imagen && Storage::disk('public')->exists($producto->imagen)) {
             Storage::disk('public')->delete($producto->imagen);
