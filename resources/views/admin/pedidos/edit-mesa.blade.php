@@ -334,7 +334,7 @@
     </div>
 
     <!-- Modal selector de productos -->
-    <x-product-selector :productos="$productos" :categorias="$categorias" :selectedItems="$pedido->items" />
+    <x-product-selector :productos="$productos" :categorias="$categorias" :selectedItems="$pedido->items" :promociones="$promociones" />
 
     <style>
         .custom-scrollbar::-webkit-scrollbar {

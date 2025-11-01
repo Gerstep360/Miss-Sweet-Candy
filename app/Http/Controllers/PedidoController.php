@@ -76,9 +76,17 @@ class PedidoController extends BaseController
 
             
         $categorias = Categoria::orderBy('nombre')->get();
+        
+        // 🎁 CARGAR PROMOCIONES VIGENTES
+        $promociones = \App\Models\Promocion::with(['productos', 'categorias'])
+            ->where('activo', true)
+            ->get()
+            ->filter(fn($p) => $p->esta_vigente)
+            ->values();
+        
         BitacoraController::registrar('crear', 'Pedido', null);
 
-        return view('admin.pedidos.create-mesa', compact('mesas', 'clientes', 'productos', 'categorias'));
+        return view('admin.pedidos.create-mesa', compact('mesas', 'clientes', 'productos', 'categorias', 'promociones'));
     }
 
     /**
@@ -102,8 +110,16 @@ class PedidoController extends BaseController
 
             
         $categorias = Categoria::orderBy('nombre')->get();
+        
+        // 🎁 CARGAR PROMOCIONES VIGENTES
+        $promociones = \App\Models\Promocion::with(['productos', 'categorias'])
+            ->where('activo', true)
+            ->get()
+            ->filter(fn($p) => $p->esta_vigente)
+            ->values();
+        
         BitacoraController::registrar('crear', 'Pedido', null);
-        return view('admin.pedidos.create-mostrador', compact('clientes', 'productos', 'categorias'));
+        return view('admin.pedidos.create-mostrador', compact('clientes', 'productos', 'categorias', 'promociones'));
     }
 
     /**
@@ -336,6 +352,13 @@ class PedidoController extends BaseController
 
         $categorias = Categoria::orderBy('nombre')->get();
         $clientes = User::role('cliente')->get();
+        
+        // 🎁 CARGAR PROMOCIONES VIGENTES
+        $promociones = \App\Models\Promocion::with(['productos', 'categorias'])
+            ->where('activo', true)
+            ->get()
+            ->filter(fn($p) => $p->esta_vigente)
+            ->values();
 
         // ✅ PREPARAR LOS ITEMS DEL PEDIDO PARA JAVASCRIPT
         $itemsJson = $pedido->items->map(function($item) {
@@ -358,9 +381,9 @@ class PedidoController extends BaseController
             ->orderBy('nombre')
             ->get();
             
-            return view('admin.pedidos.edit-mesa', compact('pedido', 'productos', 'mesas', 'categorias', 'clientes', 'itemsJson'));
+            return view('admin.pedidos.edit-mesa', compact('pedido', 'productos', 'mesas', 'categorias', 'clientes', 'itemsJson', 'promociones'));
         } else {
-            return view('admin.pedidos.edit-mostrador', compact('pedido', 'productos', 'categorias', 'clientes', 'itemsJson'));
+            return view('admin.pedidos.edit-mostrador', compact('pedido', 'productos', 'categorias', 'clientes', 'itemsJson', 'promociones'));
         }
         BitacoraController::registrar('editar', 'Pedido', $pedido->id);
     }

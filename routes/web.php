@@ -38,3 +38,6 @@ require __DIR__.'/Bitacora/bitacora.php';
 require __DIR__.'/barista/barista.php';
 
 require __DIR__.'/especial_dia.php';
+
+// Feedback
+require __DIR__.'/feedback.php';

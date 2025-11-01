@@ -1,157 +1,187 @@
 {{-- resources/views/admin/promociones/edit.blade.php --}}
 <x-layouts.app :title="__('Editar Promoción - Miss Sweet Candy')">
-
-    <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 py-4 sm:py-8">
+    <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 py-6">
         <div class="max-w-4xl mx-auto px-4">
 
-            <h1 class="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Editar Promoción</h1>
-
-            <!-- Vista previa de la promoción -->
-            <div class="dashboard-card mb-4 sm:mb-6 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-amber-500/30 to-amber-600/20 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <svg class="w-6 h-6 sm:w-8 sm:h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
-                        </svg>
-                    </div>
-
-                    <div class="flex-1 min-w-0">
-                        <h2 class="text-lg sm:text-xl font-semibold text-white truncate">{{ $promocion->nombre }}</h2>
-
-                        <div class="flex flex-wrap gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
-                            <span class="bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-full capitalize font-medium border border-amber-500/30">
-                                {{ $promocion->tipo }}
-                            </span>
-
-                            <span class="bg-gradient-to-r from-blue-500/20 to-blue-600/10 text-blue-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-full border border-blue-500/30">
-                                {{ $promocion->aplica_sobre }}
-                            </span>
-
-                            <span class="bg-gradient-to-r from-green-500/20 to-green-600/10 text-green-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold border border-green-500/30">
-                                @if($promocion->tipo == 'porcentaje')
-                                    -{{ $promocion->valor }}%
-                                @elseif($promocion->tipo == 'monto_fijo')
-                                    -${{ number_format($promocion->valor, 2) }}
-                                @else
-                                    {{ ucfirst($promocion->tipo) }}
-                                @endif
-                            </span>
-
-                            @if($promocion->esta_vigente)
-                                <span class="bg-gradient-to-r from-green-500/20 to-green-600/10 text-green-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-full flex items-center gap-1 border border-green-500/30">
-                                    <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                                    Vigente Ahora
-                                </span>
-                            @else
-                                <span class="bg-gradient-to-r from-red-500/20 to-red-600/10 text-red-400 text-[10px] sm:text-xs px-2.5 py-1 rounded-full border border-red-500/30">✕ No Vigente</span>
-                            @endif
-                        </div>
-                    </div>
+            {{-- Header --}}
+            <div class="flex items-center gap-4 mb-6">
+                <a href="{{ route('promociones.index') }}"
+                   class="bg-zinc-800 hover:bg-zinc-700 text-white p-2.5 rounded-lg transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-white">✏️ Editar Promoción</h1>
+                    <p class="text-sm text-zinc-400">Modifica los datos de tu promoción</p>
                 </div>
             </div>
 
-            <form action="{{ route('promociones.update', $promocion) }}" method="POST" class="space-y-4 sm:space-y-6">
-                @csrf {{-- CSRF field (requerido por middleware) --}}
-                @method('PUT') {{-- Method spoofing para PUT --}}
-                {{-- Docs: @csrf y @method en formularios Blade. --}}
-                {{-- https://laravel.com/docs/12.x/blade (Forms > CSRF Field / Method Field) --}}
-
-                <!-- Información Básica -->
-                <div class="dashboard-card">
-                    <h2 class="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Información de la Promoción</h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            {{-- Errores --}}
+            @if ($errors->any())
+                <div class="bg-red-900/20 border-2 border-red-500 rounded-lg p-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                         <div>
-                            <label for="nombre" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Nombre *</label>
-                            <input
-                                type="text"
-                                name="nombre"
-                                id="nombre"
-                                value="{{ old('nombre', $promocion->nombre) }}"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base"
-                                required maxlength="120"
-                                placeholder="Ej: 2x1 Tazas de Café Latte">
-                            @error('nombre')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
+                            <h3 class="text-red-400 font-semibold mb-2">Corrige estos errores:</h3>
+                            <ul class="list-disc list-inside text-red-300 text-sm space-y-1">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
                         </div>
+                    </div>
+                </div>
+            @endif
 
+            <form action="{{ route('promociones.update', $promocion) }}" method="POST" id="formPromocion" class="space-y-6">
+                @csrf
+                @method('PUT')
+
+                {{-- PASO 1: Información Básica --}}
+                <div class="bg-zinc-900 rounded-xl border-2 border-zinc-800 p-6 shadow-xl">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                            1
+                        </div>
                         <div>
-                            <label for="tipo" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Tipo *</label>
-                            <select
-                                name="tipo"
-                                id="tipo"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base"
-                                required>
-                                <option value="">Selecciona un tipo</option>
-                                <option value="porcentaje" {{ old('tipo', $promocion->tipo) == 'porcentaje' ? 'selected' : '' }}>Porcentaje de descuento</option>
-                                <option value="monto_fijo" {{ old('tipo', $promocion->tipo) == 'monto_fijo' ? 'selected' : '' }}>Monto fijo</option>
-                                <option value="2x1"        {{ old('tipo', $promocion->tipo) == '2x1' ? 'selected' : '' }}>2x1</option>
-                                <option value="combo"      {{ old('tipo', $promocion->tipo) == 'combo' ? 'selected' : '' }}>Combo especial</option>
-                            </select>
-                            @error('tipo')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
+                            <h2 class="text-xl font-bold text-white">Nombre de la Promoción</h2>
+                            <p class="text-sm text-zinc-400">Dale un nombre llamativo</p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
+                    <input type="text"
+                           name="nombre"
+                           id="nombre"
+                           value="{{ old('nombre', $promocion->nombre) }}"
+                           class="w-full px-4 py-4 rounded-xl bg-zinc-800 text-white text-lg border-2 border-zinc-700 focus:outline-none focus:border-amber-500 transition-colors placeholder-zinc-500"
+                           required
+                           maxlength="120"
+                           placeholder="Ej: Happy Hour 2x1 en Cafés ☕"
+                           autofocus>
+                    @error('nombre')
+                        <p class="text-red-400 text-sm mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- PASO 2: Tipo de Descuento --}}
+                @php $tipoOld = old('tipo', $promocion->tipo); @endphp
+                <div class="bg-zinc-900 rounded-xl border-2 border-zinc-800 p-6 shadow-xl">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                            2
+                        </div>
                         <div>
-                            <label for="valor" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Valor *</label>
-                            <input
-                                type="number"
-                                name="valor"
-                                id="valor"
-                                value="{{ old('valor', $promocion->valor) }}"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base"
-                                required min="0" step="0.01" placeholder="15">
+                            <h2 class="text-xl font-bold text-white">¿Qué Tipo de Descuento?</h2>
+                            <p class="text-sm text-zinc-400">Selecciona solo UNO</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {{-- Porcentaje --}}
+                        <label class="relative cursor-pointer group">
+                            <input type="radio"
+                                   name="tipo"
+                                   value="porcentaje"
+                                   class="peer hidden"
+                                   {{ $tipoOld === 'porcentaje' ? 'checked' : '' }}
+                                   required>
+                            <div class="bg-zinc-800 border-3 border-zinc-700 rounded-xl p-6 hover:border-amber-500 peer-checked:border-amber-500 peer-checked:bg-amber-500/10 transition-all hover:scale-105">
+                                <div class="text-5xl mb-3 text-center">📊</div>
+                                <div class="text-lg font-bold text-white text-center mb-1">Porcentaje</div>
+                                <div class="text-sm text-zinc-400 text-center">Ej: 20% de descuento</div>
+                            </div>
+                        </label>
+
+                        {{-- Monto Fijo --}}
+                        <label class="relative cursor-pointer group">
+                            <input type="radio"
+                                   name="tipo"
+                                   value="monto_fijo"
+                                   class="peer hidden"
+                                   {{ $tipoOld === 'monto_fijo' ? 'checked' : '' }}>
+                            <div class="bg-zinc-800 border-3 border-zinc-700 rounded-xl p-6 hover:border-amber-500 peer-checked:border-amber-500 peer-checked:bg-amber-500/10 transition-all hover:scale-105">
+                                <div class="text-5xl mb-3 text-center">💵</div>
+                                <div class="text-lg font-bold text-white text-center mb-1">Monto Fijo</div>
+                                <div class="text-sm text-zinc-400 text-center">Ej: $15 de descuento</div>
+                            </div>
+                        </label>
+
+                        {{-- 2x1 --}}
+                        <label class="relative cursor-pointer group">
+                            <input type="radio"
+                                   name="tipo"
+                                   value="2x1"
+                                   class="peer hidden"
+                                   {{ $tipoOld === '2x1' ? 'checked' : '' }}>
+                            <div class="bg-zinc-800 border-3 border-zinc-700 rounded-xl p-6 hover:border-amber-500 peer-checked:border-amber-500 peer-checked:bg-amber-500/10 transition-all hover:scale-105">
+                                <div class="text-5xl mb-3 text-center">🎁</div>
+                                <div class="text-lg font-bold text-white text-center mb-1">2x1</div>
+                                <div class="text-sm text-zinc-400 text-center">Paga 1, lleva 2</div>
+                            </div>
+                        </label>
+
+                        {{-- Combo --}}
+                        <label class="relative cursor-pointer group">
+                            <input type="radio"
+                                   name="tipo"
+                                   value="combo"
+                                   class="peer hidden"
+                                   {{ $tipoOld === 'combo' ? 'checked' : '' }}>
+                            <div class="bg-zinc-800 border-3 border-zinc-700 rounded-xl p-6 hover:border-amber-500 peer-checked:border-amber-500 peer-checked:bg-amber-500/10 transition-all hover:scale-105">
+                                <div class="text-5xl mb-3 text-center">🍰</div>
+                                <div class="text-lg font-bold text-white text-center mb-1">Combo</div>
+                                <div class="text-sm text-zinc-400 text-center">Descuento en combo</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                {{-- PASO 3: Valor del Descuento (dinámico) --}}
+                <div id="seccionValor" class="bg-zinc-900 rounded-xl border-2 border-zinc-800 p-6 shadow-xl" style="display: none;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                            3
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">¿Cuánto Descuento?</h2>
+                            <p class="text-sm text-zinc-400" id="valorAyuda">Ingresa el valor</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-white font-medium mb-2">
+                                <span id="valorLabel">Valor</span> *
+                            </label>
+                            <input type="number"
+                                   name="valor"
+                                   id="valor"
+                                   value="{{ old('valor', $promocion->valor) }}"
+                                   class="w-full px-4 py-4 rounded-xl bg-zinc-800 text-white text-lg border-2 border-zinc-700 focus:outline-none focus:border-amber-500"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="0.00">
                             @error('valor')
                                 <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div>
-                            <label for="aplica_sobre" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Aplica sobre *</label>
-                            <select
-                                name="aplica_sobre"
-                                id="aplica_sobre"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base"
-                                required>
-                                <option value="item"   {{ old('aplica_sobre', $promocion->aplica_sobre) == 'item' ? 'selected' : '' }}>Producto individual</option>
-                                <option value="pedido" {{ old('aplica_sobre', $promocion->aplica_sobre) == 'pedido' ? 'selected' : '' }}>Todo el pedido</option>
-                            </select>
-                            @error('aplica_sobre')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
-                        <div>
-                            <label for="prioridad" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Prioridad *</label>
-                            <input
-                                type="number"
-                                name="prioridad"
-                                id="prioridad"
-                                value="{{ old('prioridad', $promocion->prioridad) }}"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base"
-                                required min="1" max="10">
-                            <p class="text-xs text-zinc-400 mt-1">Número entre 1 (más alta) y 10 (más baja)</p>
-                            @error('prioridad')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label for="tope_descuento" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Tope de descuento</label>
-                            <input
-                                type="number"
-                                name="tope_descuento"
-                                id="tope_descuento"
-                                value="{{ old('tope_descuento', $promocion->tope_descuento) }}"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base"
-                                min="0" step="0.01" placeholder="Máximo descuento">
-                            <p class="text-xs text-zinc-400 mt-1">Solo para descuentos porcentuales</p>
+                        <div id="seccionTope" style="display: {{ $tipoOld === 'porcentaje' ? 'block' : 'none' }};">
+                            <label class="block text-white font-medium mb-2">
+                                Límite Máximo (Opcional)
+                            </label>
+                            <input type="number"
+                                   name="tope_descuento"
+                                   id="tope_descuento"
+                                   value="{{ old('tope_descuento', $promocion->tope_descuento) }}"
+                                   class="w-full px-4 py-4 rounded-xl bg-zinc-800 text-white text-lg border-2 border-zinc-700 focus:outline-none focus:border-amber-500"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="Sin límite">
+                            <p class="text-xs text-zinc-400 mt-1">Máximo descuento en dinero</p>
                             @error('tope_descuento')
                                 <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
                             @enderror
@@ -159,170 +189,392 @@
                     </div>
                 </div>
 
-                <!-- Vigencia -->
-                <div class="dashboard-card">
-                    <h2 class="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4"> Vigencia</h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                            <label for="fecha_inicio" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Fecha inicio</label>
-                            <input
-                                type="date"
-                                name="fecha_inicio"
-                                id="fecha_inicio"
-                                value="{{ old('fecha_inicio', $promocion->fecha_inicio?->format('Y-m-d')) }}"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base">
-                            @error('fecha_inicio')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
+                {{-- PASO 4: Dónde Aplica --}}
+                <div id="seccionAplicacion" class="bg-zinc-900 rounded-xl border-2 border-zinc-800 p-6 shadow-xl" style="display: none;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                            4
                         </div>
-
                         <div>
-                            <label for="fecha_fin" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Fecha fin</label>
-                            <input
-                                type="date"
-                                name="fecha_fin"
-                                id="fecha_fin"
-                                value="{{ old('fecha_fin', $promocion->fecha_fin?->format('Y-m-d')) }}"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base">
-                            @error('fecha_fin')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
+                            <h2 class="text-xl font-bold text-white">¿Dónde se Aplica?</h2>
+                            <p class="text-sm text-zinc-400">Selecciona el alcance</p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
-                        <div>
-                            <label for="hora_inicio" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Hora inicio</label>
-                            <input
-                                type="time"
-                                name="hora_inicio"
-                                id="hora_inicio"
-                                value="{{ old('hora_inicio', $promocion->hora_inicio) }}"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base">
-                            @error('hora_inicio')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <label class="relative cursor-pointer">
+                            <input type="radio"
+                                   name="aplica_sobre"
+                                   value="pedido"
+                                   class="peer hidden"
+                                   {{ old('aplica_sobre', $promocion->aplica_sobre) == 'pedido' ? 'checked' : '' }}
+                                   required>
+                            <div class="bg-zinc-800 border-3 border-zinc-700 rounded-xl p-5 hover:border-amber-500 peer-checked:border-amber-500 peer-checked:bg-amber-500/10 transition-all">
+                                <div class="flex items-center gap-4">
+                                    <div class="text-4xl">🛒</div>
+                                    <div>
+                                        <div class="text-lg font-bold text-white">Todo el Pedido</div>
+                                        <div class="text-sm text-zinc-400">Descuento al total</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
 
-                        <div>
-                            <label for="hora_fin" class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base"> Hora fin</label>
-                            <input
-                                type="time"
-                                name="hora_fin"
-                                id="hora_fin"
-                                value="{{ old('hora_fin', $promocion->hora_fin) }}"
-                                class="w-full px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:outline-none focus:border-amber-500 text-sm sm:text-base">
-                            @error('hora_fin')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
+                        <label class="relative cursor-pointer">
+                            <input type="radio"
+                                   name="aplica_sobre"
+                                   value="item"
+                                   class="peer hidden"
+                                   {{ old('aplica_sobre', $promocion->aplica_sobre) == 'item' ? 'checked' : '' }}>
+                            <div class="bg-zinc-800 border-3 border-zinc-700 rounded-xl p-5 hover:border-amber-500 peer-checked:border-amber-500 peer-checked:bg-amber-500/10 transition-all">
+                                <div class="flex items-center gap-4">
+                                    <div class="text-4xl">🎯</div>
+                                    <div>
+                                        <div class="text-lg font-bold text-white">Productos Específicos</div>
+                                        <div class="text-sm text-zinc-400">Solo ciertos productos</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
                     </div>
 
-                    <div class="mt-3 sm:mt-4">
-                        <label class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base"> Días de la semana</label>
-
-                        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                            @foreach(['lun' => 'Lun', 'mar' => 'Mar', 'mie' => 'Mié', 'jue' => 'Jue', 'vie' => 'Vie', 'sab' => 'Sáb', 'dom' => 'Dom'] as $value => $label)
-                                <label class="flex items-center gap-2 bg-zinc-800 p-2 rounded-lg hover:bg-zinc-700 transition cursor-pointer min-h-[44px] touch-manipulation">
-                                    <input
-                                        type="checkbox"
-                                        name="dias_semana[]" value="{{ $value }}"
-                                        {{ in_array($value, old('dias_semana', $promocion->dias_semana ?? [])) ? 'checked' : '' }}
-                                        class="rounded bg-zinc-800 border-zinc-700 text-amber-500 focus:ring-amber-500">
-                                    <span class="text-zinc-300 text-sm">{{ $label }}</span>
-                                </label>
-                            @endforeach
+                    {{-- Selección de Productos/Categorías --}}
+                    <div id="seleccionProductos" style="display: none;" class="mt-6 bg-zinc-800/50 rounded-xl p-5 border border-zinc-700">
+                        <div class="flex items-center gap-2 mb-4">
+                            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p class="text-amber-400 text-sm font-medium">Selecciona productos o categorías</p>
                         </div>
 
-                        @error('dias_semana')
-                            <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-white font-medium mb-3">Productos</label>
+                                <div class="bg-zinc-900 rounded-lg p-3 max-h-60 overflow-y-auto border border-zinc-700 space-y-2">
+                                    @php $selProd = old('productos', $promocion->productos->pluck('id')->toArray()); @endphp
+                                    @foreach($productos as $producto)
+                                        <label class="flex items-center gap-3 p-2.5 hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors">
+                                            <input type="checkbox"
+                                                   name="productos[]"
+                                                   value="{{ $producto->id }}"
+                                                   class="rounded bg-zinc-800 border-zinc-600 text-amber-500 focus:ring-amber-500 w-5 h-5"
+                                                   {{ in_array($producto->id, $selProd) ? 'checked' : '' }}>
+                                            <span class="text-white">{{ $producto->nombre }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-white font-medium mb-3">Categorías</label>
+                                <div class="bg-zinc-900 rounded-lg p-3 max-h-60 overflow-y-auto border border-zinc-700 space-y-2">
+                                    @php $selCat = old('categorias', $promocion->categorias->pluck('id')->toArray()); @endphp
+                                    @foreach($categorias as $categoria)
+                                        <label class="flex items-center gap-3 p-2.5 hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors">
+                                            <input type="checkbox"
+                                                   name="categorias[]"
+                                                   value="{{ $categoria->id }}"
+                                                   class="rounded bg-zinc-800 border-zinc-600 text-amber-500 focus:ring-amber-500 w-5 h-5"
+                                                   {{ in_array($categoria->id, $selCat) ? 'checked' : '' }}>
+                                            <span class="text-white">{{ $categoria->nombre }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        @error('productos')
+                            <p class="text-red-400 text-sm mt-2">{{ $message }}</p>
+                        @enderror
+                        @error('categorias')
+                            <p class="text-red-400 text-sm mt-2">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
 
-                <!-- Productos y Categorías -->
-                <div class="dashboard-card">
-                    <h2 class="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Aplicación</h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                        <div>
-                            <label class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Productos específicos</label>
-                            <div class="max-h-48 overflow-y-auto border border-zinc-700 rounded-lg p-2 bg-zinc-800 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-800">
-                                @foreach($productos as $producto)
-                                    <label class="flex items-center p-2 hover:bg-zinc-700 rounded transition cursor-pointer min-h-[44px] touch-manipulation">
-                                        <input
-                                            type="checkbox"
-                                            name="productos[]" value="{{ $producto->id }}"
-                                            {{ in_array($producto->id, old('productos', $promocion->productos->pluck('id')->toArray())) ? 'checked' : '' }}
-                                            class="rounded bg-zinc-800 border-zinc-700 text-amber-500 focus:ring-amber-500 flex-shrink-0">
-                                        <span class="ml-2 text-zinc-300 text-xs sm:text-sm">{{ $producto->nombre }}</span>
-                                    </label>
-                                @endforeach
+                {{-- PASO 5: Vigencia (OPCIONAL) --}}
+                @php
+                    $diasSeleccionados = $promocion->dias_semana
+                        ? (is_array($promocion->dias_semana) ? $promocion->dias_semana : explode(',', $promocion->dias_semana))
+                        : [];
+                    $diasSeleccionados = old('dias_semana', $diasSeleccionados);
+                    $mostrarVigencia = old('fecha_inicio', $promocion->fecha_inicio) || old('fecha_fin', $promocion->fecha_fin) ||
+                                       old('hora_inicio', $promocion->hora_inicio) || old('hora_fin', $promocion->hora_fin) ||
+                                       !empty($diasSeleccionados);
+                @endphp
+                <div id="seccionVigencia" class="bg-zinc-900 rounded-xl border-2 border-zinc-800 p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                                5
                             </div>
-                            @error('productos')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-zinc-300 font-medium mb-2 text-sm sm:text-base">Categorías</label>
-                            <div class="max-h-48 overflow-y-auto border border-zinc-700 rounded-lg p-2 bg-zinc-800 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-800">
-                                @foreach($categorias as $categoria)
-                                    <label class="flex items-center p-2 hover:bg-zinc-700 rounded transition cursor-pointer min-h-[44px] touch-manipulation">
-                                        <input
-                                            type="checkbox"
-                                            name="categorias[]" value="{{ $categoria->id }}"
-                                            {{ in_array($categoria->id, old('categorias', $promocion->categorias->pluck('id')->toArray())) ? 'checked' : '' }}
-                                            class="rounded bg-zinc-800 border-zinc-700 text-amber-500 focus:ring-amber-500 flex-shrink-0">
-                                        <span class="ml-2 text-zinc-300 text-xs sm:text-sm">{{ $categoria->nombre }}</span>
-                                    </label>
-                                @endforeach
+                            <div>
+                                <h2 class="text-xl font-bold text-white">Vigencia (Opcional)</h2>
+                                <p class="text-sm text-zinc-400">Define cuándo aplica</p>
                             </div>
-                            @error('categorias')
-                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                            @enderror
                         </div>
-                    </div>
-                </div>
-
-                <!-- Estado -->
-                <div class="dashboard-card">
-                    <label class="flex items-center cursor-pointer min-h-[44px] touch-manipulation">
-                        <input
-                            type="checkbox"
-                            name="activo" value="1"
-                            {{ old('activo', $promocion->activo) ? 'checked' : '' }}
-                            class="rounded bg-zinc-800 border-zinc-700 text-amber-500 focus:ring-amber-500 w-5 h-5">
-                        <span class="ml-3 text-zinc-300 font-medium text-sm sm:text-base">Promoción activa</span>
-                    </label>
-                    @error('activo')
-                        <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Botones -->
-                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-                    <a href="{{ route('promociones.index') }}"
-                       class="text-zinc-400 hover:text-white transition-colors text-center sm:text-left py-2 sm:py-0 text-sm sm:text-base">
-                        ← Volver a la lista
-                    </a>
-
-                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                        <a href="{{ route('promociones.show', $promocion) }}"
-                           class="bg-zinc-700/80 hover:bg-zinc-600 active:bg-zinc-500 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg transition-all text-center min-h-[44px] flex items-center justify-center touch-manipulation shadow-lg text-sm sm:text-base">
-                            Ver Detalles
-                        </a>
-
-                        <button type="submit"
-                                class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:from-amber-600 active:to-amber-700 text-black font-semibold px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg transition-all min-h-[44px] touch-manipulation shadow-lg shadow-amber-500/30 text-sm sm:text-base">
-                            Guardar Cambios
+                        <button type="button"
+                                id="btnMostrarVigencia"
+                                class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg transition-all">
+                            {{ $mostrarVigencia ? 'Ocultar' : 'Configurar' }}
                         </button>
                     </div>
+
+                    <div id="opcionesVigencia" style="display: {{ $mostrarVigencia ? 'block' : 'none' }};" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-white font-medium mb-2">Desde</label>
+                                <input type="date"
+                                       name="fecha_inicio"
+                                       id="fecha_inicio"
+                                       value="{{ old('fecha_inicio', $promocion->fecha_inicio ? \Carbon\Carbon::parse($promocion->fecha_inicio)->format('Y-m-d') : '') }}"
+                                       class="w-full px-4 py-3 rounded-lg bg-zinc-800 text-white border-2 border-zinc-700 focus:outline-none focus:border-blue-500">
+                                @error('fecha_inicio')
+                                    <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="block text-white font-medium mb-2">Hasta</label>
+                                <input type="date"
+                                       name="fecha_fin"
+                                       id="fecha_fin"
+                                       value="{{ old('fecha_fin', $promocion->fecha_fin ? \Carbon\Carbon::parse($promocion->fecha_fin)->format('Y-m-d') : '') }}"
+                                       class="w-full px-4 py-3 rounded-lg bg-zinc-800 text-white border-2 border-zinc-700 focus:outline-none focus:border-blue-500"
+                                       min="{{ old('fecha_inicio', $promocion->fecha_inicio ? \Carbon\Carbon::parse($promocion->fecha_inicio)->format('Y-m-d') : '') }}">
+                                @error('fecha_fin')
+                                    <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-white font-medium mb-2">Hora Inicio</label>
+                                <input type="time"
+                                       name="hora_inicio"
+                                       id="hora_inicio"
+                                       value="{{ old('hora_inicio', $promocion->hora_inicio ? \Carbon\Carbon::parse($promocion->hora_inicio)->format('H:i') : '') }}"
+                                       class="w-full px-4 py-3 rounded-lg bg-zinc-800 text-white border-2 border-zinc-700 focus:outline-none focus:border-blue-500">
+                                @error('hora_inicio')
+                                    <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="block text-white font-medium mb-2">Hora Fin</label>
+                                <input type="time"
+                                       name="hora_fin"
+                                       id="hora_fin"
+                                       value="{{ old('hora_fin', $promocion->hora_fin ? \Carbon\Carbon::parse($promocion->hora_fin)->format('H:i') : '') }}"
+                                       class="w-full px-4 py-3 rounded-lg bg-zinc-800 text-white border-2 border-zinc-700 focus:outline-none focus:border-blue-500">
+                                @error('hora_fin')
+                                    <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-white font-medium mb-3">Días de la Semana (Opcional)</label>
+                            @php
+                                $dias = ['lun' => 'L', 'mar' => 'M', 'mie' => 'X', 'jue' => 'J', 'vie' => 'V', 'sab' => 'S', 'dom' => 'D'];
+                            @endphp
+                            <div class="grid grid-cols-3 sm:grid-cols-7 gap-2">
+                                @foreach($dias as $value => $label)
+                                    <label class="relative cursor-pointer">
+                                        <input type="checkbox"
+                                               name="dias_semana[]"
+                                               value="{{ $value }}"
+                                               class="peer hidden"
+                                               {{ in_array($value, $diasSeleccionados) ? 'checked' : '' }}>
+                                        <div class="bg-zinc-800 border-2 border-zinc-700 rounded-lg p-3 text-center hover:border-blue-500 peer-checked:border-blue-500 peer-checked:bg-blue-500/20 transition-all">
+                                            <span class="text-lg font-bold text-white">{{ $label }}</span>
+                                        </div>
+                                    </label>
+                                @endforeach
+                            </div>
+                            @error('dias_semana')
+                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- PASO 6: Configuración Final --}}
+                <div id="seccionFinal" class="bg-zinc-900 rounded-xl border-2 border-zinc-800 p-6 shadow-xl" style="display: none;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                            6
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Configuración Final</h2>
+                            <p class="text-sm text-zinc-400">Últimos ajustes</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-white font-medium mb-2">
+                                Prioridad
+                                <span class="text-zinc-400 text-sm font-normal ml-2">(1 = mayor, 10 = menor)</span>
+                            </label>
+                            <input type="number"
+                                   name="prioridad"
+                                   id="prioridad"
+                                   value="{{ old('prioridad', $promocion->prioridad) }}"
+                                   class="w-full md:w-64 px-4 py-3 rounded-lg bg-zinc-800 text-white border-2 border-zinc-700 focus:outline-none focus:border-green-500"
+                                   required
+                                   min="1"
+                                   max="10">
+                            @error('prioridad')
+                                <p class="text-red-400 text-xs sm:text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <label class="flex items-center gap-3 cursor-pointer bg-zinc-800/50 p-4 rounded-xl border-2 border-zinc-700 hover:border-green-500 transition-colors">
+                            <input type="checkbox"
+                                   name="activo"
+                                   value="1"
+                                   class="rounded bg-zinc-800 border-zinc-600 text-green-500 focus:ring-green-500 w-6 h-6"
+                                   {{ old('activo', $promocion->activo) ? 'checked' : '' }}>
+                            <div>
+                                <span class="text-white font-medium text-lg">Activar Ahora</span>
+                                <p class="text-sm text-zinc-400 mt-1">La promoción estará disponible inmediatamente</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                {{-- Botones --}}
+                <div class="flex gap-3 justify-end">
+                    <a href="{{ route('promociones.index') }}"
+                       class="bg-zinc-800 hover:bg-zinc-700 text-white font-medium px-6 py-3 rounded-xl transition-all">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                            class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-green-500/30">
+                        ✓ Guardar Cambios
+                    </button>
                 </div>
             </form>
-
         </div>
     </div>
 
+    {{-- JavaScript para lógica dinámica --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tipoRadios = document.querySelectorAll('input[name="tipo"]');
+            const aplicaSobreRadios = document.querySelectorAll('input[name="aplica_sobre"]');
+
+            // Secciones
+            const seccionValor = document.getElementById('seccionValor');
+            const seccionAplicacion = document.getElementById('seccionAplicacion');
+            const seccionVigencia = document.getElementById('seccionVigencia');
+            const seccionFinal = document.getElementById('seccionFinal');
+            const seleccionProductos = document.getElementById('seleccionProductos');
+            const opcionesVigencia = document.getElementById('opcionesVigencia');
+
+            // Elementos
+            const valorInput = document.getElementById('valor');
+            const valorLabel = document.getElementById('valorLabel');
+            const valorAyuda = document.getElementById('valorAyuda');
+            const seccionTope = document.getElementById('seccionTope');
+            const btnMostrarVigencia = document.getElementById('btnMostrarVigencia');
+
+            function mostrarPasosDesdeTipo() {
+                seccionValor.style.display = 'block';
+                seccionAplicacion.style.display = 'block';
+                seccionVigencia.style.display = 'block';
+                seccionFinal.style.display = 'block';
+            }
+
+            // 1) Tipo
+            function aplicarTipo(val) {
+                mostrarPasosDesdeTipo();
+                if (val === 'porcentaje') {
+                    valorLabel.textContent = 'Porcentaje de Descuento';
+                    valorAyuda.textContent = 'Ej: 20 para 20% de descuento';
+                    valorInput.placeholder = '20';
+                    valorInput.max = '100';
+                    valorInput.readOnly = false;
+                    seccionTope.style.display = 'block';
+                } else if (val === 'monto_fijo') {
+                    valorLabel.textContent = 'Monto del Descuento';
+                    valorAyuda.textContent = 'Ej: 15 para $15 de descuento';
+                    valorInput.placeholder = '15.00';
+                    valorInput.removeAttribute('max');
+                    valorInput.readOnly = false;
+                    seccionTope.style.display = 'none';
+                } else if (val === '2x1') {
+                    valorLabel.textContent = 'Valor del Descuento (Automático)';
+                    valorAyuda.textContent = 'Para 2x1, el valor siempre es 50%';
+                    if (!valorInput.value) valorInput.value = '50';
+                    valorInput.removeAttribute('max');
+                    valorInput.readOnly = true;
+                    seccionTope.style.display = 'none';
+                } else { // combo
+                    valorLabel.textContent = 'Descuento del Combo';
+                    valorAyuda.textContent = 'Puede ser porcentaje o monto fijo';
+                    valorInput.placeholder = '10';
+                    valorInput.removeAttribute('max');
+                    valorInput.readOnly = false;
+                    seccionTope.style.display = 'none';
+                }
+            }
+            tipoRadios.forEach(r => r.addEventListener('change', () => aplicarTipo(r.value)));
+
+            // 2) Aplica sobre
+            function aplicarAplicaSobre(val) {
+                seleccionProductos.style.display = (val === 'item') ? 'block' : 'none';
+            }
+            aplicaSobreRadios.forEach(r => r.addEventListener('change', () => aplicarAplicaSobre(r.value)));
+
+            // 3) Toggle vigencia
+            btnMostrarVigencia.addEventListener('click', function() {
+                if (opcionesVigencia.style.display === 'none') {
+                    opcionesVigencia.style.display = 'block';
+                    this.textContent = 'Ocultar';
+                } else {
+                    opcionesVigencia.style.display = 'none';
+                    this.textContent = 'Configurar';
+                }
+            });
+
+            // 4) Validación fechas
+            const fechaInicio = document.getElementById('fecha_inicio');
+            const fechaFin = document.getElementById('fecha_fin');
+            function validarFechas() {
+                if (fechaInicio && fechaFin && fechaInicio.value && fechaFin.value && fechaFin.value < fechaInicio.value) {
+                    alert('La fecha de fin debe ser posterior a la fecha de inicio');
+                    fechaFin.value = '';
+                }
+                if (fechaInicio && fechaFin) {
+                    if (fechaInicio.value) fechaFin.min = fechaInicio.value; else fechaFin.removeAttribute('min');
+                }
+            }
+            if (fechaInicio) fechaInicio.addEventListener('change', validarFechas);
+            if (fechaFin) fechaFin.addEventListener('change', validarFechas);
+
+            // 5) Inicializar con valores actuales (para que EDIT se vea como CREATE pero ya expandido)
+            const tipoChecked = document.querySelector('input[name="tipo"]:checked');
+            if (tipoChecked) aplicarTipo(tipoChecked.value);
+
+            const aplicaChecked = document.querySelector('input[name="aplica_sobre"]:checked');
+            if (aplicaChecked) aplicarAplicaSobre(aplicaChecked.value);
+
+            validarFechas();
+        });
+    </script>
+
+    <style>
+        /* Animaciones suaves */
+        [id^="seccion"] { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        /* Scrollbar en listas */
+        .overflow-y-auto::-webkit-scrollbar { width: 8px; }
+        .overflow-y-auto::-webkit-scrollbar-track { background: #27272a; border-radius: 4px; }
+        .overflow-y-auto::-webkit-scrollbar-thumb { background: #52525b; border-radius: 4px; }
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover { background: #71717a; }
+    </style>
 </x-layouts.app>

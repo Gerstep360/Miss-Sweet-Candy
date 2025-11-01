@@ -152,50 +152,142 @@
          x-show="items.length > 2" x-transition></div>
 </div>
 
-<!-- Footer del carrito mejorado -->
-<div class="px-3 py-2.5 lg:p-6 lg:pt-4 border-t border-zinc-700/50 flex-shrink-0 bg-gradient-to-br from-zinc-800/50 to-zinc-900/50">
+<!-- Footer del carrito SIMPLIFICADO Y MEJORADO -->
+<div class="px-2 py-2 lg:px-6 lg:py-4 border-t border-zinc-700/50 flex-shrink-0 bg-gradient-to-br from-zinc-800/50 to-zinc-900/50"
+     x-data="{ 
+        mostrarDesglose: false,
+        get subtotalBase() {
+            return this.items.reduce((acc, it) => acc + (Number(it.cantidad) * Number(it.precio_base ?? it.precio)), 0);
+        },
+        get ahorroEspeciales() {
+            return this.items.reduce((acc, it) => {
+                const base = Number(it.precio_base ?? it.precio);
+                const vig = Number(it.precio);
+                const cant = Number(it.cantidad);
+                return acc + Math.max(0, (base - vig) * cant);
+            }, 0);
+        },
+        get ahorroTotal() {
+            return this.ahorroEspeciales + (this.descuentoPromociones || 0);
+        }
+     }">
 
-    <!-- Resumen económico -->
-    <div class="space-y-2 lg:space-y-4" x-show="items.length > 0" x-transition>
-        <!-- Subtotal base y ahorro total -->
-        <div class="grid grid-cols-2 gap-2 lg:gap-3">
-            <div class="bg-zinc-800/40 border border-zinc-700/50 rounded-lg lg:rounded-xl p-2 lg:p-3">
-                <p class="text-zinc-400 text-[10px] lg:text-sm mb-0.5 lg:mb-1">Subtotal base</p>
-                <p class="text-white font-semibold text-sm lg:text-lg">
-                    $<span class="tabular-nums"
-                           x-text="(items.reduce((acc, it) => acc + (Number(it.cantidad) * Number(it.precio_base ?? it.precio)), 0)).toFixed(2)"></span>
-                </p>
-            </div>
-            <div class="bg-green-500/10 border border-green-500/30 rounded-lg lg:rounded-xl p-2 lg:p-3">
-                <p class="text-green-400 text-[10px] lg:text-sm mb-0.5 lg:mb-1">Ahorro</p>
-                <p class="text-green-300 font-semibold text-sm lg:text-lg">
-                    -$<span class="tabular-nums"
-                            x-text="(items.reduce((acc, it) => {
-                                const base = Number(it.precio_base ?? it.precio);
-                                const vig  = Number(it.precio);
-                                const cant = Number(it.cantidad);
-                                return acc + Math.max(0, (base - vig) * cant);
-                            }, 0)).toFixed(2)"></span>
-                </p>
-            </div>
-        </div>
-
-        <!-- Total a pagar + artículos -->
-        <div class="bg-gradient-to-br from-amber-500/10 to-amber-600/10 border border-amber-500/30 rounded-lg lg:rounded-xl p-2.5 lg:p-4">
-            <div class="flex justify-between items-end">
+    <!-- Resumen económico COMPACTO -->
+    <div class="space-y-2" x-show="items.length > 0" x-transition>
+        
+        <!-- TOTAL DESTACADO (Lo más importante primero) -->
+        <div class="bg-gradient-to-br from-amber-500/20 to-amber-600/20 border-2 border-amber-500/50 rounded-lg lg:rounded-xl p-2.5 lg:p-3 shadow-lg">
+            <div class="flex justify-between items-center gap-2">
                 <div>
-                    <p class="text-zinc-400 text-[10px] lg:text-sm mb-0.5 lg:mb-1">Total a pagar</p>
-                    <p class="text-white font-bold text-lg lg:text-2xl">
-                        $<span x-text="Number(total).toFixed(2)" class="tabular-nums"></span>
+                    <p class="text-zinc-300 text-[9px] lg:text-xs uppercase tracking-wide mb-0.5">Total a pagar</p>
+                    <p class="text-amber-400 font-bold text-xl lg:text-3xl leading-none">
+                        $<span class="tabular-nums" x-text="Number(totalConPromociones || total).toFixed(2)"></span>
                     </p>
                 </div>
                 <div class="text-right">
-                    <p class="text-zinc-400 text-[10px] lg:text-xs mb-0.5 lg:mb-1">Artículos</p>
-                    <p class="text-amber-400 font-bold text-base lg:text-xl" x-text="cantidadTotal"></p>
+                    <p class="text-zinc-400 text-[9px] lg:text-xs uppercase mb-0.5">Items</p>
+                    <p class="text-amber-400 font-bold text-lg lg:text-2xl leading-none" x-text="cantidadTotal"></p>
+                </div>
+            </div>
+            
+            <!-- Mostrar ahorro total si existe -->
+            <div x-show="ahorroTotal > 0" 
+                 x-transition
+                 class="mt-2 pt-2 border-t border-amber-500/30 flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-sm lg:text-base">�</span>
+                    <p class="text-green-400 font-semibold text-xs lg:text-sm">Estás ahorrando:</p>
+                </div>
+                <p class="text-green-300 font-bold text-base lg:text-xl">
+                    -$<span class="tabular-nums" x-text="ahorroTotal.toFixed(2)"></span>
+                </p>
+            </div>
+        </div>
+
+        <!-- BOTÓN DESGLOSE (Solo si hay descuentos) -->
+        <button x-show="ahorroTotal > 0"
+                @click="mostrarDesglose = !mostrarDesglose"
+                type="button"
+                class="w-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-600/50 rounded-lg p-2 lg:p-2.5 transition-colors flex items-center justify-between text-xs lg:text-sm">
+            <span class="text-zinc-300 font-medium">Ver desglose de descuentos</span>
+            <svg class="w-4 h-4 text-zinc-400 transition-transform"
+                 :class="mostrarDesglose ? 'rotate-180' : ''"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+        </button>
+
+        <!-- DESGLOSE EXPANDIBLE (Acordeón) -->
+        <div x-show="mostrarDesglose && ahorroTotal > 0"
+             x-collapse
+             x-transition
+             class="space-y-1.5 lg:space-y-2">
+            
+            <!-- Subtotal Original -->
+            <div class="bg-zinc-800/40 border border-zinc-700/50 rounded-lg p-2 lg:p-2.5">
+                <div class="flex justify-between items-center text-xs lg:text-sm">
+                    <p class="text-zinc-400">Subtotal original:</p>
+                    <p class="text-white font-semibold">
+                        $<span class="tabular-nums" x-text="subtotalBase.toFixed(2)"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Especiales del Día -->
+            <div x-show="ahorroEspeciales > 0"
+                 class="bg-gradient-to-br from-orange-900/15 to-amber-900/15 border border-orange-500/30 rounded-lg p-2 lg:p-2.5">
+                <div class="flex justify-between items-center text-xs lg:text-sm">
+                    <div class="flex items-center gap-1 lg:gap-1.5">
+                        <span class="text-sm lg:text-base">⭐</span>
+                        <p class="text-orange-300 font-medium">Especiales del Día</p>
+                    </div>
+                    <p class="text-green-400 font-bold">
+                        -$<span class="tabular-nums" x-text="ahorroEspeciales.toFixed(2)"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Promociones -->
+            <div x-show="promocionesAplicadas?.length > 0"
+                 class="bg-gradient-to-br from-purple-900/15 to-pink-900/15 border border-purple-500/30 rounded-lg overflow-hidden">
+                <div class="p-2 lg:p-2.5">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <div class="flex items-center gap-1 lg:gap-1.5">
+                            <span class="text-sm lg:text-base">🎁</span>
+                            <p class="text-purple-300 font-medium text-xs lg:text-sm">
+                                Promociones (<span x-text="promocionesAplicadas?.length || 0"></span>)
+                            </p>
+                        </div>
+                        <p class="text-green-400 font-bold text-xs lg:text-sm">
+                            -$<span class="tabular-nums" x-text="Number(descuentoPromociones || 0).toFixed(2)"></span>
+                        </p>
+                    </div>
+                    
+                    <!-- Lista de promociones -->
+                    <div class="space-y-1 mt-2 pt-2 border-t border-purple-500/20">
+                        <template x-for="promo in promocionesAplicadas" :key="promo.id">
+                            <div class="flex items-center justify-between gap-2 text-[10px] lg:text-xs">
+                                <p class="text-purple-200 truncate" x-text="promo.nombre"></p>
+                                <p class="text-purple-300 font-semibold whitespace-nowrap">
+                                    -$<span x-text="Number(promo.descuento).toFixed(2)"></span>
+                                </p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtotal después de especiales -->
+            <div x-show="ahorroEspeciales > 0"
+                 class="bg-zinc-800/30 border border-zinc-700/40 rounded-lg p-2 lg:p-2.5">
+                <div class="flex justify-between items-center text-xs lg:text-sm">
+                    <p class="text-zinc-400">Subtotal c/especiales:</p>
+                    <p class="text-zinc-300 font-semibold">
+                        $<span class="tabular-nums" x-text="Number(total).toFixed(2)"></span>
+                    </p>
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Botones -->
     <div class="grid grid-cols-2 gap-2 lg:gap-3 mt-2 lg:mt-3">

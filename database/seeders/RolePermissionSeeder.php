@@ -133,6 +133,10 @@ class RolePermissionSeeder extends Seeder
             'crear-promociones',
             'editar-promociones',
             'eliminar-promociones',
+
+            //feedback
+            'crear-feedback',
+            'ver-estadisticas-feedback',
         ];
 
         /* -----------------------------------------------------------------
@@ -233,6 +237,9 @@ class RolePermissionSeeder extends Seeder
             
             // Ver sus propios pedidos
             'ver-pedidos',
+            
+            // Feedback
+            'crear-feedback',
         ]);
 
         // 4) BARISTA (por el momento no tiene muchos permisos, pero se deja para los proximos casos de uso)

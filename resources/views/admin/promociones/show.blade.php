@@ -186,6 +186,161 @@
             </div>
             @endif
 
+            <!-- Requisitos para Aplicar (NUEVO) -->
+            <div class="bg-gradient-to-br from-blue-900/30 to-blue-800/20 border-2 border-blue-500/50 rounded-xl p-6 mb-4 sm:mb-6 shadow-xl">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    ✅ Requisitos para Aplicar
+                </h3>
+
+                <div class="space-y-4">
+                    <!-- Tipo y Valor -->
+                    <div class="bg-zinc-900/60 rounded-lg p-4 border border-zinc-700">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">
+                                @if($promocion->tipo == 'porcentaje')
+                                    📊
+                                @elseif($promocion->tipo == 'monto_fijo')
+                                    💵
+                                @elseif($promocion->tipo == '2x1')
+                                    🎁
+                                @else
+                                    🍰
+                                @endif
+                            </span>
+                            <span class="text-white font-bold text-lg">Descuento:</span>
+                        </div>
+                        <p class="text-blue-300 text-lg font-semibold ml-8">
+                            @if($promocion->tipo == 'porcentaje')
+                                {{ $promocion->valor }}% de descuento
+                                @if($promocion->tope_descuento)
+                                    (máximo ${{ number_format($promocion->tope_descuento, 2) }})
+                                @endif
+                            @elseif($promocion->tipo == 'monto_fijo')
+                                ${{ number_format($promocion->valor, 2) }} de descuento
+                            @elseif($promocion->tipo == '2x1')
+                                2x1 - El producto más barato sale GRATIS (50% de descuento automático)
+                            @else
+                                Combo especial
+                            @endif
+                        </p>
+                    </div>
+
+                    <!-- Dónde Aplica -->
+                    <div class="bg-zinc-900/60 rounded-lg p-4 border border-zinc-700">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">{{ $promocion->aplica_sobre == 'pedido' ? '🛒' : '🎯' }}</span>
+                            <span class="text-white font-bold text-lg">Aplica sobre:</span>
+                        </div>
+                        <p class="text-blue-300 font-semibold ml-8">
+                            @if($promocion->aplica_sobre == 'pedido')
+                                Todo el pedido completo
+                            @else
+                                Solo productos/categorías específicos
+                            @endif
+                        </p>
+                        
+                        @if($promocion->aplica_sobre == 'item')
+                            @if($promocion->productos->count() > 0)
+                            <div class="ml-8 mt-3">
+                                <p class="text-zinc-400 text-sm mb-2">✓ Productos válidos:</p>
+                                <ul class="list-disc list-inside text-blue-200 text-sm space-y-1">
+                                    @foreach($promocion->productos as $producto)
+                                        <li>{{ $producto->nombre }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            @endif
+
+                            @if($promocion->categorias->count() > 0)
+                            <div class="ml-8 mt-3">
+                                <p class="text-zinc-400 text-sm mb-2">✓ Categorías válidas:</p>
+                                <ul class="list-disc list-inside text-blue-200 text-sm space-y-1">
+                                    @foreach($promocion->categorias as $categoria)
+                                        <li>Todos los productos de: {{ $categoria->nombre }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            @endif
+                        @endif
+                    </div>
+
+                    <!-- Horario -->
+                    <div class="bg-zinc-900/60 rounded-lg p-4 border border-zinc-700">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">⏰</span>
+                            <span class="text-white font-bold text-lg">Horario:</span>
+                        </div>
+                        <p class="text-blue-300 font-semibold ml-8">
+                            @if($promocion->hora_inicio && $promocion->hora_fin)
+                                Válida de {{ \Carbon\Carbon::parse($promocion->hora_inicio)->format('H:i') }} a {{ \Carbon\Carbon::parse($promocion->hora_fin)->format('H:i') }}
+                            @else
+                                ✅ Todo el día - Sin restricción de horario
+                            @endif
+                        </p>
+                    </div>
+
+                    <!-- Días de la Semana -->
+                    <div class="bg-zinc-900/60 rounded-lg p-4 border border-zinc-700">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">📅</span>
+                            <span class="text-white font-bold text-lg">Días válidos:</span>
+                        </div>
+                        @php
+                            $diasMapping = ['lun' => 'Lunes', 'mar' => 'Martes', 'mie' => 'Miércoles', 'jue' => 'Jueves', 'vie' => 'Viernes', 'sab' => 'Sábado', 'dom' => 'Domingo'];
+                        @endphp
+                        @if($promocion->dias_semana && count($promocion->dias_semana) > 0)
+                            <p class="text-blue-300 font-semibold ml-8">
+                                @foreach($promocion->dias_semana as $dia)
+                                    {{ $diasMapping[$dia] ?? $dia }}{{ !$loop->last ? ', ' : '' }}
+                                @endforeach
+                            </p>
+                        @else
+                            <p class="text-blue-300 font-semibold ml-8">✅ Todos los días de la semana</p>
+                        @endif
+                    </div>
+
+                    <!-- Periodo de Validez -->
+                    <div class="bg-zinc-900/60 rounded-lg p-4 border border-zinc-700">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">📆</span>
+                            <span class="text-white font-bold text-lg">Periodo de validez:</span>
+                        </div>
+                        <p class="text-blue-300 font-semibold ml-8">
+                            @if($promocion->fecha_inicio && $promocion->fecha_fin)
+                                Desde {{ \Carbon\Carbon::parse($promocion->fecha_inicio)->format('d/m/Y') }} hasta {{ \Carbon\Carbon::parse($promocion->fecha_fin)->format('d/m/Y') }}
+                            @elseif($promocion->fecha_inicio)
+                                Desde {{ \Carbon\Carbon::parse($promocion->fecha_inicio)->format('d/m/Y') }} - Sin fecha límite
+                            @elseif($promocion->fecha_fin)
+                                Hasta {{ \Carbon\Carbon::parse($promocion->fecha_fin)->format('d/m/Y') }}
+                            @else
+                                ✅ Sin fecha límite - Válida indefinidamente
+                            @endif
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Nota Final -->
+                <div class="mt-6 bg-gradient-to-r from-green-900/40 to-green-800/30 border-2 border-green-500/50 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl flex-shrink-0">🎉</span>
+                        <div>
+                            <p class="text-green-300 font-semibold text-sm">
+                                @if($promocion->activo)
+                                    ¡Buenas noticias! Esta promoción ya está activa y disponible. Se aplicará automáticamente cuando se cumplan todas las condiciones anteriores.
+                                @else
+                                    Esta promoción está configurada pero inactiva. Actívala para que los clientes puedan usarla.
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Botones de Acción -->
             <div class="flex flex-col sm:flex-row gap-3">
                 <a href="{{ route('promociones.index') }}" 

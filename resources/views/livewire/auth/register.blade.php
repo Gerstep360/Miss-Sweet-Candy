@@ -2,9 +2,12 @@
 <?php
 
 use App\Models\User;
+use App\Mail\VerifyEmail;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -26,24 +29,33 @@ new #[Layout('components.layouts.auth')] class extends Component {
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Crear usuario con registro normal (sin temporal_token)
+        // Crear usuario SIN email verificado
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'password_set' => true, // Contraseña ya establecida
-            'temporal_token' => null, // Sin token temporal
-            'email_verified_at' => null, // Se verificará después si es necesario
+            'password_set' => true,
+            'temporal_token' => null,
+            'email_verified_at' => null, // NO verificado aún
         ]);
         
         // Asignar rol cliente por defecto
         $user->assignRole('cliente');
 
+        // Enviar email de verificación
+        try {
+            Mail::to($user->email)->send(new VerifyEmail($user));
+            Log::info("Email de verificación enviado a: {$user->email}");
+        } catch (\Exception $e) {
+            Log::error("Error al enviar email de verificación: " . $e->getMessage());
+        }
+
         event(new Registered($user));
 
         Auth::login($user);
 
-        $this->redirectIntended(route('dashboard', absolute: false), navigate: true);
+        // Redirigir a página de verificación
+        $this->redirect(route('verification.notice'), navigate: true);
     }
 }; ?>
 

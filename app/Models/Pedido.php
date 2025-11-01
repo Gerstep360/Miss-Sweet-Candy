@@ -66,6 +66,14 @@ class Pedido extends Model
     }
 
     /**
+     * Relación con el feedback del pedido
+     */
+    public function feedback()
+    {
+        return $this->hasOne(Feedback::class);
+    }
+
+    /**
      * Scopes para filtrar por tipo
      */
     public function scopeMesa($query)
@@ -191,6 +199,39 @@ class Pedido extends Model
     public function getTotalAttribute(): float
     {
         return $this->items->sum('subtotal_item');
+    }
+
+    /**
+     * Obtener el total con descuentos de promociones aplicadas
+     */
+    public function getTotalConPromocionesAttribute(): float
+    {
+        $subtotal = $this->total;
+        $descuentoPromociones = $this->calcularDescuentoPromociones();
+        
+        return max(0, $subtotal - $descuentoPromociones);
+    }
+
+    /**
+     * Calcular descuento total de promociones aplicables
+     */
+    public function calcularDescuentoPromociones(): float
+    {
+        $promocionService = app(\App\Services\PromocionService::class);
+        $resultado = $promocionService->aplicarPromociones($this);
+        
+        return $resultado['descuento_total'] ?? 0;
+    }
+
+    /**
+     * Obtener promociones aplicadas al pedido
+     */
+    public function getPromocionesAplicadas(): array
+    {
+        $promocionService = app(\App\Services\PromocionService::class);
+        $resultado = $promocionService->aplicarPromociones($this);
+        
+        return $resultado['promociones'] ?? [];
     }
 
     /**

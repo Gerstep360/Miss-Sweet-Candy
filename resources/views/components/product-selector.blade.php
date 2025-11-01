@@ -5,6 +5,7 @@
     'productos' => [],
     'categorias' => [],
     'selectedItems' => [],
+    'promociones' => [], // Nuevo: array de promociones activas y vigentes
 ])
 
 <div x-data="{ open: false }"
@@ -33,7 +34,7 @@
          class="fixed inset-0 flex items-center justify-center lg:p-4 xl:p-6 z-[100]"
          @click.stop>
 
-        <div x-data="productSelector(@js($productos ?? []), @js($categorias ?? []), @js($selectedItems ?? []))"
+        <div x-data="productSelector(@js($productos ?? []), @js($categorias ?? []), @js($selectedItems ?? []), @js($promociones ?? []))"
              class="w-full h-full lg:max-w-7xl lg:max-h-[90vh] bg-zinc-900 lg:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
 
             <!-- Header -->
@@ -59,10 +60,24 @@
                                 <div class="text-xs lg:text-xl font-bold text-white" x-text="cantidadTotal"></div>
                             </div>
                         </div>
-                        <div class="bg-white/20 rounded-lg px-2 py-1 lg:px-3 lg:py-2">
+                        <div class="bg-white/20 rounded-lg px-2 py-1 lg:px-3 lg:py-2" 
+                             :title="promocionesAplicadas?.length > 0 ? `${promocionesAplicadas.length} promociones aplicadas` : ''">
                             <div class="text-center">
-                                <div class="text-[10px] lg:text-xs text-amber-100">Total</div>
-                                <div class="text-xs lg:text-xl font-bold text-white">$<span x-text="total.toFixed(2)"></span></div>
+                                <div class="text-[10px] lg:text-xs text-amber-100 flex items-center justify-center gap-0.5">
+                                    <span>Total</span>
+                                    <span x-show="promocionesAplicadas?.length > 0" class="text-xs lg:text-sm">🎁</span>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <div class="text-xs lg:text-xl font-bold text-white"
+                                         :class="(promocionesAplicadas?.length > 0 && descuentoPromociones > 0) ? 'line-through text-white/50 text-[10px] lg:text-sm' : ''">
+                                        $<span x-text="total.toFixed(2)"></span>
+                                    </div>
+                                    <div x-show="promocionesAplicadas?.length > 0 && descuentoPromociones > 0"
+                                         x-transition
+                                         class="text-xs lg:text-xl font-bold text-green-300">
+                                        $<span x-text="(totalConPromociones || total).toFixed(2)"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <button @click="cerrarModal()"
@@ -152,6 +167,13 @@
                                                 <div x-show="(producto.tiene_oferta ?? tieneOfertaFallback(producto))" class="absolute top-1 right-1 lg:top-2 lg:right-2">
                                                     <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 lg:px-2 text-[9px] lg:text-xs font-bold bg-green-500/20 text-green-400 rounded-full border border-green-500/30">
                                                         -<span x-text="producto.porcentaje_oferta ?? calcPorcentaje(producto)"></span>%
+                                                    </span>
+                                                </div>
+                                                <!-- Badge promoción -->
+                                                <div x-show="tienePromocion(producto)" class="absolute bottom-1 right-1 lg:bottom-2 lg:right-2">
+                                                    <span class="inline-flex items-center gap-0.5 lg:gap-1 px-1.5 py-0.5 lg:px-2 lg:py-1 text-[9px] lg:text-xs font-bold bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-300 rounded-full border border-purple-400/50 shadow-lg animate-pulse">
+                                                        🎁
+                                                        <span class="hidden lg:inline">PROMO</span>
                                                     </span>
                                                 </div>
                                             </div>
@@ -244,8 +266,19 @@
                             </div>
                             <span>Ver Carrito</span>
                             <span class="bg-white/20 px-2 py-0.5 rounded-full text-sm" x-text="cantidadTotal"></span>
+                            <span x-show="promocionesAplicadas?.length > 0" class="text-base">🎁</span>
                         </div>
-                        <span class="font-bold text-lg">$<span x-text="total.toFixed(2)"></span></span>
+                        <div class="flex flex-col items-end">
+                            <span class="font-bold text-lg"
+                                  :class="(promocionesAplicadas?.length > 0 && descuentoPromociones > 0) ? 'line-through text-white/50 text-sm' : ''">
+                                $<span x-text="total.toFixed(2)"></span>
+                            </span>
+                            <span x-show="promocionesAplicadas?.length > 0 && descuentoPromociones > 0"
+                                  x-transition
+                                  class="font-bold text-xl text-green-300">
+                                $<span x-text="(totalConPromociones || total).toFixed(2)"></span>
+                            </span>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -514,15 +547,24 @@
 </style>
 
 <script>
-function productSelector(productos, categorias, selectedItems) {
+function productSelector(productos, categorias, selectedItems, promociones) {
   return {
     productos, categorias,
     items: selectedItems || [],
+    promociones: promociones || [],
+    promocionesAplicadas: [],
     categoriaActiva: 'todas',
     busqueda: '',
 
     init() {
       window.productSelectorData = this;
+
+      // Normaliza promociones
+      this.promociones = (this.promociones || []).map(promo => ({
+        ...promo,
+        productos_ids: promo.productos?.map(p => p.id) || [],
+        categorias_ids: promo.categorias?.map(c => c.id) || [],
+      }));
 
       // Normaliza y agrega campos "oferta" (fallback si backend no los manda)
       this.productos = (this.productos || []).map(p => {
@@ -553,6 +595,9 @@ function productSelector(productos, categorias, selectedItems) {
       if (window.pedidoFormData && window.pedidoFormData.items?.length) {
         this.items = [...window.pedidoFormData.items];
       }
+      
+      // Recalcular promociones cuando cambian los items
+      this.$watch('items', () => this.calcularPromociones());
     },
 
     /* ==== Especial del Día ==== */
@@ -633,6 +678,111 @@ function productSelector(productos, categorias, selectedItems) {
       return base > 0 ? Math.round(((base - vig) / base) * 100) : 0;
     },
     toMoney(n){ n = Number(n||0); return n.toFixed(2); },
+
+    /* ==== Promociones ==== */
+    tienePromocion(producto) {
+      // Verifica si el producto tiene alguna promoción aplicable
+      return this.promociones.some(promo => {
+        if (promo.aplica_sobre === 'pedido') return true; // Las de pedido completo afectan a todos
+        if (promo.aplica_sobre === 'item') {
+          // Verifica si está en productos específicos
+          if (promo.productos_ids?.includes(producto.id)) return true;
+          // Verifica si está en categorías específicas
+          if (promo.categorias_ids?.includes(producto.categoria_id)) return true;
+        }
+        return false;
+      });
+    },
+
+    calcularPromociones() {
+      // Calcula las promociones aplicables al carrito actual
+      this.promocionesAplicadas = [];
+      
+      // Si no hay items, no calcular
+      if (!this.items || this.items.length === 0) return;
+      
+      // Ordenar por prioridad (mayor prioridad primero)
+      const promocionesOrdenadas = [...this.promociones].sort((a, b) => 
+        (Number(b.prioridad) || 0) - (Number(a.prioridad) || 0)
+      );
+
+      for (const promo of promocionesOrdenadas) {
+        let descuento = 0;
+        let itemsAfectados = [];
+
+        if (promo.aplica_sobre === 'pedido') {
+          // Promoción sobre todo el pedido (usa precio vigente ya con especiales)
+          const subtotal = this.items.reduce((sum, it) => 
+            sum + (Number(it.cantidad) * Number(it.precio)), 0
+          );
+          
+          if (subtotal <= 0) continue;
+          
+          if (promo.tipo === 'porcentaje') {
+            descuento = subtotal * (Number(promo.valor) / 100);
+            if (promo.tope_descuento) {
+              descuento = Math.min(descuento, Number(promo.tope_descuento));
+            }
+          } else if (promo.tipo === 'monto_fijo') {
+            descuento = Math.min(Number(promo.valor), subtotal);
+          }
+          
+          itemsAfectados = this.items.map(it => it.producto_id);
+
+        } else if (promo.aplica_sobre === 'item') {
+          // Promoción sobre items específicos
+          const itemsElegibles = this.items.filter(it => {
+            return promo.productos_ids?.includes(it.producto_id) || 
+                   promo.categorias_ids?.includes(
+                     this.productos.find(p => p.id === it.producto_id)?.categoria_id
+                   );
+          });
+
+          if (itemsElegibles.length > 0) {
+            const subtotalElegibles = itemsElegibles.reduce((sum, it) => 
+              sum + (Number(it.cantidad) * Number(it.precio)), 0
+            );
+            
+            if (subtotalElegibles <= 0) continue;
+
+            if (promo.tipo === 'porcentaje') {
+              descuento = subtotalElegibles * (Number(promo.valor) / 100);
+              if (promo.tope_descuento) {
+                descuento = Math.min(descuento, Number(promo.tope_descuento));
+              }
+            } else if (promo.tipo === 'monto_fijo') {
+              descuento = Math.min(Number(promo.valor), subtotalElegibles);
+            } else if (promo.tipo === '2x1') {
+              // 2x1: aplica 50% al total de items elegibles
+              descuento = subtotalElegibles * 0.5;
+            }
+
+            itemsAfectados = itemsElegibles.map(it => it.producto_id);
+          }
+        }
+
+        if (descuento > 0) {
+          this.promocionesAplicadas.push({
+            id: promo.id,
+            nombre: promo.nombre,
+            tipo: promo.tipo,
+            descuento: Math.round(descuento * 100) / 100, // Redondear a 2 decimales
+            itemsAfectados: itemsAfectados,
+            prioridad: promo.prioridad,
+          });
+        }
+      }
+    },
+
+    get descuentoPromociones() {
+      // Total de descuento por promociones
+      return this.promocionesAplicadas.reduce((sum, p) => sum + Number(p.descuento), 0);
+    },
+
+    get totalConPromociones() {
+      // Total después de aplicar promociones
+      return Math.max(0, this.total - this.descuentoPromociones);
+    },
 
     /* ==== Filtros / búsqueda ==== */
     get productosFiltrados() {
