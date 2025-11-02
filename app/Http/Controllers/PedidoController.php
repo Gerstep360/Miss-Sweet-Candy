@@ -8,6 +8,7 @@ use App\Models\PedidoItem;
 use App\Models\Mesa;
 use App\Models\Producto;
 use App\Models\Categoria;
+use App\Models\InventarioProducto;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -68,9 +69,11 @@ class PedidoController extends BaseController
             
         $clientes = User::role('cliente')->get();
         
-        $productos = Producto::with('categoria')
+        $productos = Producto::with(['categoria', 'inventario', 'especialVigente'])
             ->orderBy('nombre')
-            ->get();
+            ->get()
+            ->each->append(['imagen_url','precio_vigente','tiene_oferta','porcentaje_oferta','ahorro_oferta']);
+
             
         $categorias = Categoria::orderBy('nombre')->get();
         BitacoraController::registrar('crear', 'Pedido', null);
@@ -92,9 +95,11 @@ class PedidoController extends BaseController
 
         $clientes = User::role('cliente')->get();
         
-        $productos = Producto::with('categoria')
+        $productos = Producto::with(['categoria', 'inventario', 'especialVigente'])
             ->orderBy('nombre')
-            ->get();
+            ->get()
+            ->each->append(['imagen_url','precio_vigente','tiene_oferta','porcentaje_oferta','ahorro_oferta']);
+
             
         $categorias = Categoria::orderBy('nombre')->get();
         BitacoraController::registrar('crear', 'Pedido', null);
@@ -129,15 +134,26 @@ class PedidoController extends BaseController
             }
 
             // Crear el pedido
-            $pedido = Pedido::create([
-                'tipo' => 'mesa',
-                'cliente_id' => $validated['cliente_id'] ?? null,
-                'atendido_por' => Auth::id(),
-                'mesa_id' => $validated['mesa_id'],
-                'estado' => 'pendiente',
-                'canal' => 'local',
-                'notas' => $validated['notas'] ?? null,
+            $producto = Producto::with('especialVigente')->findOrFail($productoData['producto_id']);
+
+            $precioBase      = (float) $producto->precio;
+            $precioUnitario  = (float) $producto->precio_vigente;   // <— aquí la magia
+            $descuentoItem   = max(0, $precioBase - $precioUnitario);
+            $cantidad        = (int) $productoData['cantidad'];
+            $subtotalItem    = $precioUnitario * $cantidad;
+
+            PedidoItem::create([
+                'pedido_id'       => $pedido->id,
+                'producto_id'     => $producto->id,
+                'cantidad'        => $cantidad,
+                'precio_unitario' => $precioUnitario,
+                'descuento_item'  => $descuentoItem,
+                'subtotal_item'   => $subtotalItem,
+                'estado_item'     => 'pendiente',
+                'destino'         => $producto->categoria->destino ?? 'cocina',
+                'notas'           => $productoData['notas'] ?? null,
             ]);
+
 
             // Crear los items del pedido
             foreach ($validated['productos'] as $productoData) {
@@ -160,6 +176,17 @@ class PedidoController extends BaseController
                     'destino' => $producto->categoria->destino ?? 'cocina', // barra o cocina
                     'notas' => $productoData['notas'] ?? null,
                 ]);
+
+                // 📦 DESCONTAR DEL INVENTARIO
+                $inventario = InventarioProducto::where('producto_id', $producto->id)->first();
+                if ($inventario) {
+                    $inventario->decrementarStock($cantidad);
+                    
+                    // Generar alerta si el stock está bajo
+                    if ($inventario->requiereAlerta()) {
+                        $this->generarAlertaStock($inventario, $producto);
+                    }
+                }
             }
 
             // Cambiar estado de la mesa a ocupada
@@ -202,16 +229,25 @@ class PedidoController extends BaseController
 
         try {
             // Crear el pedido
-            $pedido = Pedido::create([
-                'tipo' => 'mostrador',
-                'cliente_id' => $validated['cliente_id'] ?? null,
-                'atendido_por' => Auth::id(),
-                'estado' => 'pendiente',
-                'canal' => 'local',
-                'telefono_contacto' => $validated['telefono_contacto'] ?? null,
-                'notas' => $validated['notas'] ?? null,
-            ]);
+            $producto = Producto::with('especialVigente')->findOrFail($productoData['producto_id']);
 
+            $precioBase      = (float) $producto->precio;
+            $precioUnitario  = (float) $producto->precio_vigente;   // <— aquí la magia
+            $descuentoItem   = max(0, $precioBase - $precioUnitario);
+            $cantidad        = (int) $productoData['cantidad'];
+            $subtotalItem    = $precioUnitario * $cantidad;
+
+            PedidoItem::create([
+                'pedido_id'       => $pedido->id,
+                'producto_id'     => $producto->id,
+                'cantidad'        => $cantidad,
+                'precio_unitario' => $precioUnitario,
+                'descuento_item'  => $descuentoItem,
+                'subtotal_item'   => $subtotalItem,
+                'estado_item'     => 'pendiente',
+                'destino'         => $producto->categoria->destino ?? 'cocina',
+                'notas'           => $productoData['notas'] ?? null,
+            ]);
             // Crear los items del pedido
             foreach ($validated['productos'] as $productoData) {
                 $producto = Producto::findOrFail($productoData['producto_id']);
@@ -233,6 +269,17 @@ class PedidoController extends BaseController
                     'destino' => $producto->categoria->destino ?? 'cocina',
                     'notas' => $productoData['notas'] ?? null,
                 ]);
+
+                // 📦 DESCONTAR DEL INVENTARIO
+                $inventario = InventarioProducto::where('producto_id', $producto->id)->first();
+                if ($inventario) {
+                    $inventario->decrementarStock($cantidad);
+                    
+                    // Generar alerta si el stock está bajo
+                    if ($inventario->requiereAlerta()) {
+                        $this->generarAlertaStock($inventario, $producto);
+                    }
+                }
             }
 
             DB::commit();
@@ -286,7 +333,11 @@ class PedidoController extends BaseController
         }
 
         $pedido->load(['items.producto.categoria']);
-        $productos = Producto::with('categoria')->orderBy('nombre')->get();
+        $productos = Producto::with(['categoria', 'inventario', 'especialVigente'])
+            ->orderBy('nombre')
+            ->get()
+            ->each->append(['imagen_url','precio_vigente','tiene_oferta','porcentaje_oferta','ahorro_oferta']);
+
         $categorias = Categoria::orderBy('nombre')->get();
         $clientes = User::role('cliente')->get();
 
@@ -571,5 +622,41 @@ class PedidoController extends BaseController
             return back()->with('error', 'Error al eliminar el pedido: ' . $e->getMessage());
         }
         BitacoraController::registrar('eliminado', 'Pedido', $pedido->id);
+    }
+
+    /**
+     * Genera alertas automáticas de stock bajo o crítico
+     */
+    protected function generarAlertaStock(InventarioProducto $inventario, Producto $producto)
+    {
+        $estado = $inventario->estado_stock;
+        $mensaje = "⚠️ El producto '{$producto->nombre}' tiene stock {$estado}. Stock actual: {$inventario->stock_actual}, Stock mínimo: {$inventario->stock_minimo}.";
+
+        // Obtener usuarios con permiso para recibir alertas de inventario
+        $usuariosDestino = \App\Models\User::permission('ver-inventario')->get();
+
+        foreach ($usuariosDestino as $usuario) {
+            // Verificar si ya existe una notificación reciente sin leer (últimas 24 horas)
+            $notificacionReciente = \App\Models\Notificacion::where('usuario_destino_id', $usuario->id)
+                ->where('rel_model', 'producto')
+                ->where('rel_id', $producto->id)
+                ->where('tipo', 'stock')
+                ->where('leido', false)
+                ->where('id', '>', now()->subDay()->timestamp)
+                ->first();
+
+            // Solo crear notificación si no hay una reciente
+            if (!$notificacionReciente) {
+                \App\Models\Notificacion::create([
+                    'tipo' => 'stock',
+                    'canal' => 'panel',
+                    'mensaje' => $mensaje,
+                    'usuario_destino_id' => $usuario->id,
+                    'rel_model' => 'producto',
+                    'rel_id' => $producto->id,
+                    'leido' => false,
+                ]);
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-iiqn78yR.css",
+    "file": "assets/app-Bqb_CUS5.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -26,12 +26,6 @@
     "file": "assets/modal-store-XFpNzzCP.js",
     "name": "modal-store",
     "src": "resources/js/modal-store.js",
-    "isEntry": true
-  },
-  "resources/js/welcome.js": {
-    "file": "assets/welcome-Fp50iEO_.js",
-    "name": "welcome",
-    "src": "resources/js/welcome.js",
     "isEntry": true
   }
 }

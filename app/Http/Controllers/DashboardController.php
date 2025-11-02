@@ -26,6 +26,8 @@ class DashboardController extends Controller
             return $this->adminDashboard($hours);
         } elseif ($user->hasRole('cajero')) {
             return $this->cajeroDashboard($hours);
+        } elseif ($user->hasRole('barista')) {
+            return $this->baristaDashboard($hours);
         } elseif ($user->hasRole('cliente')) {
             return $this->clienteDashboard($hours);
         }
@@ -297,6 +299,128 @@ class DashboardController extends Controller
             'pedidosPendientes',
             'misVentasPorMetodo',
             'ventasPorHora',
+            'especialHoy'
+        ));
+    }
+
+    /**
+     * Dashboard para Barista
+     */
+    private function baristaDashboard(BusinessHours $hours)
+    {
+        $tz  = 'America/La_Paz';
+        $now = Carbon::now($tz);
+        $start = $now->copy()->startOfDay();
+        $end   = $now->copy()->endOfDay();
+
+        // ========== PEDIDOS PENDIENTES PARA BARRA ==========
+        $pedidosPendientesBarra = Pedido::whereIn('estado', ['pendiente', 'en_preparacion'])
+            ->whereHas('items', function($q) {
+                $q->where('destino', 'barra')
+                  ->whereIn('estado_item', ['pendiente', 'en_preparacion']);
+            })
+            ->with(['items' => function($q) {
+                $q->where('destino', 'barra')
+                  ->whereIn('estado_item', ['pendiente', 'en_preparacion'])
+                  ->with('producto');
+            }, 'mesa', 'cliente'])
+            ->latest()
+            ->limit(15)
+            ->get()
+            ->map(function($pedido) {
+                return [
+                    'id' => $pedido->id,
+                    'tipo' => $pedido->tipo_nombre,
+                    'mesa' => $pedido->mesa->nombre ?? 'Mostrador',
+                    'cliente' => $pedido->cliente->name ?? 'Sin cliente',
+                    'items' => $pedido->items->map(function($item) {
+                        return [
+                            'id' => $item->id,
+                            'producto' => $item->producto->nombre,
+                            'cantidad' => $item->cantidad,
+                            'estado' => $item->estado_item,
+                            'notas' => $item->notas
+                        ];
+                    }),
+                    'tiempo_transcurrido' => $pedido->created_at->diffForHumans(),
+                    'urgente' => $pedido->created_at->diffInMinutes() > 15
+                ];
+            });
+
+        // ========== ITEMS COMPLETADOS HOY (por el barista actual) ==========
+        $itemsCompletadosHoy = DB::table('pedido_items')
+            ->join('productos', 'pedido_items.producto_id', '=', 'productos.id')
+            ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
+            ->where('pedido_items.destino', 'barra')
+            ->where('pedido_items.estado_item', 'preparado')
+            ->whereBetween('pedido_items.updated_at', [$start, $end])
+            ->count();
+
+        // ========== PRODUCTOS MÁS PREPARADOS HOY ==========
+        $topProductosBarra = DB::table('pedido_items')
+            ->join('productos', 'pedido_items.producto_id', '=', 'productos.id')
+            ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
+            ->where('pedido_items.destino', 'barra')
+            ->whereBetween('pedidos.created_at', [$start, $end])
+            ->select(
+                'productos.nombre',
+                DB::raw('SUM(pedido_items.cantidad) as total_preparado')
+            )
+            ->groupBy('productos.id', 'productos.nombre')
+            ->orderByDesc('total_preparado')
+            ->limit(10)
+            ->get();
+
+        // ========== PEDIDOS POR HORA (barra) ==========
+        $pedidosPorHora = DB::table('pedido_items')
+            ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
+            ->where('pedido_items.destino', 'barra')
+            ->whereBetween('pedidos.created_at', [$start, $end])
+            ->select(
+                DB::raw('HOUR(pedidos.created_at) as hora'),
+                DB::raw('COUNT(DISTINCT pedido_items.id) as cantidad')
+            )
+            ->groupBy('hora')
+            ->orderBy('hora')
+            ->get();
+
+        // ========== ITEMS PENDIENTES (contador) ==========
+        $itemsPendientes = DB::table('pedido_items')
+            ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
+            ->where('pedido_items.destino', 'barra')
+            ->whereIn('pedidos.estado', ['pendiente', 'en_preparacion'])
+            ->whereIn('pedido_items.estado_item', ['pendiente', 'en_preparacion'])
+            ->count();
+
+        // ========== ITEMS EN PREPARACIÓN (contador) ==========
+        $itemsEnPreparacion = DB::table('pedido_items')
+            ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
+            ->where('pedido_items.destino', 'barra')
+            ->where('pedido_items.estado_item', 'en_preparacion')
+            ->count();
+
+        // ========== TIEMPO PROMEDIO DE PREPARACIÓN ==========
+        $tiempoPromedio = DB::table('pedido_items')
+            ->join('pedidos', 'pedido_items.pedido_id', '=', 'pedidos.id')
+            ->where('pedido_items.destino', 'barra')
+            ->where('pedido_items.estado_item', 'preparado')
+            ->whereBetween('pedido_items.updated_at', [$start, $end])
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, pedidos.created_at, pedido_items.updated_at)) as promedio')
+            ->value('promedio');
+
+        // ========== ESPECIAL DEL DÍA ==========
+        $especialHoy = EspecialDelDia::getEspecialHoy();
+
+        return view('dashboard.barista', compact(
+            'now',
+            'hours',
+            'pedidosPendientesBarra',
+            'itemsCompletadosHoy',
+            'topProductosBarra',
+            'pedidosPorHora',
+            'itemsPendientes',
+            'itemsEnPreparacion',
+            'tiempoPromedio',
             'especialHoy'
         ));
     }

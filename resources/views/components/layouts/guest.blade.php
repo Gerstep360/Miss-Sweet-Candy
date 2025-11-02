@@ -6,6 +6,6 @@
     @stack('scripts')
     <body class="min-h-screen bg-zinc-950 text-white antialiased">
         {{ $slot }}
-        @vite(['resources/js/app.js', 'resources/js/welcome.js'])
+        @vite(['resources/js/app.js'])
     </body>
 </html>

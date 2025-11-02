@@ -40,6 +40,7 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <livewire:turno-status />
       <!-- Métricas del Cajero (tarjetas zinc + borde) -->
       <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <article class="bg-zinc-900/60 backdrop-blur border border-zinc-800 rounded-2xl p-6">

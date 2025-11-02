@@ -97,6 +97,37 @@ class RolePermissionSeeder extends Seeder
             // Permisos generales
             'ver-pedidos',
             'cambiar-estado-pedidos',
+            
+            // CU15 - Inventario de Producto Terminado (ADMIN, ALMACENERO)
+            'ver-inventario',
+            'editar-inventario',
+            
+            // Notificaciones
+            'crear-notificacion',
+            'ver-todas-notificaciones',
+
+            //reportes
+            'ver-reportes',
+
+            // arqueos
+            'realizar-arqueo',
+            'ver-arqueos',
+            
+            //cierre de caja
+            'cerrar-caja',
+            'ver-cierres',
+
+            //turnos de caja
+            'iniciar-turno',
+            'cerrar-turno',
+            'ver-turnos',
+
+            //especial del día
+            'ver-especiales',
+            'crear-especial',
+            'editar-especial',
+            'eliminar-especial',
+            'activar-especial',
         ];
 
         /* -----------------------------------------------------------------
@@ -157,6 +188,18 @@ class RolePermissionSeeder extends Seeder
             
             // CU12 - Menú Público
             'ver-menu-publico',
+            
+            // CU13 - Cierres de Caja
+            'cerrar-caja',
+            'ver-cierres',
+            
+            // Turnos de Caja
+            'iniciar-turno',
+            'cerrar-turno',
+            'ver-turnos',
+            
+            // CU15 - Inventario (solo ver)
+            'ver-inventario',
             
             // Generales
             'ver-pedidos',

@@ -15,12 +15,10 @@ class CategoriaController extends BaseController
     // Mostrar todas las categorías
     public function index()
     {
-        try {
-            $this->authorize('ver-categorias');
-        } catch (AuthorizationException $e) {
-            return redirect()->route('403');
+        //validacion de permisos
+        if (!auth()->user()->can('ver-categorias')) {
+            abort(403, 'No tienes permiso para ver categorías.');
         }
-
         $categorias = Categoria::orderBy('nombre')->get();
         BitacoraController::registrar('ver', 'Categoria', null);
         return view('admin.categorias.index', compact('categorias'));

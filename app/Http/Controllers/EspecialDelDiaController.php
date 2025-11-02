@@ -7,9 +7,20 @@ use Illuminate\Support\Facades\Cache;
 use App\Models\EspecialDelDia;
 use App\Models\Producto;
 use Carbon\Carbon;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class EspecialDelDiaController extends Controller
+class EspecialDelDiaController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:ver-especiales', only: ['index','show']),
+            new Middleware('permission:crear-especial', only: ['create','store']),
+            new Middleware('permission:editar-especial', only: ['edit','update','toggle']),
+            new Middleware('permission:eliminar-especial', only: ['destroy']),
+        ];
+    }
     public function index(Request $request)
     {
         $especiales = EspecialDelDia::with('producto.categoria')
@@ -40,6 +51,7 @@ class EspecialDelDiaController extends Controller
             // 1. Validar datos
             $data = $this->validated($request, false);
 
+<<<<<<< HEAD
             // 2. Verificar conflictos
             if ($this->hayConflictoDiaSemana($request)) {
                 return back()->withInput()->withErrors([
@@ -64,25 +76,56 @@ class EspecialDelDiaController extends Controller
     // Pasamos el modelo a la vista con la variable 'especial'
     return view('admin.especial_dia.show', ['especial' => $especiale]);
 }
+=======
+        if ($this->hayConflictoDiaSemana($request)) {
+            return back()->withInput()->withErrors([
+                'dia_semana' => 'Ya existe un especial activo para este día.'
+            ]);
+        }
 
-    public function edit(EspecialDelDia $especial)
+        $especial = EspecialDelDia::create($this->normalizar($data, $request));
+        $this->clearCache();
+
+        // Bitácora
+        BitacoraController::registrar('Crear', 'Especial del Día', $especial->id);
+
+        return redirect()->route('especial_dia.index')
+            ->with('success', 'Especial del día creado correctamente.');
+    }
+
+    public function show(EspecialDelDia $especial) // ¡Ojo al nombre!
+    {
+        $especial->load(['producto.categoria']);
+        return view('admin.especial_dia.show', compact('especial'));
+    }
+>>>>>>> d008dee9b8158f8f1c7dd3a4d7b4669a2e741a2c
+
+    public function edit(EspecialDelDia $especial) // ¡Ojo al nombre!
     {
         $productos  = Producto::with('categoria')->orderBy('nombre')->get();
         $diasSemana = $this->diasSemana();
+<<<<<<< HEAD
         return view('admin.especial_dia.show', compact('especial', 'productos', 'diasSemana'));
+=======
+        // AQUÍ estaba el bug: antes devolvías la vista "show"
+        return view('admin.especial_dia.edit', compact('especial', 'productos', 'diasSemana'));
+>>>>>>> d008dee9b8158f8f1c7dd3a4d7b4669a2e741a2c
     }
 
-    public function update(Request $request, EspecialDelDia $especial)
+    public function update(Request $request, EspecialDelDia $especial) // ¡Ojo!
     {
         $data = $this->validated($request, true);
 
         if ($this->hayConflictoDiaSemana($request, $especial->id)) {
-            return back()->withInput()->withErrors(['dia_semana' => 'Ya existe un especial activo para este día.']);
+            return back()->withInput()->withErrors([
+                'dia_semana' => 'Ya existe un especial activo para este día.'
+            ]);
         }
 
         $especial->update($this->normalizar($data, $request));
         $this->clearCache();
 
+<<<<<<< HEAD
         return redirect()->route('especial_dia.index')->with('success', 'Especial del día actualizado.');
     }
 
@@ -92,10 +135,28 @@ class EspecialDelDiaController extends Controller
             \Log::info('Destroy method called for especial: ' . $especiale->id);
 
             $especiale->delete();
+=======
+        // Bitácora
+        BitacoraController::registrar('Actualizar', 'Especial del Día', $especial->id);
+
+        return redirect()->route('especial_dia.index')
+            ->with('success', 'Especial del día actualizado.');
+    }
+
+    public function destroy(EspecialDelDia $especial) // ¡Ojo!
+    {
+        try {
+            $id = $especial->id;
+            $especial->delete();
+
+            // Bitácora
+            BitacoraController::registrar('Eliminar', 'Especial del Día', $id);
+>>>>>>> d008dee9b8158f8f1c7dd3a4d7b4669a2e741a2c
 
             return redirect()->route('especial_dia.index')
                 ->with('success', 'Especial eliminado correctamente');
         } catch (\Exception $e) {
+<<<<<<< HEAD
             \Log::error('Error deleting especial: ' . $e->getMessage());
             return back()->with('error', 'Error al eliminar el especial: ' . $e->getMessage());
         }
@@ -108,11 +169,28 @@ class EspecialDelDiaController extends Controller
         try {
             $especiale->activo = !$especiale->activo;
             $especiale->save();
+=======
+            return back()->with('error', 'Error al eliminar el especial: '.$e->getMessage());
+        }
+    }
+
+    public function toggle(EspecialDelDia $especial) // ¡Ojo!
+    {
+        try {
+            $especial->activo = ! $especial->activo;
+            $especial->save();
+
+            // Bitácora
+            BitacoraController::registrar('Toggle', 'Especial del Día', $especial->id);
+>>>>>>> d008dee9b8158f8f1c7dd3a4d7b4669a2e741a2c
 
             return redirect()->route('especial_dia.index')
                 ->with('success', 'Estado del especial actualizado correctamente');
         } catch (\Exception $e) {
+<<<<<<< HEAD
             \Log::error('Error al cambiar el estado: ' . $e->getMessage());
+=======
+>>>>>>> d008dee9b8158f8f1c7dd3a4d7b4669a2e741a2c
             return back()->with('error', 'No se pudo cambiar el estado');
         }
     }
@@ -134,10 +212,14 @@ class EspecialDelDiaController extends Controller
         return response()->json(['success' => true, 'especiales' => $payload]);
     }
 
+<<<<<<< HEAD
     
 
 
     
+=======
+    // ------- Helpers privados compactos ------
+>>>>>>> d008dee9b8158f8f1c7dd3a4d7b4669a2e741a2c
     private function validated(Request $request, bool $isUpdate): array
 {
     $rules = [
@@ -264,6 +346,11 @@ class EspecialDelDiaController extends Controller
             Cache::forget('especiales_activos');
             Cache::forget('especiales_hoy');
             Cache::forget('especiales_del_dia');
+
+            // ❗ clave que usa el welcome:
+            Cache::forget('welcome:especial_hoy');
+            Cache::forget('welcome:horarios');
+            Cache::forget('welcome:destacados');
         } catch (\Throwable $e) {
             // Silencioso
         }
