@@ -208,6 +208,9 @@ class PedidoController extends BaseController
 
             DB::commit();
 
+            // 🔔 NOTIFICAR A BARISTAS sobre el nuevo pedido
+            NotificacionController::notificarNuevoPedidoABarista($pedido);
+
             return redirect()
                 ->route('pedidos.show', $pedido)
                 ->with('success', 'Pedido de mesa creado exitosamente.');
@@ -296,6 +299,9 @@ class PedidoController extends BaseController
             BitacoraController::registrar('crear', 'Pedido', $pedido->id);
 
             DB::commit();
+
+            // 🔔 NOTIFICAR A BARISTAS sobre el nuevo pedido
+            NotificacionController::notificarNuevoPedidoABarista($pedido);
 
             return redirect()
                 ->route('pedidos.show', $pedido)
@@ -545,13 +551,24 @@ class PedidoController extends BaseController
 
             DB::commit();
 
+            // 🔔 NOTIFICACIONES según el cambio de estado
+            if ($validated['estado'] === 'preparado' || $validated['estado'] === 'listo') {
+                // Barista terminó de preparar → Notificar a cajeros
+                NotificacionController::notificarPedidoListo($pedido);
+            } else {
+                // Para otros cambios de estado
+                NotificacionController::notificarCambioEstadoPedido($pedido, $estadoAnterior, $validated['estado']);
+            }
+
+            // Registrar en bitácora
+            BitacoraController::registrar('cambiar estado', 'Pedido', $pedido->id);
+
             return back()->with('success', "Estado del pedido cambiado de '{$estadoAnterior}' a '{$validated['estado']}'.");
 
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error al cambiar el estado: ' . $e->getMessage());
         }
-        BitacoraController::registrar('cambiar estado', 'Pedido', $pedido->id);
     }
 
     /**

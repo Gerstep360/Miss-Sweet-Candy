@@ -199,4 +199,171 @@ class NotificacionController extends Controller
             ]);
         }
     }
+
+    /**
+     * Notificar a baristas cuando hay un nuevo pedido
+     * Flujo: Cajero crea pedido → Barista recibe notificación
+     */
+    public static function notificarNuevoPedidoABarista($pedido)
+    {
+        // Obtener todos los baristas activos
+        $baristas = User::role('barista')
+            ->where('activo', true)
+            ->get();
+
+        if ($baristas->isEmpty()) {
+            return;
+        }
+
+        $cajero = $pedido->cajero ? $pedido->cajero->name : 'Sistema';
+        $mesa = $pedido->mesa ? "Mesa {$pedido->mesa->numero}" : 'Para llevar';
+        $itemsCount = $pedido->items->count();
+
+        $mensaje = "🆕 Nuevo pedido #{$pedido->id} de {$cajero} - {$mesa} ({$itemsCount} productos)";
+
+        foreach ($baristas as $barista) {
+            Notificacion::create([
+                'tipo' => 'pedido',
+                'canal' => 'panel',
+                'mensaje' => $mensaje,
+                'usuario_destino_id' => $barista->id,
+                'rel_model' => 'pedido',
+                'rel_id' => $pedido->id,
+                'leido' => false,
+            ]);
+        }
+
+        // Registrar en bitácora
+        BitacoraController::registrar(
+            'pedido_notificado_barista',
+            'pedido',
+            $pedido->id,
+            auth()->check() ? auth()->id() : null
+        );
+    }
+
+    /**
+     * Notificar al cajero cuando el barista completa el pedido
+     * Flujo: Barista completa pedido → Cajero recibe notificación para entrega
+     */
+    public static function notificarPedidoListo($pedido)
+    {
+        // Notificar al cajero que creó el pedido
+        if ($pedido->cajero_id) {
+            $cajero = User::find($pedido->cajero_id);
+            
+            if ($cajero && $cajero->activo) {
+                $barista = $pedido->barista ? $pedido->barista->name : 'Barista';
+                $mesa = $pedido->mesa ? "Mesa {$pedido->mesa->numero}" : 'Para llevar';
+                
+                $mensaje = "✅ Pedido #{$pedido->id} listo para entregar - {$mesa} (Preparado por {$barista})";
+
+                Notificacion::create([
+                    'tipo' => 'pedido',
+                    'canal' => 'panel',
+                    'mensaje' => $mensaje,
+                    'usuario_destino_id' => $cajero->id,
+                    'rel_model' => 'pedido',
+                    'rel_id' => $pedido->id,
+                    'leido' => false,
+                ]);
+            }
+        }
+
+        // También notificar a todos los cajeros activos (por si el cajero original no está disponible)
+        $otrosCajeros = User::role(['cajero', 'administrador'])
+            ->where('activo', true)
+            ->where('id', '!=', $pedido->cajero_id)
+            ->get();
+
+        if ($otrosCajeros->isNotEmpty()) {
+            $mesa = $pedido->mesa ? "Mesa {$pedido->mesa->numero}" : 'Para llevar';
+            $mensaje = "🔔 Pedido #{$pedido->id} listo para entregar - {$mesa}";
+
+            foreach ($otrosCajeros as $cajero) {
+                Notificacion::create([
+                    'tipo' => 'pedido',
+                    'canal' => 'panel',
+                    'mensaje' => $mensaje,
+                    'usuario_destino_id' => $cajero->id,
+                    'rel_model' => 'pedido',
+                    'rel_id' => $pedido->id,
+                    'leido' => false,
+                ]);
+            }
+        }
+
+        // Registrar en bitácora
+        BitacoraController::registrar(
+            'pedido_listo_notificado',
+            'pedido',
+            $pedido->id,
+            auth()->check() ? auth()->id() : null
+        );
+    }
+
+    /**
+     * Notificar cuando se actualiza el estado de un pedido
+     */
+    public static function notificarCambioEstadoPedido($pedido, $estadoAnterior, $estadoNuevo)
+    {
+        $destinatarios = [];
+
+        // Determinar quién debe ser notificado según el cambio de estado
+        switch ($estadoNuevo) {
+            case 'en_preparacion':
+                // Notificar a baristas
+                $destinatarios = User::role('barista')->where('activo', true)->get();
+                $mensaje = "👨‍🍳 Pedido #{$pedido->id} asignado para preparación";
+                break;
+
+            case 'listo':
+                // Notificar a cajeros (ya lo hace notificarPedidoListo)
+                return; // No duplicar notificaciones
+
+            case 'completado':
+                // Notificar al barista que lo preparó (confirmación)
+                if ($pedido->barista_id) {
+                    $destinatarios = collect([User::find($pedido->barista_id)])->filter();
+                    $mensaje = "✅ Pedido #{$pedido->id} entregado al cliente";
+                }
+                break;
+
+            case 'cancelado':
+                // Notificar a todos los involucrados
+                $usuarios = collect();
+                if ($pedido->cajero_id) $usuarios->push(User::find($pedido->cajero_id));
+                if ($pedido->barista_id) $usuarios->push(User::find($pedido->barista_id));
+                $destinatarios = $usuarios->filter();
+                $mensaje = "❌ Pedido #{$pedido->id} cancelado";
+                break;
+
+            default:
+                return;
+        }
+
+        // Crear notificaciones
+        foreach ($destinatarios as $usuario) {
+            if ($usuario && $usuario->activo) {
+                Notificacion::create([
+                    'tipo' => 'pedido',
+                    'canal' => 'panel',
+                    'mensaje' => $mensaje,
+                    'usuario_destino_id' => $usuario->id,
+                    'rel_model' => 'pedido',
+                    'rel_id' => $pedido->id,
+                    'leido' => false,
+                ]);
+            }
+        }
+
+        // Registrar en bitácora
+        BitacoraController::registrar(
+            'pedido_cambio_estado',
+            'pedido',
+            $pedido->id,
+            auth()->check() ? auth()->id() : null,
+            ['estado_anterior' => $estadoAnterior, 'estado_nuevo' => $estadoNuevo]
+        );
+    }
 }
