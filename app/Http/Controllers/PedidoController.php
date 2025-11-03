@@ -500,29 +500,30 @@ class PedidoController extends BaseController
 
         DB::beginTransaction();
 
-        try {
-            $estadoAnterior = $pedido->estado;
-            $pedido->estado = $validated['estado'];
+        //MODIFICACION PARA FIDELIDAD
+            try {
+                $estadoAnterior = $pedido->estado;
+                $pedido->estado = $validated['estado'];
 
-            // Si se anula o cancela
-            if (in_array($validated['estado'], ['anulado', 'cancelado'])) {
-                // Marcar items como anulados
-                foreach ($pedido->items as $item) {
-                    $item->update(['estado_item' => 'anulado']);
+                // Si el pedido se completa, acumular puntos de fidelidad
+                if (in_array($validated['estado'], ['entregado', 'servido', 'retirado', 'pagado']) && 
+                    $estadoAnterior !== $validated['estado'] &&
+                    $pedido->cliente_id) {
+                    
+                    try {
+                        $fidelidadController = new FidelidadController();
+                        if ($fidelidadController->isProgramaActivo()) {
+                            $puntosAcumulados = $fidelidadController->acumularPuntosPorPedido($pedido);
+                            
+                            // Opcional: agregar mensaje informativo
+                            session()->flash('info', "Se acumularon {$puntosAcumulados} puntos de fidelidad para el cliente.");
+                        }
+                    } catch (\Exception $e) {
+                        // Log del error pero no revertir la transacción del pedido
+                        \Log::error('Error al acumular puntos de fidelidad: ' . $e->getMessage());
+                    }
                 }
 
-                // Liberar mesa si aplica
-                if ($pedido->tipo === 'mesa' && $pedido->mesa) {
-                    $pedido->mesa->update(['estado' => 'libre']);
-                }
-            }
-
-            // Si se completa el pedido (entregado/servido/retirado), liberar mesa
-            if (in_array($validated['estado'], ['entregado', 'servido', 'retirado']) && $pedido->tipo === 'mesa' && $pedido->mesa) {
-                $pedido->mesa->update(['estado' => 'libre']);
-            }
-
-            $pedido->save();
 
             DB::commit();
 

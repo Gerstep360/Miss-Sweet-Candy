@@ -128,6 +128,8 @@ class RolePermissionSeeder extends Seeder
             'editar-especial',
             'eliminar-especial',
             'activar-especial',
+            'gestionar-fidelidad',
+            'puntosCajero'
         ];
 
         /* -----------------------------------------------------------------
@@ -206,6 +208,8 @@ class RolePermissionSeeder extends Seeder
             'cambiar-estado-pedidos',
             'ver-dashboard-cajero',
             'ver-categorias',
+            'gestionar-fidelidad',
+            'puntosCajero'
         ]);
 
         // 3) CLIENTE

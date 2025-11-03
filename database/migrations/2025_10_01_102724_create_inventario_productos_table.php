@@ -15,6 +15,7 @@ return new class extends Migration
             $table->integer('stock_minimo')->default(0);
             $table->integer('punto_reposicion')->default(0);
             $table->string('ubicacion', 120)->nullable();
+            $table->timestamps(); 
             
             $table->unique('producto_id', 'uk_inv_producto');
         });

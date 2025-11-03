@@ -20,6 +20,9 @@ require __DIR__.'/cierres_caja.php';
 // Turnos de caja
 require __DIR__.'/turnos_caja.php';
 
+// Fidelidad - NUEVO SISTEMA - AGREGAR ESTA LÍNEA
+require __DIR__ . '/fidelidad.php';
+
 // API
 require __DIR__.'/api.php';
 

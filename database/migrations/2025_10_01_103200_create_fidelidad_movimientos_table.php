@@ -10,28 +10,18 @@ return new class extends Migration
     {
         Schema::create('fidelidad_movimientos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('cliente_id')->constrained('users')->onUpdate('cascade')->onDelete('restrict');
-            $table->foreignId('pedido_id')->nullable()->constrained('pedidos')->onUpdate('cascade')->onDelete('set null');
-            $table->enum('tipo', ['acumulo', 'canje']);
+            $table->unsignedBigInteger('cliente_id'); // Cambiar el nombre
             $table->integer('puntos');
-            $table->string('motivo', 200)->nullable();
-            
-            $table->index('cliente_id', 'idx_fid_cliente');
-            $table->index('pedido_id', 'idx_fid_pedido');
-        });
+            $table->string('tipo'); // ganancia, canje, etc.
+            $table->string('descripcion');
+            $table->morphs('origen');
+            $table->timestamps();
 
-        // Renombrar constraints FK con nombres explícitos
-        Schema::table('fidelidad_movimientos', function (Blueprint $table) {
-            $table->dropForeign(['cliente_id']);
-            $table->dropForeign(['pedido_id']);
-            
-            $table->foreign('cliente_id', 'fk_fid_cliente')
-                  ->references('id')->on('users')
-                  ->onUpdate('cascade')->onDelete('restrict');
-            
-            $table->foreign('pedido_id', 'fk_fid_pedido')
-                  ->references('id')->on('pedidos')
-                  ->onUpdate('cascade')->onDelete('set null');
+            // Referenciar user_id en lugar de id
+            $table->foreign('cliente_id')
+                  ->references('user_id')
+                  ->on('clientes_perfil')
+                  ->onDelete('cascade');
         });
     }
 

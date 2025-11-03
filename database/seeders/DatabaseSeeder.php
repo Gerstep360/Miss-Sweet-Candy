@@ -19,6 +19,7 @@ public function run(): void
         HorarioSeeder::class,
         CategoriaSeeder::class,
         ProductoSeeder::class,
+        InventarioSeeder::Class,
         MesaSeeder::class,
         PedidoSeeder::class,
         CobroCajaSeeder::class,
