@@ -42,6 +42,7 @@
                     </div>
                 </div>
                 
+
                 <!-- Tarjeta de puntos principal -->
                 <div class="max-w-md mx-auto mb-8">
                     <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 text-white shadow-2xl shadow-amber-500/30">
@@ -49,13 +50,8 @@
                             <div>
                                 <p class="text-amber-100 text-sm">Tus Puntos</p>
                                 @php
-                                    $misPuntos = 0;
-                                    foreach($puntosClientes as $puntosCliente) {
-                                        if($puntosCliente->cliente_id == auth()->id()) {
-                                            $misPuntos = $puntosCliente->puntos_actuales;
-                                            break;
-                                        }
-                                    }
+                                    // Calcular puntos del usuario actual directamente
+                                    $misPuntos = app('App\Http\Controllers\FidelidadController')->calcularPuntosCliente(auth()->id());
                                 @endphp
                                 <p class="text-4xl font-bold">{{ number_format($misPuntos) }}</p>
                             </div>

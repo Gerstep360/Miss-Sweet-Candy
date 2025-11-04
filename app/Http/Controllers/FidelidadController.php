@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\FidelidadMovimiento;
+use App\Models\FidelidadConfig;
 use App\Models\Pedido;
 use App\Models\User;
-use App\Models\Producto;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -17,14 +16,12 @@ class FidelidadController extends BaseController
 {
     use AuthorizesRequests;
 
-    // Configuración hardcodeada (podría moverse a la base de datos después)
-    private $configFidelidad = [
-        'activo' => true,
-        'puntos_por_dolar' => 10, // 10 puntos por cada $1 gastado
-        'puntos_por_antiguedad_meses' => 12, // Cada 12 meses
-        'puntos_antiguedad_base' => 100, // 100 puntos por cada año
-        'multiplicador_fin_semana' => 1.5, // 50% más los fines de semana
-    ];
+    private $configFidelidad;
+
+    public function __construct()
+    {
+        $this->configFidelidad = FidelidadConfig::getConfig();
+    }
 
     /**
      * Display a listing of puntos for clients
@@ -38,149 +35,104 @@ class FidelidadController extends BaseController
             ->selectRaw('SUM(CASE WHEN tipo = "acumulo" THEN puntos ELSE -puntos END) as puntos_actuales')
             ->groupBy('cliente_id');
 
-        // 🔒 SEGURIDAD: Si es cliente, solo ver sus propios puntos
+        // Filtros de seguridad
         if (auth()->user()->hasRole('cliente')) {
             $query->where('cliente_id', auth()->id());
-        }
-
-        // Filtrar por cliente si se especifica (para administradores)
-        if ($request->get('cliente_id') && auth()->user()->can('gestionar-fidelidad')) {
+        } elseif ($request->get('cliente_id') && auth()->user()->can('gestionar-fidelidad')) {
             $query->where('cliente_id', $request->get('cliente_id'));
         }
 
         $puntosClientes = $query->paginate(15);
         $clientes = User::role('cliente')->get();
 
+        // Calcular puntos del usuario actual para la tarjeta principal
+        $misPuntos = $this->calcularPuntosCliente(auth()->id());
+
         BitacoraController::registrar('ver lista', 'Fidelidad', null);
-        return view('fidelidad.index', compact('puntosClientes', 'clientes'));
+        return view('fidelidad.index', compact('puntosClientes', 'clientes', 'misPuntos'));
     }
 
     /**
-     * Show the form for managing fidelidad configuration (versión simple)
+     * Show the form for managing fidelidad configuration
      */
     public function config()
     {
-        // 🔒 Solo administradores pueden gestionar la configuración
-        try {
-            $this->authorize('gestionar-fidelidad');
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return redirect()->route('403');
-        }
-
+        $this->authorize('gestionar-fidelidad');
+        
         $config = $this->configFidelidad;
-
         BitacoraController::registrar('ver configuracion', 'FidelidadConfig', null);
+        
         return view('fidelidad.config', compact('config'));
     }
 
     /**
-     * Update fidelidad configuration (versión simple)
+     * Update fidelidad configuration
      */
     public function updateConfig(Request $request)
     {
-        // 🔒 Solo administradores pueden gestionar la configuración
-        try {
-            $this->authorize('gestionar-fidelidad');
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return redirect()->route('403');
-        }
+        $this->authorize('gestionar-fidelidad');
 
         $validated = $request->validate([
             'puntos_por_dolar' => 'required|numeric|min:0',
             'puntos_por_antiguedad_meses' => 'nullable|integer|min:0',
             'puntos_antiguedad_base' => 'nullable|integer|min:0',
             'multiplicador_fin_semana' => 'nullable|numeric|min:1',
+            'activo' => 'sometimes|boolean',
         ]);
 
-        // En una versión futura, podrías guardar esto en la base de datos
-        // Por ahora, actualizamos la configuración en memoria (sesión)
-        foreach ($validated as $key => $value) {
-            if (array_key_exists($key, $this->configFidelidad)) {
-                $this->configFidelidad[$key] = $value;
-            }
+        foreach ($validated as $clave => $valor) {
+            FidelidadConfig::setValor($clave, $valor, $this->determinarTipo($valor));
         }
+
+        $this->configFidelidad = FidelidadConfig::getConfig();
 
         BitacoraController::registrar('actualizar configuracion', 'FidelidadConfig', null);
         return back()->with('success', 'Configuración de fidelidad actualizada exitosamente.');
     }
 
-    /**
-     * Show available rewards for redemption (versión simple)
-     */
-    public function recompensas()
+    private function determinarTipo($valor)
     {
-        // Recompensas hardcodeadas
-        $recompensas = [
-            [
-                'id' => 1,
-                'nombre' => 'Descuento 10%',
-                'descripcion' => '10% de descuento en tu próxima compra',
-                'puntos_requeridos' => 100,
-                'tipo' => 'descuento',
-                'valor_descuento' => 10,
-                'activo' => true
-            ],
-            [
-                'id' => 2,
-                'nombre' => 'Descuento 20%',
-                'descripcion' => '20% de descuento en tu próxima compra',
-                'puntos_requeridos' => 200,
-                'tipo' => 'descuento',
-                'valor_descuento' => 20,
-                'activo' => true
-            ],
-            [
-                'id' => 3,
-                'nombre' => 'Producto Gratis',
-                'descripcion' => 'Producto de cortesía del menú',
-                'puntos_requeridos' => 150,
-                'tipo' => 'producto',
-                'activo' => true
-            ]
-        ];
-        
-        $puntosCliente = 0;
-        $puntosTotales = 0;
-        $movimientos = collect();
-
-        if (auth()->user()->hasRole('cliente')) {
-            $puntosCliente = $this->calcularPuntosCliente(auth()->id());
-            $puntosTotales = $puntosCliente;
-            
-            // 🔥 CORRECCIÓN: Cambiar latest() por orderBy('id', 'desc')
-            $movimientos = FidelidadMovimiento::where('cliente_id', auth()->id())
-                ->orderBy('id', 'desc')  // ← CORREGIDO
-                ->get();
-        }
-
-        BitacoraController::registrar('ver recompensas', 'Recompensa', null);
-        return view('fidelidad.recompensas', compact('recompensas', 'puntosCliente', 'movimientos', 'puntosTotales'));
+        if (is_bool($valor)) return 'boolean';
+        if (is_int($valor)) return 'integer';
+        if (is_float($valor)) return 'float';
+        return 'string';
     }
 
     /**
-     * Redeem a reward (versión simple)
+     * Show available rewards for redemption
+     */
+    public function recompensas()
+    {
+        $recompensas = $this->obtenerRecompensasConfiguradas();
+        $programaActivo = $this->isProgramaActivo();
+
+        // Para clientes, calcular sus puntos actuales
+        $puntosCliente = 0;
+        if (auth()->user()->hasRole('cliente')) {
+            $puntosCliente = $this->calcularPuntosCliente(auth()->id());
+        }
+
+        BitacoraController::registrar('ver recompensas', 'Recompensa', null);
+        return view('fidelidad.recompensas', compact('recompensas', 'programaActivo', 'puntosCliente'));
+    }
+
+    /**
+     * Redeem a reward
      */
     public function canjearRecompensa(Request $request, $recompensaId)
     {
-        // Recompensas hardcodeadas
-        $recompensas = [
-            1 => ['nombre' => 'Descuento 10%', 'puntos_requeridos' => 100],
-            2 => ['nombre' => 'Descuento 20%', 'puntos_requeridos' => 200],
-            3 => ['nombre' => 'Producto Gratis', 'puntos_requeridos' => 150]
-        ];
-
-        if (!isset($recompensas[$recompensaId])) {
-            return back()->withErrors(['error' => 'Recompensa no válida.']);
+        if (!$this->isProgramaActivo()) {
+            return back()->withErrors(['error' => 'El programa de fidelidad no está activo actualmente.']);
         }
 
-        $recompensa = $recompensas[$recompensaId];
-        $validated = $request->validate([
-            'cliente_id' => auth()->user()->hasRole('cliente') ? 'nullable' : 'required|exists:users,id',
-        ]);
+        $recompensa = $this->obtenerRecompensaPorId($recompensaId);
+        if (!$recompensa) {
+            return back()->withErrors(['error' => 'Recompensa no válida o no disponible.']);
+        }
 
-        $clienteId = $validated['cliente_id'] ?? auth()->id();
+        $clienteId = auth()->user()->hasRole('cliente') ? auth()->id() : $request->cliente_id;
 
-        // 🔒 SEGURIDAD: Cliente solo puede canjear para sí mismo
+        // Validación de seguridad
         if (auth()->user()->hasRole('cliente') && $clienteId !== auth()->id()) {
             abort(403, 'No tienes permiso para canjear recompensas para otros clientes.');
         }
@@ -188,87 +140,120 @@ class FidelidadController extends BaseController
         DB::beginTransaction();
 
         try {
-            // Calcular puntos del cliente
             $puntosCliente = $this->calcularPuntosCliente($clienteId);
+            $cliente = User::findOrFail($clienteId);
 
-            // Verificar que tenga puntos suficientes
-            if ($puntosCliente < $recompensa['puntos_requeridos']) {
-                throw new \Exception('No tienes puntos suficientes para canjear esta recompensa.');
+            if (!$cliente->hasRole('cliente')) {
+                throw new \Exception('El usuario especificado no es un cliente válido.');
             }
 
-            // Crear movimiento de canje
+            if ($puntosCliente < $recompensa['puntos_requeridos']) {
+                $puntosFaltantes = $recompensa['puntos_requeridos'] - $puntosCliente;
+                throw new \Exception("No tienes puntos suficientes. Te faltan {$puntosFaltantes} puntos.");
+            }
+
             FidelidadMovimiento::create([
                 'cliente_id' => $clienteId,
                 'tipo' => 'canje',
                 'puntos' => $recompensa['puntos_requeridos'],
-                'motivo' => "Canje de recompensa: {$recompensa['nombre']}"
+                'motivo' => "Canje de recompensa: {$recompensa['nombre']}",
             ]);
 
             DB::commit();
 
-            BitacoraController::registrar('canjear recompensa', 'Recompensa', $recompensaId);
-            return back()->with('success', "Recompensa '{$recompensa['nombre']}' canjeada exitosamente.");
+            BitacoraController::registrar(
+                'canjear recompensa', 
+                'Recompensa', 
+                $recompensaId,
+                "Cliente: {$cliente->name}, Recompensa: {$recompensa['nombre']}"
+            );
+
+            return back()->with('success', "¡Recompensa '{$recompensa['nombre']}' canjeada exitosamente!");
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error("Error al canjear recompensa: {$e->getMessage()}");
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
     /**
-     * Show client points history
+     * Show client points history - CORREGIDO CON LAS VARIABLES QUE LA VISTA NECESITA
      */
     public function historial(Request $request, User $cliente = null)
     {
-        // 🔒 SEGURIDAD: Cliente solo puede ver su propio historial
+        // Determinar cliente
         if (auth()->user()->hasRole('cliente')) {
             $cliente = auth()->user();
         } elseif (!$cliente) {
-            // Si es admin y no se especifica cliente, usar el usuario actual
-            if (auth()->user()->can('gestionar-fidelidad')) {
-                $cliente = auth()->user();
-            } else {
-                abort(403, 'No tienes permiso para ver este historial.');
-            }
+            $cliente = auth()->user();
         }
 
-        // Verificar que el admin tenga permiso para ver este cliente
+        // Validar permisos
         if ($cliente->id != auth()->id() && !auth()->user()->can('gestionar-fidelidad')) {
             abort(403, 'No tienes permiso para ver el historial de otros clientes.');
         }
 
         $movimientos = FidelidadMovimiento::with(['pedido'])
             ->where('cliente_id', $cliente->id)
-            ->orderBy('id', 'desc') // 🔥 CORREGIDO
+            ->orderBy('id', 'desc')
             ->paginate(15);
 
         $puntosTotales = $this->calcularPuntosCliente($cliente->id);
 
-        // Cálculos optimizados para el resumen
-        $puntosAcumulados = $movimientos->where('tipo', 'acumulo')->sum('puntos');
-        $puntosCanjeados = $movimientos->where('tipo', 'canje')->sum('puntos');
+        // CÁLCULOS ADICIONALES QUE LA VISTA NECESITA
+        $puntosAcumulados = FidelidadMovimiento::where('cliente_id', $cliente->id)
+            ->where('tipo', 'acumulo')
+            ->sum('puntos');
+            
+        $puntosCanjeados = FidelidadMovimiento::where('cliente_id', $cliente->id)
+            ->where('tipo', 'canje')
+            ->sum('puntos');
 
         BitacoraController::registrar('ver historial', 'FidelidadMovimiento', null);
-        return view('fidelidad.historial', compact('movimientos', 'cliente', 'puntosTotales', 'puntosAcumulados', 'puntosCanjeados'));
+        return view('fidelidad.historial', compact(
+            'movimientos', 
+            'cliente', 
+            'puntosTotales',
+            'puntosAcumulados',
+            'puntosCanjeados'
+        ));
     }
 
     /**
-     * Calculate client points
+     * Calculate client points - MÉTODO UNIFICADO Y CORREGIDO
      */
-    private function calcularPuntosCliente($clienteId): int
+    public function calcularPuntosCliente($clienteId): int
     {
-        return FidelidadMovimiento::where('cliente_id', $clienteId)
-            ->selectRaw('SUM(CASE WHEN tipo = "acumulo" THEN puntos ELSE -puntos END) as puntos_totales')
-            ->value('puntos_totales') ?? 0;
+        try {
+            $result = FidelidadMovimiento::where('cliente_id', $clienteId)
+                ->selectRaw('SUM(CASE WHEN tipo = "acumulo" THEN puntos WHEN tipo = "canje" THEN -puntos ELSE 0 END) as puntos_totales')
+                ->first();
+
+            $puntos = $result->puntos_totales ?? 0;
+
+            // Log para diagnóstico en desarrollo
+            if (app()->environment('local')) {
+                \Log::info("Cálculo de puntos - Cliente: {$clienteId}", [
+                    'puntos_totales' => $puntos,
+                    'cliente_id' => $clienteId
+                ]);
+            }
+
+            return max(0, $puntos);
+
+        } catch (\Exception $e) {
+            \Log::error("Error calculando puntos para cliente {$clienteId}: " . $e->getMessage());
+            return 0;
+        }
     }
 
     /**
      * API: Acumular puntos automáticamente cuando un pedido se completa
-     * Este método se puede llamar desde el PedidoController cuando un pedido cambia a estado "entregado" o "pagado"
      */
     public function acumularPuntosPorPedido(Pedido $pedido)
     {
-        // Verificar pre-condiciones del caso de uso
+        // Validaciones
         if (!$pedido->cliente_id) {
             throw new \Exception('Cliente no identificado para acumular puntos.');
         }
@@ -277,17 +262,12 @@ class FidelidadController extends BaseController
             throw new \Exception('El programa de fidelidad no está activo.');
         }
 
-        // Verificar que el pedido esté en estado completado
         if (!in_array($pedido->estado, ['entregado', 'servido', 'retirado', 'pagado'])) {
             throw new \Exception('El pedido no está completado para acumular puntos.');
         }
 
-        // Verificar que no se hayan acumulado puntos ya para este pedido
-        $existeMovimiento = FidelidadMovimiento::where('pedido_id', $pedido->id)
-            ->where('tipo', 'acumulo')
-            ->exists();
-
-        if ($existeMovimiento) {
+        // Verificar que no se hayan acumulado puntos ya
+        if (FidelidadMovimiento::where('pedido_id', $pedido->id)->where('tipo', 'acumulo')->exists()) {
             throw new \Exception('Ya se acumularon puntos para este pedido.');
         }
 
@@ -296,7 +276,6 @@ class FidelidadController extends BaseController
         try {
             $puntos = $this->calcularPuntosPedido($pedido);
 
-            // Crear movimiento de acumulación
             FidelidadMovimiento::create([
                 'cliente_id' => $pedido->cliente_id,
                 'pedido_id' => $pedido->id,
@@ -317,18 +296,16 @@ class FidelidadController extends BaseController
     }
 
     /**
-     * Calculate points for a completed order based on configuration
+     * Calculate points for a completed order
      */
     private function calcularPuntosPedido(Pedido $pedido): int
     {
         $totalPedido = $pedido->total;
-        
-        // Puntos base por monto gastado
         $puntos = intval($totalPedido * $this->configFidelidad['puntos_por_dolar']);
 
-        // Puntos por antigüedad del cliente
-        if ($this->configFidelidad['puntos_por_antiguedad_meses'] > 0 && 
-            $this->configFidelidad['puntos_antiguedad_base'] > 0) {
+        // Puntos por antigüedad
+        if (($this->configFidelidad['puntos_por_antiguedad_meses'] ?? 0) > 0 && 
+            ($this->configFidelidad['puntos_antiguedad_base'] ?? 0) > 0) {
             
             $antiguedadMeses = $pedido->cliente->created_at->diffInMonths(now());
             $puntosAntiguedad = intval($antiguedadMeses / $this->configFidelidad['puntos_por_antiguedad_meses']) * $this->configFidelidad['puntos_antiguedad_base'];
@@ -336,7 +313,7 @@ class FidelidadController extends BaseController
         }
 
         // Multiplicador por fin de semana
-        if ($this->configFidelidad['multiplicador_fin_semana'] > 1 && now()->isWeekend()) {
+        if (($this->configFidelidad['multiplicador_fin_semana'] ?? 1) > 1 && now()->isWeekend()) {
             $puntos = intval($puntos * $this->configFidelidad['multiplicador_fin_semana']);
         }
 
@@ -348,12 +325,8 @@ class FidelidadController extends BaseController
      */
     public function puntosCajero()
     {
-                // 🔒 Solo administradores pueden gestionar la configuración
-        try {
-            $this->authorize('gestionar-fidelidad');
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            abort(403, 'No tienes permiso para gestionar la configuración de fidelidad.');
-        }
+        $this->authorize('gestionar-fidelidad');
+        
         $recompensas = $this->getRecompensasDisponibles();
         
         BitacoraController::registrar('acceder', 'PuntosCajero', null);
@@ -365,12 +338,7 @@ class FidelidadController extends BaseController
      */
     public function buscarCliente(Request $request)
     {
-        // 🔒 Solo cajeros y admin pueden buscar clientes
-        try {
-            $this->authorize('gestionar-fidelidad');
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            abort(403, 'No tienes permiso para gestionar la configuración de fidelidad.');
-        }
+        $this->authorize('gestionar-fidelidad');
 
         $query = $request->get('q');
         
@@ -379,7 +347,7 @@ class FidelidadController extends BaseController
         }
 
         $clientes = User::role('cliente')
-            ->with(['clientePerfil', 'fidelidadMovimientos', 'pedidos'])
+            ->with(['clientePerfil', 'pedidos'])
             ->where(function($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
                   ->orWhere('email', 'LIKE', "%{$query}%")
@@ -390,16 +358,8 @@ class FidelidadController extends BaseController
             ->limit(10)
             ->get()
             ->map(function($cliente) {
-                // Calcular puntos totales del cliente
-                $puntosAcumulados = $cliente->fidelidadMovimientos
-                    ->where('tipo', 'acumulo')
-                    ->sum('puntos');
-                    
-                $puntosCanjeados = $cliente->fidelidadMovimientos
-                    ->where('tipo', 'canje')
-                    ->sum('puntos');
-                    
-                $puntosTotales = $puntosAcumulados - $puntosCanjeados;
+                // USAR EL MISMO MÉTODO UNIFICADO para consistencia
+                $puntosTotales = $this->calcularPuntosCliente($cliente->id);
                 
                 return [
                     'id' => $cliente->id,
@@ -408,8 +368,6 @@ class FidelidadController extends BaseController
                     'telefono' => $cliente->clientePerfil->telefono ?? 'No registrado',
                     'direccion' => $cliente->clientePerfil->direccion ?? 'No registrada',
                     'puntos_totales' => $puntosTotales,
-                    'puntos_acumulados' => $puntosAcumulados,
-                    'puntos_canjeados' => $puntosCanjeados,
                     'total_pedidos' => $cliente->pedidos->count() ?? 0,
                     'cliente_desde' => $cliente->created_at->format('M Y')
                 ];
@@ -423,12 +381,7 @@ class FidelidadController extends BaseController
      */
     public function getHistorialCliente($clienteId)
     {
-        // 🔒 Solo administradores pueden gestionar la configuración
-        try {
-            $this->authorize('gestionar-fidelidad');
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            abort(403, 'No tienes permiso para gestionar la configuración de fidelidad.');
-        }
+        $this->authorize('gestionar-fidelidad');
 
         $movimientos = FidelidadMovimiento::with('pedido')
             ->where('cliente_id', $clienteId)
@@ -442,8 +395,7 @@ class FidelidadController extends BaseController
                     'puntos' => $movimiento->puntos,
                     'descripcion' => $movimiento->motivo,
                     'fecha' => $movimiento->created_at->format('d/m/Y H:i'),
-                    'pedido_id' => $movimiento->pedido_id,
-                    'recompensa_canjeada' => $movimiento->tipo === 'canje' ? 'Canje de puntos' : null
+                    'pedido_id' => $movimiento->pedido_id
                 ];
             });
 
@@ -451,184 +403,11 @@ class FidelidadController extends BaseController
     }
 
     /**
-     * Canjear puntos desde el panel de cajero
-     */
-    public function canjearPuntosCajero(Request $request)
-    {
-        // 🔒 Solo cajeros y admin pueden canjear puntos
-        try {
-            $this->authorize('gestionar-fidelidad');
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No autorizado para realizar esta acción'
-            ], 403);
-        }
-
-        $request->validate([
-            'cliente_id' => 'required|exists:users,id',
-            'puntos' => 'required|integer|min:1',
-            'descripcion' => 'required|string|max:255',
-            'recompensa_id' => 'nullable|string'
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            $cliente = User::findOrFail($request->cliente_id);
-            
-            // Verificar que el cliente tenga suficientes puntos
-            $puntosTotales = $this->calcularPuntosCliente($cliente->id);
-            
-            if ($puntosTotales < $request->puntos) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El cliente no tiene suficientes puntos. Puntos disponibles: ' . $puntosTotales
-                ], 422);
-            }
-
-            // Crear movimiento de canje
-            $movimiento = FidelidadMovimiento::create([
-                'cliente_id' => $cliente->id,
-                'puntos' => $request->puntos,
-                'tipo' => 'canje',
-                'motivo' => $request->descripcion,
-                'origen_id' => auth()->id(),
-                'origen_type' => User::class,
-            ]);
-
-            // Aplicar recompensa si se especifica
-            if ($request->recompensa_id) {
-                $this->aplicarRecompensa($request->recompensa_id, $cliente, $request->puntos);
-            }
-
-            DB::commit();
-
-            // Obtener datos actualizados del cliente
-            $clienteData = $this->getDatosClienteParaCajero($cliente->id);
-            $historial = $this->getHistorialCliente($cliente->id)->getData();
-
-            BitacoraController::registrar('canjear puntos cajero', 'FidelidadMovimiento', $movimiento->id, "Cliente: {$cliente->name}");
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Puntos canjeados exitosamente',
-                'cliente' => $clienteData,
-                'historial' => $historial
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al canjear puntos: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Obtener datos completos de un cliente para el cajero
-     */
-    private function getDatosClienteParaCajero($clienteId)
-    {
-        $cliente = User::with(['clientePerfil', 'pedidos'])->find($clienteId);
-        
-        if (!$cliente) {
-            return null;
-        }
-
-        $puntosAcumulados = FidelidadMovimiento::where('cliente_id', $clienteId)
-            ->where('tipo', 'acumulo')
-            ->sum('puntos');
-            
-        $puntosCanjeados = FidelidadMovimiento::where('cliente_id', $clienteId)
-            ->where('tipo', 'canje')
-            ->sum('puntos');
-            
-        $puntosTotales = $puntosAcumulados - $puntosCanjeados;
-
-        return [
-            'id' => $cliente->id,
-            'name' => $cliente->name,
-            'email' => $cliente->email,
-            'telefono' => $cliente->clientePerfil->telefono ?? 'No registrado',
-            'direccion' => $cliente->clientePerfil->direccion ?? 'No registrada',
-            'cliente_desde' => $cliente->created_at->format('M Y'),
-            'total_pedidos' => $cliente->pedidos->count(),
-            'puntos_totales' => $puntosTotales,
-            'puntos_acumulados' => $puntosAcumulados,
-            'puntos_canjeados' => $puntosCanjeados
-        ];
-    }
-
-    /**
-     * Obtener recompensas disponibles
-     */
-    private function getRecompensasDisponibles()
-    {
-        return [
-            [
-                'id' => 'desc_10',
-                'nombre' => '10% de Descuento',
-                'descripcion' => 'Descuento del 10% en tu próximo pedido',
-                'puntos_requeridos' => 100,
-                'tipo' => 'descuento',
-                'valor_descuento' => 10,
-                'activo' => true
-            ],
-            [
-                'id' => 'desc_20',
-                'nombre' => '20% de Descuento',
-                'descripcion' => 'Descuento del 20% en tu próximo pedido',
-                'puntos_requeridos' => 200,
-                'tipo' => 'descuento',
-                'valor_descuento' => 20,
-                'activo' => true
-            ],
-            [
-                'id' => 'cafe_gratis',
-                'nombre' => 'Café Gratis',
-                'descripcion' => 'Café especial de la casa gratis',
-                'puntos_requeridos' => 50,
-                'tipo' => 'producto',
-                'activo' => true
-            ],
-            [
-                'id' => 'postre_gratis',
-                'nombre' => 'Postre Gratis',
-                'descripcion' => 'Postre del día gratis',
-                'puntos_requeridos' => 80,
-                'tipo' => 'producto',
-                'activo' => true
-            ]
-        ];
-    }
-
-    /**
-     * Aplicar recompensa (lógica básica)
-     */
-    private function aplicarRecompensa($recompensaId, $cliente, $puntos)
-    {
-        // Aquí puedes implementar la lógica específica para cada recompensa
-        // Por ejemplo: generar cupones, aplicar descuentos automáticos, etc.
-        
-        \Log::info("Recompensa aplicada por cajero: {$recompensaId} para cliente {$cliente->name} por {$puntos} puntos");
-        
-        // Por ahora solo registramos en el log
-        // En una implementación completa, aquí generarías cupones o aplicarías descuentos
-    }
-
-    /**
      * Manual points adjustment (for administrators)
      */
     public function ajustarPuntos(Request $request)
     {
-        // 🔒 Solo administradores pueden ajustar puntos manualmente
-        try {
-            $this->authorize('gestionar-fidelidad');
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return redirect()->route('403');
-        }
+        $this->authorize('gestionar-fidelidad');
 
         $validated = $request->validate([
             'cliente_id' => 'required|exists:users,id',
@@ -641,11 +420,11 @@ class FidelidadController extends BaseController
 
         try {
             FidelidadMovimiento::create($validated);
-
             DB::commit();
 
             $cliente = User::find($validated['cliente_id']);
             BitacoraController::registrar('ajustar puntos manualmente', 'FidelidadMovimiento', null, "Cliente: {$cliente->name}");
+            
             return back()->with('success', 'Puntos ajustados manualmente exitosamente.');
 
         } catch (\Exception $e) {
@@ -659,10 +438,9 @@ class FidelidadController extends BaseController
      */
     public function getPuntosCliente(User $cliente = null)
     {
-        // 🔒 SEGURIDAD: Cliente solo puede consultar sus propios puntos
         if (auth()->user()->hasRole('cliente')) {
             $cliente = auth()->user();
-        } elseif (!$cliente && auth()->user()->can('gestionar-fidelidad')) {
+        } elseif (!$cliente) {
             return response()->json(['error' => 'Cliente no especificado'], 400);
         }
 
@@ -680,6 +458,95 @@ class FidelidadController extends BaseController
      */
     public function isProgramaActivo()
     {
-        return $this->configFidelidad['activo'];
+        return $this->configFidelidad['activo'] ?? false;
+    }
+
+    /**
+     * Obtener recompensas configuradas
+     */
+    private function obtenerRecompensasConfiguradas()
+    {
+        $recompensas = [
+            [
+                'id' => 1,
+                'nombre' => 'Descuento 10%',
+                'descripcion' => '10% de descuento en tu próxima compra',
+                'puntos_requeridos' => (int) FidelidadConfig::getValor('recompensa_descuento_10_puntos', 100),
+                'tipo' => 'descuento',
+                'activo' => true
+            ],
+            [
+                'id' => 2,
+                'nombre' => 'Descuento 20%',
+                'descripcion' => '20% de descuento en tu próxima compra',
+                'puntos_requeridos' => (int) FidelidadConfig::getValor('recompensa_descuento_20_puntos', 200),
+                'tipo' => 'descuento',
+                'activo' => true
+            ],
+            [
+                'id' => 3,
+                'nombre' => 'Producto Gratis',
+                'descripcion' => 'Producto de cortesía del menú',
+                'puntos_requeridos' => (int) FidelidadConfig::getValor('recompensa_producto_gratis_puntos', 150),
+                'tipo' => 'producto',
+                'activo' => true
+            ]
+        ];
+        
+        return array_filter($recompensas, function($recompensa) {
+            return $recompensa['activo'] === true && $recompensa['puntos_requeridos'] > 0;
+        });
+    }
+
+    /**
+     * Obtener recompensa por ID
+     */
+    private function obtenerRecompensaPorId($recompensaId)
+    {
+        $recompensas = [
+            1 => [
+                'nombre' => 'Descuento 10%', 
+                'puntos_requeridos' => (int) FidelidadConfig::getValor('recompensa_descuento_10_puntos', 100),
+                'tipo' => 'descuento',
+                'activo' => true
+            ],
+            2 => [
+                'nombre' => 'Descuento 20%', 
+                'puntos_requeridos' => (int) FidelidadConfig::getValor('recompensa_descuento_20_puntos', 200),
+                'tipo' => 'descuento',
+                'activo' => true
+            ],
+            3 => [
+                'nombre' => 'Producto Gratis', 
+                'puntos_requeridos' => (int) FidelidadConfig::getValor('recompensa_producto_gratis_puntos', 150),
+                'tipo' => 'producto',
+                'activo' => true
+            ]
+        ];
+
+        return $recompensas[$recompensaId] ?? null;
+    }
+
+    /**
+     * Obtener recompensas disponibles para cajero
+     */
+    private function getRecompensasDisponibles()
+    {
+        return [
+            [
+                'id' => 'desc_10',
+                'nombre' => '10% de Descuento',
+                'descripcion' => 'Descuento del 10% en tu próximo pedido',
+                'puntos_requeridos' => (int) ($this->configFidelidad['recompensa_descuento_10_puntos'] ?? 100),
+                'tipo' => 'descuento'
+            ],
+            [
+                'id' => 'desc_20',
+                'nombre' => '20% de Descuento',
+                'descripcion' => 'Descuento del 20% en tu próximo pedido',
+                'puntos_requeridos' => (int) ($this->configFidelidad['recompensa_descuento_20_puntos'] ?? 200),
+                'tipo' => 'descuento'
+            ]
+        ];
     }
 }

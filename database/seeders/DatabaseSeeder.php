@@ -24,6 +24,7 @@ public function run(): void
         PedidoSeeder::class,
         CobroCajaSeeder::class,
         NotificacionSeeder::class,
+        FidelidadConfigSeeder::Class,
     ]);
 }
 }
