@@ -37,11 +37,11 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="md:col-span-2">
-                        <label class="block text-zinc-300 font-medium mb-2">Buscar por nombre, email o teléfono</label>
+                        <label class="block text-zinc-300 font-medium mb-2">Buscar por nombre o email</label>
                         <div class="relative">
                             <input type="text" 
                                    id="searchInput"
-                                   placeholder="Ej: Juan Pérez, juan@email.com, 555-1234..."
+                                   placeholder="Ej: Juan Pérez, juan@email.com..."
                                    class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-11">
                             <svg class="w-5 h-5 text-zinc-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -84,26 +84,26 @@
                         <div class="bg-gradient-to-br from-zinc-800/50 to-zinc-700/30 rounded-xl p-6 border border-zinc-700/50">
                             <div class="flex items-start gap-4">
                                 <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <span class="text-white font-bold text-lg" id="clientInitials">JD</span>
+                                    <span class="text-white font-bold text-lg" id="clientInitials">--</span>
                                 </div>
                                 <div class="flex-1">
-                                    <h3 class="text-xl font-bold text-white mb-2" id="clientName">Juan David Pérez</h3>
+                                    <h3 class="text-xl font-bold text-white mb-2" id="clientName">Selecciona un cliente</h3>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <span class="text-zinc-400">Email:</span>
-                                            <span class="text-white ml-2" id="clientEmail">juan@email.com</span>
+                                            <span class="text-white ml-2" id="clientEmail">-</span>
                                         </div>
                                         <div>
                                             <span class="text-zinc-400">Teléfono:</span>
-                                            <span class="text-white ml-2" id="clientPhone">555-1234</span>
+                                            <span class="text-white ml-2" id="clientPhone">No registrado</span>
                                         </div>
                                         <div>
                                             <span class="text-zinc-400">Cliente desde:</span>
-                                            <span class="text-white ml-2" id="clientSince">Ene 2024</span>
+                                            <span class="text-white ml-2" id="clientSince">-</span>
                                         </div>
                                         <div>
                                             <span class="text-zinc-400">Total Pedidos:</span>
-                                            <span class="text-white ml-2" id="totalOrders">15</span>
+                                            <span class="text-white ml-2" id="totalOrders">0</span>
                                         </div>
                                     </div>
                                 </div>
@@ -174,7 +174,7 @@
                 </div>
                 <h3 class="text-xl font-bold text-white mb-2">Busca un cliente</h3>
                 <p class="text-zinc-400 max-w-md mx-auto">
-                    Ingresa el nombre, email o teléfono de un cliente para consultar sus puntos y realizar canjes.
+                    Ingresa el nombre o email de un cliente para consultar sus puntos y realizar canjes.
                 </p>
             </div>
         </div>
@@ -270,7 +270,6 @@
             const emptyState = document.getElementById('emptyState');
             const redeemBtn = document.getElementById('redeemBtn');
             const redeemModal = document.getElementById('redeemModal');
-            const redeemForm = document.getElementById('redeemForm');
             const availablePoints = document.getElementById('availablePoints');
             const summaryCurrent = document.getElementById('summaryCurrent');
             const summaryRedeem = document.getElementById('summaryRedeem');
@@ -303,50 +302,21 @@
                 const query = searchInput.value.trim();
                 if (!query) return;
 
-                // Simulación de búsqueda - reemplazar con llamada AJAX real
-                simulateSearch(query);
-            }
-
-            function simulateSearch(query) {
-                // Esto es una simulación - reemplazar con llamada AJAX real a tu backend
-                const mockClients = [
-                    {
-                        id: 1,
-                        name: 'Juan David Pérez',
-                        email: 'juan@email.com',
-                        phone: '555-1234',
-                        since: 'Ene 2024',
-                        total_orders: 15,
-                        points: 1250,
-                        movements: [
-                            { date: '2024-01-15', type: 'acumulo', desc: 'Compra #001', points: 100, balance: 100 },
-                            { date: '2024-01-20', type: 'acumulo', desc: 'Compra #002', points: 150, balance: 250 },
-                            { date: '2024-02-01', type: 'canje', desc: 'Descuento 10%', points: -200, balance: 50 },
-                            { date: '2024-02-15', type: 'acumulo', desc: 'Compra #015', points: 1200, balance: 1250 }
-                        ]
-                    },
-                    {
-                        id: 2,
-                        name: 'María González',
-                        email: 'maria@email.com',
-                        phone: '555-5678',
-                        since: 'Feb 2024',
-                        total_orders: 8,
-                        points: 450,
-                        movements: [
-                            { date: '2024-02-10', type: 'acumulo', desc: 'Compra #001', points: 50, balance: 50 },
-                            { date: '2024-02-20', type: 'acumulo', desc: 'Compra #008', points: 400, balance: 450 }
-                        ]
+                fetch('/fidelidad/buscar-cliente?q=' + encodeURIComponent(query), {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
-                ];
-
-                const filteredClients = mockClients.filter(client => 
-                    client.name.toLowerCase().includes(query.toLowerCase()) ||
-                    client.email.toLowerCase().includes(query.toLowerCase()) ||
-                    client.phone.includes(query)
-                );
-
-                displaySearchResults(filteredClients);
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displaySearchResults(data);
+                })
+                .catch(error => {
+                    console.error('Error buscando clientes:', error);
+                    displaySearchResults([]);
+                });
             }
 
             function displaySearchResults(clients) {
@@ -364,15 +334,15 @@
                         <div class="p-4 hover:bg-zinc-800/50 cursor-pointer transition-colors client-result" data-client='${JSON.stringify(client)}'>
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <span class="text-white font-medium text-sm">${getInitials(client.name)}</span>
+                                    <span class="text-white font-medium text-sm">${client.initials || getInitials(client.name)}</span>
                                 </div>
                                 <div class="flex-1">
                                     <h4 class="text-white font-medium">${client.name}</h4>
-                                    <p class="text-zinc-400 text-sm">${client.email} • ${client.phone}</p>
+                                    <p class="text-zinc-400 text-sm">${client.email} • ${client.telefono || 'No registrado'}</p>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-amber-400 font-bold">${client.points} pts</span>
-                                    <p class="text-zinc-400 text-xs">${client.total_orders} pedidos</p>
+                                    <span class="text-amber-400 font-bold">${client.puntos_totales} pts</span>
+                                    <p class="text-zinc-400 text-xs">${client.total_pedidos} pedidos</p>
                                 </div>
                             </div>
                         </div>
@@ -398,42 +368,82 @@
                 emptyState.classList.add('hidden');
                 
                 // Mostrar información del cliente
-                document.getElementById('clientInitials').textContent = getInitials(client.name);
+                document.getElementById('clientInitials').textContent = client.initials || getInitials(client.name);
                 document.getElementById('clientName').textContent = client.name;
                 document.getElementById('clientEmail').textContent = client.email;
-                document.getElementById('clientPhone').textContent = client.phone;
-                document.getElementById('clientSince').textContent = client.since;
-                document.getElementById('totalOrders').textContent = client.total_orders;
-                document.getElementById('totalPoints').textContent = client.points.toLocaleString();
+                document.getElementById('clientPhone').textContent = client.telefono || 'No registrado';
+                document.getElementById('clientSince').textContent = client.cliente_desde;
+                document.getElementById('totalOrders').textContent = client.total_pedidos;
+                document.getElementById('totalPoints').textContent = client.puntos_totales.toLocaleString();
                 
-                // Mostrar historial
-                displayMovements(client.movements);
+                // Cargar historial del cliente
+                loadClientHistory(client.id);
                 
                 // Mostrar secciones
                 clientInfo.classList.remove('hidden');
                 movementsHistory.classList.remove('hidden');
             }
 
+            function loadClientHistory(clientId) {
+                fetch('/fidelidad/historial-cliente/' + clientId, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(movements => {
+                    displayMovements(movements);
+                })
+                .catch(error => {
+                    console.error('Error cargando historial:', error);
+                    displayMovements([]);
+                });
+            }
+
             function displayMovements(movements) {
                 const tableBody = document.getElementById('movementsTable');
-                tableBody.innerHTML = movements.map(mov => `
+                
+                if (!movements || movements.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-zinc-400">
+                                No hay movimientos registrados
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                // Calcular saldos acumulados
+                let saldoAcumulado = 0;
+                const movementsWithBalance = movements.map(mov => {
+                    saldoAcumulado += mov.tipo === 'acumulo' ? mov.puntos : -mov.puntos;
+                    return {
+                        ...mov,
+                        saldo: saldoAcumulado
+                    };
+                }).reverse(); // Mostrar más recientes primero
+
+                tableBody.innerHTML = movementsWithBalance.map(mov => `
                     <tr class="border-b border-zinc-800 hover:bg-zinc-800/30 transition-colors">
-                        <td class="py-3 px-4 text-zinc-300 text-sm">${formatDate(mov.date)}</td>
+                        <td class="py-3 px-4 text-zinc-300 text-sm">${mov.fecha}</td>
                         <td class="py-3 px-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                mov.type === 'acumulo' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                mov.tipo === 'acumulo' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
                             }">
-                                ${mov.type === 'acumulo' ? 'Acumulación' : 'Canje'}
+                                ${mov.tipo === 'acumulo' ? 'Acumulación' : 'Canje'}
                             </span>
                         </td>
-                        <td class="py-3 px-4 text-zinc-300 text-sm">${mov.desc}</td>
+                        <td class="py-3 px-4 text-zinc-300 text-sm">${mov.descripcion}</td>
                         <td class="py-3 px-4 text-right text-sm ${
-                            mov.points > 0 ? 'text-green-400' : 'text-red-400'
+                            mov.tipo === 'acumulo' ? 'text-green-400' : 'text-red-400'
                         } font-medium">
-                            ${mov.points > 0 ? '+' : ''}${mov.points}
+                            ${mov.tipo === 'acumulo' ? '+' : '-'}${mov.puntos}
                         </td>
                         <td class="py-3 px-4 text-right text-amber-400 text-sm font-medium">
-                            ${mov.balance.toLocaleString()}
+                            ${mov.saldo.toLocaleString()}
                         </td>
                     </tr>
                 `).join('');
@@ -444,8 +454,8 @@
 
                 modalClientInfo.textContent = `Cliente: ${currentClient.name}`;
                 redeemClientId.value = currentClient.id;
-                availablePoints.textContent = currentClient.points.toLocaleString();
-                summaryCurrent.textContent = currentClient.points.toLocaleString();
+                availablePoints.textContent = currentClient.puntos_totales.toLocaleString();
+                summaryCurrent.textContent = currentClient.puntos_totales.toLocaleString();
                 redeemPoints.value = '';
                 redeemDescription.value = '';
                 updateRedeemSummary();
@@ -459,7 +469,7 @@
 
             function updateRedeemSummary() {
                 const points = parseInt(redeemPoints.value) || 0;
-                const current = currentClient.points;
+                const current = currentClient.puntos_totales;
                 
                 summaryRedeem.textContent = points.toLocaleString();
                 summaryNew.textContent = (current - points).toLocaleString();
@@ -483,7 +493,7 @@
                     return;
                 }
 
-                if (points > currentClient.points) {
+                if (points > currentClient.puntos_totales) {
                     alert('El cliente no tiene suficientes puntos');
                     return;
                 }
@@ -493,37 +503,75 @@
                     return;
                 }
 
-                // Aquí iría la llamada AJAX real al backend
-                simulateRedeem(points, description);
+                // Enviar canje al servidor
+                fetch('/fidelidad/canjear-puntos-cajero', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        cliente_id: currentClient.id,
+                        puntos: points,
+                        descripcion: description
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualizar puntos del cliente
+                        currentClient.puntos_totales -= points;
+                        document.getElementById('totalPoints').textContent = currentClient.puntos_totales.toLocaleString();
+                        
+                        // Recargar historial
+                        loadClientHistory(currentClient.id);
+                        
+                        // Mostrar mensaje de éxito
+                        showNotification('Canje realizado exitosamente', 'success');
+                        
+                        closeRedeemModal();
+                    } else {
+                        showNotification(data.message || 'Error al realizar el canje', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error realizando canje:', error);
+                    showNotification('Error al realizar el canje', 'error');
+                });
             }
 
-            function simulateRedeem(points, description) {
-                // Simulación - reemplazar con llamada AJAX real
-                alert(`Canje realizado:\n${points} puntos\n${description}`);
+            function showNotification(message, type = 'info') {
+                // Crear notificación
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transition-all duration-300 ${
+                    type === 'success' ? 'bg-green-500/90 text-white' : 
+                    type === 'error' ? 'bg-red-500/90 text-white' : 
+                    'bg-blue-500/90 text-white'
+                }`;
+                notification.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${
+                                type === 'success' ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"' :
+                                type === 'error' ? 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"' :
+                                'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                            }"/>
+                        </svg>
+                        <span>${message}</span>
+                    </div>
+                `;
                 
-                // Actualizar puntos del cliente (en una implementación real, esto vendría del backend)
-                currentClient.points -= points;
-                currentClient.movements.unshift({
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'canje',
-                    desc: description,
-                    points: -points,
-                    balance: currentClient.points
-                });
-
-                // Actualizar la vista
-                document.getElementById('totalPoints').textContent = currentClient.points.toLocaleString();
-                displayMovements(currentClient.movements);
+                document.body.appendChild(notification);
                 
-                closeRedeemModal();
+                // Remover después de 3 segundos
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
             }
 
             function getInitials(name) {
                 return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-            }
-
-            function formatDate(dateString) {
-                return new Date(dateString).toLocaleDateString('es-ES');
             }
         });
     </script>

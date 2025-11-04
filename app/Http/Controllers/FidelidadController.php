@@ -178,7 +178,7 @@ class FidelidadController extends BaseController
     }
 
     /**
-     * Show client points history - CORREGIDO CON LAS VARIABLES QUE LA VISTA NECESITA
+     * Show client points history
      */
     public function historial(Request $request, User $cliente = null)
     {
@@ -231,14 +231,6 @@ class FidelidadController extends BaseController
                 ->first();
 
             $puntos = $result->puntos_totales ?? 0;
-
-            // Log para diagnóstico en desarrollo
-            if (app()->environment('local')) {
-                \Log::info("Cálculo de puntos - Cliente: {$clienteId}", [
-                    'puntos_totales' => $puntos,
-                    'cliente_id' => $clienteId
-                ]);
-            }
 
             return max(0, $puntos);
 
@@ -334,7 +326,7 @@ class FidelidadController extends BaseController
     }
 
     /**
-     * Buscar clientes para el cajero (para AJAX)
+     * Buscar clientes para el cajero (para AJAX) - CORREGIDO
      */
     public function buscarCliente(Request $request)
     {
@@ -347,29 +339,28 @@ class FidelidadController extends BaseController
         }
 
         $clientes = User::role('cliente')
-            ->with(['clientePerfil', 'pedidos'])
+            ->with(['misPedidos']) // RELACIÓN CORREGIDA - usar misPedidos en lugar de pedidos
             ->where(function($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
-                  ->orWhere('email', 'LIKE', "%{$query}%")
-                  ->orWhereHas('clientePerfil', function($q2) use ($query) {
-                      $q2->where('telefono', 'LIKE', "%{$query}%");
-                  });
+                  ->orWhere('email', 'LIKE', "%{$query}%");
+                  // Eliminada la búsqueda por teléfono ya que no existe en el modelo
             })
             ->limit(10)
             ->get()
             ->map(function($cliente) {
-                // USAR EL MISMO MÉTODO UNIFICADO para consistencia
+                // USAR EL MÉTODO UNIFICADO para consistencia
                 $puntosTotales = $this->calcularPuntosCliente($cliente->id);
                 
                 return [
                     'id' => $cliente->id,
                     'name' => $cliente->name,
                     'email' => $cliente->email,
-                    'telefono' => $cliente->clientePerfil->telefono ?? 'No registrado',
-                    'direccion' => $cliente->clientePerfil->direccion ?? 'No registrada',
+                    'telefono' => 'No registrado', // No existe teléfono en el modelo User
+                    'direccion' => 'No registrada', // No existe dirección en el modelo User
                     'puntos_totales' => $puntosTotales,
-                    'total_pedidos' => $cliente->pedidos->count() ?? 0,
-                    'cliente_desde' => $cliente->created_at->format('M Y')
+                    'total_pedidos' => $cliente->misPedidos->count() ?? 0, // RELACIÓN CORREGIDA
+                    'cliente_desde' => $cliente->created_at->format('M Y'),
+                    'initials' => $cliente->initials() // Usar el método initials del modelo
                 ];
             });
 

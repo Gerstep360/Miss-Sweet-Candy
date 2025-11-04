@@ -18,6 +18,14 @@
                     </div>
                     
                     <div class="flex items-center gap-4">
+                        <!-- Mostrar puntos del cliente si está logueado como cliente -->
+                        @if(auth()->user()->hasRole('cliente') && isset($puntosCliente))
+                        <div class="bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg px-4 py-2 text-white">
+                            <div class="text-sm">Tus Puntos</div>
+                            <div class="text-xl font-bold">{{ number_format($puntosCliente) }}</div>
+                        </div>
+                        @endif
+                        
                         <a href="{{ route('fidelidad.index') }}" 
                         class="bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2">
                             <i class="fas fa-arrow-left"></i>
@@ -26,6 +34,21 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ALERTA SI EL PROGRAMA NO ESTÁ ACTIVO -->
+            @if(!$programaActivo)
+            <div class="dashboard-card mb-6 bg-red-500/10 border-red-500/30">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+                    <div>
+                        <h3 class="text-red-400 font-semibold">Programa de Fidelidad Inactivo</h3>
+                        <p class="text-zinc-300 text-sm mt-1">
+                            El programa de fidelidad no está activo actualmente. Las recompensas no están disponibles para canje.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             <!-- INFORMACIÓN PARA CLIENTES -->
             @if(auth()->user()->hasRole('cliente'))
@@ -50,9 +73,9 @@
                     Catálogo de Recompensas
                 </h2>
                 
-                @if(count($recompensasDisponibles) > 0)
+                @if(count($recompensas) > 0 && $programaActivo)
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($recompensasDisponibles as $recompensa)
+                    @foreach($recompensas as $recompensa)
                     <div class="dashboard-card hover:border-purple-500/30 transition-all duration-300 group">
                         <!-- Badge de tipo -->
                         <div class="flex justify-between items-start mb-4">
@@ -99,7 +122,7 @@
                             @if($recompensa['tipo'] === 'descuento')
                             <div class="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
                                 <span class="text-green-400 font-semibold text-lg">
-                                    {{ $recompensa['valor_descuento'] }}% DE DESCUENTO
+                                    {{ $recompensa['valor_descuento'] ?? 0 }}% DE DESCUENTO
                                 </span>
                                 <p class="text-zinc-300 text-sm mt-1">En tu próxima compra</p>
                             </div>
@@ -119,10 +142,39 @@
                                 <i class="fas fa-store"></i>
                                 <span>Acércate al mostrador para canjear</span>
                             </div>
+                            
+                            <!-- Mostrar si el cliente tiene puntos suficientes -->
+                            @if(auth()->user()->hasRole('cliente') && isset($puntosCliente))
+                                @if($puntosCliente >= $recompensa['puntos_requeridos'])
+                                <div class="mt-2 flex items-center gap-2 text-emerald-400 text-sm">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Tienes puntos suficientes</span>
+                                </div>
+                                @else
+                                <div class="mt-2 flex items-center gap-2 text-amber-400 text-sm">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Te faltan {{ number_format($recompensa['puntos_requeridos'] - $puntosCliente) }} puntos</span>
+                                </div>
+                                @endif
+                            @endif
                         </div>
                     </div>
                     @endforeach
                 </div>
+                
+                @elseif(!$programaActivo)
+                <!-- Programa inactivo -->
+                <div class="dashboard-card text-center py-16">
+                    <div class="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-pause-circle text-zinc-600 text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Programa de Fidelidad Inactivo</h3>
+                    <p class="text-zinc-400 mb-6 max-w-md mx-auto">
+                        El programa de fidelidad no está activo actualmente. 
+                        Vuelve pronto cuando el programa esté disponible.
+                    </p>
+                </div>
+                
                 @else
                 <!-- Estado vacío -->
                 <div class="dashboard-card text-center py-16">
@@ -160,6 +212,12 @@
                             <i class="fas fa-check text-green-400"></i>
                             Canjea cuando tengas suficientes puntos
                         </li>
+                        @if(auth()->user()->hasRole('cliente') && isset($puntosCliente))
+                        <li class="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-700">
+                            <i class="fas fa-star text-amber-400"></i>
+                            <span class="font-semibold text-amber-400">Tus puntos actuales: {{ number_format($puntosCliente) }}</span>
+                        </li>
+                        @endif
                     </ul>
                 </div>
 
@@ -182,6 +240,10 @@
                         <li class="flex items-center gap-2">
                             <i class="fas fa-3 text-amber-400"></i>
                             Menciona al cajero tu elección
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fas fa-4 text-amber-400"></i>
+                            El cajero procesará tu canje
                         </li>
                     </ul>
                 </div>
