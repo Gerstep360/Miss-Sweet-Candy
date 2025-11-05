@@ -370,7 +370,7 @@
 
     {{-- Footer --}}
     <div class="footer">
-        <p>Cafetería - Sistema de Gestión de Ventas</p>
+        <p>Cafetería - Miss Sweet Candy</p>
         <p>Este documento es un reporte generado automáticamente el {{ now()->format('d/m/Y \a \l\a\s H:i:s') }}</p>
     </div>
 </body>

@@ -238,38 +238,38 @@
 
       <!-- Especial del Día -->
       @if($especialHoy)
-      <section class="mt-8 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6">
+      <section class="mt-6 sm:mt-8 bg-amber-500/10 border border-amber-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-6">
         <div class="flex items-center gap-2 mb-4">
-          <span class="text-2xl">⭐</span>
-          <h2 class="text-xl font-bold">Especial del Día</h2>
+          <span class="text-xl sm:text-2xl">⭐</span>
+          <h2 class="text-lg sm:text-xl font-bold">Especial del Día</h2>
           <span class="ml-2 text-[10px] uppercase bg-amber-400/20 text-amber-300 border border-amber-300/30 px-2 py-0.5 rounded-full tracking-wide">Hoy</span>
         </div>
-        <div class="grid md:grid-cols-12 gap-6 items-center">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 items-center">
           <div class="md:col-span-3">
-            <div class="w-full aspect-square bg-amber-500/20 rounded-2xl overflow-hidden">
+            <div class="w-full aspect-square bg-amber-500/20 rounded-xl sm:rounded-2xl overflow-hidden">
               @if($especialHoy->producto->imagen_url)
                 <img src="{{ $especialHoy->producto->imagen_url }}" alt="{{ $especialHoy->producto->nombre }}" class="w-full h-full object-cover" loading="lazy">
               @else
-                <div class="w-full h-full grid place-items-center"><span class="text-6xl">☕</span></div>
+                <div class="w-full h-full grid place-items-center"><span class="text-4xl sm:text-6xl">☕</span></div>
               @endif
             </div>
           </div>
           <div class="md:col-span-6">
-            <h3 class="text-2xl font-bold mb-2">{{ $especialHoy->producto->nombre }}</h3>
-            <p class="text-zinc-300 mb-4">{{ $especialHoy->getDescripcionCompleta() }}</p>
-            <div class="flex items-center gap-4 flex-wrap">
+            <h3 class="text-xl sm:text-2xl font-bold mb-2">{{ $especialHoy->producto->nombre }}</h3>
+            <p class="text-zinc-300 text-sm sm:text-base mb-3 sm:mb-4 line-clamp-2">{{ $especialHoy->getDescripcionCompleta() }}</p>
+            <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
               @if($especialHoy->tieneDescuento())
-                <span class="text-zinc-400 line-through text-lg">${{ number_format($especialHoy->producto->precio, 2) }}</span>
-                <span class="text-4xl font-extrabold text-amber-400">${{ number_format($especialHoy->getPrecioFinal(), 2) }}</span>
-                <span class="bg-red-500 text-white text-xs px-3 py-1.5 rounded-full font-bold">Ahorra ${{ number_format($especialHoy->getDescuentoMonto(), 2) }}</span>
+                <span class="text-zinc-400 line-through text-base sm:text-lg">${{ number_format($especialHoy->producto->precio, 2) }}</span>
+                <span class="text-3xl sm:text-4xl font-extrabold text-amber-400">${{ number_format($especialHoy->getPrecioFinal(), 2) }}</span>
+                <span class="bg-red-500 text-white text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-bold">Ahorra ${{ number_format($especialHoy->getDescuentoMonto(), 2) }}</span>
               @else
-                <span class="text-4xl font-extrabold text-amber-400">${{ number_format($especialHoy->producto->precio, 2) }}</span>
+                <span class="text-3xl sm:text-4xl font-extrabold text-amber-400">${{ number_format($especialHoy->producto->precio, 2) }}</span>
               @endif
             </div>
           </div>
           <div class="md:col-span-3 flex items-center md:justify-end">
             <a href="{{ route('productos.show', $especialHoy->producto->id) }}"
-               class="w-full md:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-2xl transition-all transform hover:scale-[1.02] shadow-lg shadow-amber-500/40 text-center">
+               class="w-full md:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black text-sm sm:text-base font-bold rounded-xl sm:rounded-2xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-amber-500/40 text-center min-h-[44px] flex items-center justify-center touch-manipulation">
               Ordenar ahora
             </a>
           </div>

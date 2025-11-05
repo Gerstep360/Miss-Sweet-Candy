@@ -129,7 +129,16 @@ class RolePermissionSeeder extends Seeder
             'eliminar-especial',
             'activar-especial',
             'gestionar-fidelidad',
-            'puntosCajero'
+            'puntosCajero',
+            //promociones
+            'ver-promociones',
+            'crear-promociones',
+            'editar-promociones',
+            'eliminar-promociones',
+
+            //feedback
+            'crear-feedback',
+            'ver-estadisticas-feedback',
         ];
 
         /* -----------------------------------------------------------------
@@ -191,7 +200,11 @@ class RolePermissionSeeder extends Seeder
             // CU12 - Menú Público
             'ver-menu-publico',
             
-            // CU13 - Cierres de Caja
+            // Arqueos de Caja
+            'realizar-arqueo',
+            'ver-arqueos',
+            
+            // Cierres de Caja
             'cerrar-caja',
             'ver-cierres',
             
@@ -199,6 +212,12 @@ class RolePermissionSeeder extends Seeder
             'iniciar-turno',
             'cerrar-turno',
             'ver-turnos',
+            
+            // Reportes (del turno/caja)
+            'ver-reportes',
+            
+            // Especiales del Día (solo ver)
+            'ver-especiales',
             
             // CU15 - Inventario (solo ver)
             'ver-inventario',
@@ -222,6 +241,9 @@ class RolePermissionSeeder extends Seeder
             
             // Ver sus propios pedidos
             'ver-pedidos',
+            
+            // Feedback
+            'crear-feedback',
         ]);
 
         // 4) BARISTA (por el momento no tiene muchos permisos, pero se deja para los proximos casos de uso)

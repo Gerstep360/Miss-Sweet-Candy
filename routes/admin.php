@@ -8,7 +8,7 @@ use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\EspecialDelDiaController;
-
+use App\Http\Controllers\PromocionController;
 Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     // ===== Usuarios =====
@@ -87,9 +87,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::put('/{especiale}',         'update')->middleware('permission:editar-productos')->name('update');
         Route::delete('/{especiale}',      'destroy')->middleware('permission:eliminar-productos')->name('destroy');
 
-        Route::post('/{especiale}/toggle', 'toggle')
-        ->middleware('permission:editar-productos')
-        ->name('toggle');
+        Route::post('/{especiale}/toggle', 'toggleActive')
+            ->middleware('permission:editar-productos')
+            ->name('toggle');
     });
 
 });

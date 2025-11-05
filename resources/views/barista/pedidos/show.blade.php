@@ -1,6 +1,5 @@
 {{-- filepath: resources/views/barista/pedidos/show.blade.php --}}
 <x-layouts.app :title="__('Pedido #'.$pedido->id.' — Barista')">
-@can('gestionar-pedidos-barista')
     @php
         // ===== Normalización de estado (acepta 'en preparacion' y 'en_preparacion') =====
         $estadoRaw   = strtolower(trim($pedido->estado ?? ''));
@@ -44,7 +43,7 @@
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center gap-3">
-                        <a href="{{ route('barista.pedidos.index') }}"
+                        <a href="{{ route('dashboard') }}"
                            class="inline-flex items-center gap-2 text-zinc-300 hover:text-white px-2 py-1 rounded-lg hover:bg-zinc-800 transition-colors">
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -250,28 +249,4 @@
             </section>
         </main>
     </div>
-@else
-    {{-- Fallback 403 ligero --}}
-    <div class="min-h-screen bg-zinc-950 text-white flex items-center">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-6">
-                <span class="w-2 h-2 bg-amber-400 rounded-full mr-2"></span>
-                403 — No autorizado
-            </div>
-            <h1 class="text-4xl font-bold mb-3">No puedes pasar… por ahora ☕</h1>
-            <p class="text-zinc-300 mb-6">No tienes permiso para ver este pedido.</p>
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                <a href="{{ url('/') }}" class="bg-amber-500 text-black px-6 py-3 rounded-lg font-semibold hover:bg-amber-400 transition-colors inline-flex items-center justify-center gap-2">
-                    Ir al inicio
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                </a>
-                @if (Route::has('login'))
-                    <a href="{{ route('login') }}" class="border-2 border-amber-500 text-amber-500 px-6 py-3 rounded-lg font-semibold hover:bg-amber-500/10 transition-colors">
-                        Iniciar sesión
-                    </a>
-                @endif
-            </div>
-        </div>
-    </div>
-@endcan
 </x-layouts.app>

@@ -50,11 +50,22 @@ class NotificacionController extends Controller
 
         // Verificar que el usuario autenticado sea el destinatario
         if ($notificacion->usuario_destino_id !== auth()->id()) {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => 'No autorizado'], 403);
+            }
             abort(403, 'No tienes permiso para modificar esta notificación.');
         }
 
         $notificacion->marcarComoLeida();
         BitacoraController::registrar('notificacion_leida', 'notificacion', $notificacion->id);
+
+        // Si es una petición AJAX, retornar JSON
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Notificación marcada como leída'
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Notificación marcada como leída.');
     }

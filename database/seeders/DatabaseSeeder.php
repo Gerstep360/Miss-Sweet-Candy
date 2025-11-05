@@ -23,6 +23,10 @@ public function run(): void
         MesaSeeder::class,
         PedidoSeeder::class,
         CobroCajaSeeder::class,
+        TurnoCajaSeeder::class,
+        CierreCajaSeeder::class,
+        InventarioProductoSeeder::class,
+        EspecialDelDiaSeeder::class,
         NotificacionSeeder::class,
         FidelidadConfigSeeder::Class,
     ]);

@@ -12,25 +12,28 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             
             <!-- HEADER MEJORADO -->
-            <div class="dashboard-card mb-8">
+            <div class="dashboard-card mb-6 sm:mb-8">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                            <i class="fas fa-star text-amber-400"></i>
+                        <h1 class="text-xl sm:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                            <i class="fas fa-star text-amber-400 text-lg sm:text-xl"></i>
                             Especiales del Día
                         </h1>
-                        <p class="text-zinc-300 flex items-center gap-2">
-                            <i class="fas fa-clock text-amber-400"></i>
-                            Gestiona promociones diarias y ofertas temporales
+                        <p class="text-sm sm:text-base text-zinc-300 flex items-center gap-2">
+                            <i class="fas fa-clock text-amber-400 text-sm"></i>
+                            Gestiona promociones diarias
                         </p>
                     </div>
                     
                     <!-- BOTÓN DE CREAR -->
-                    <a href="{{ route('especial_dia.create') }}" 
-                    class="bg-amber-500 hover:bg-amber-400 text-black font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-lg hover:shadow-amber-500/25">
-                        <i class="fas fa-plus"></i>
-                        Crear Especial
-                    </a>
+                    @can('crear-especial')
+                        <a href="{{ route('especial_dia.create') }}" 
+                        class="bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-medium py-3 px-4 sm:px-6 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-amber-500/25 text-sm sm:text-base min-h-[44px] touch-manipulation">
+                            <i class="fas fa-plus"></i>
+                            <span class="hidden xs:inline">Crear Especial</span>
+                            <span class="xs:hidden">Nuevo</span>
+                        </a>
+                    @endcan
                 </div>
             </div>
 
@@ -44,21 +47,21 @@
             @endphp
             
             @if($especial_hoy)
-            <div class="dashboard-card mb-8 border-2 border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-amber-600/5">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-crown text-white text-xl"></i>
+            <div class="dashboard-card mb-6 sm:mb-8 border-2 border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-amber-600/5">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-crown text-white text-base sm:text-xl"></i>
                         </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-white">Especial de Hoy</h3>
-                            <p class="text-amber-300">{{ $especial_hoy->producto->nombre ?? 'Producto no disponible' }}</p>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-base sm:text-lg font-bold text-white">Especial de Hoy</h3>
+                            <p class="text-amber-300 text-sm sm:text-base truncate">{{ $especial_hoy->producto->nombre ?? 'Producto no disponible' }}</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-white font-bold text-xl">${{ number_format($especial_hoy->getPrecioFinal(), 2) }}</p>
+                    <div class="text-right flex-shrink-0">
+                        <p class="text-white font-bold text-lg sm:text-xl">${{ number_format($especial_hoy->getPrecioFinal(), 2) }}</p>
                         @if($especial_hoy->getPrecioFinal() < $especial_hoy->producto->precio)
-                            <p class="text-green-400 text-sm">¡Oferta especial!</p>
+                            <p class="text-green-400 text-xs sm:text-sm">¡Oferta!</p>
                         @endif
                     </div>
                 </div>
@@ -66,69 +69,71 @@
             @endif
 
             <!-- FILTROS MEJORADOS -->
-            <div class="dashboard-card mb-6">
-                <div class="flex items-center gap-2 mb-4">
-                    <i class="fas fa-filter text-amber-400"></i>
-                    <h3 class="text-lg font-semibold text-white">Filtros Avanzados</h3>
+            <div class="dashboard-card mb-4 sm:mb-6">
+                <div class="flex items-center gap-2 mb-3 sm:mb-4">
+                    <i class="fas fa-filter text-amber-400 text-sm"></i>
+                    <h3 class="text-base sm:text-lg font-semibold text-white">Filtros</h3>
                 </div>
-                <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <form method="GET" class="space-y-3 sm:space-y-4">
                     <!-- Búsqueda -->
                     <div>
-                        <label class="block text-sm font-medium text-zinc-300 mb-2 flex items-center gap-2">
-                            <i class="fas fa-search text-amber-400"></i>
+                        <label class="text-xs sm:text-sm font-medium text-zinc-300 mb-2 flex items-center gap-2">
+                            <i class="fas fa-search text-amber-400 text-xs"></i>
                             Buscar producto
                         </label>
                         <input type="text" 
                                name="search" 
                                value="{{ request('search') }}" 
-                               placeholder="Escribe para buscar..." 
-                               class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                               placeholder="Buscar..." 
+                               class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm sm:text-base min-h-[44px]">
                     </div>
                     
-                    <!-- Estado -->
-                    <div>
-                        <label class="block text-sm font-medium text-zinc-300 mb-2">Estado</label>
-                        <div class="flex gap-2">
-                            <label class="flex items-center gap-1">
-                                <input type="radio" name="estado" value="" {{ !request('estado') ? 'checked' : '' }} class="text-amber-500">
-                                <span class="text-zinc-300 text-sm">Todos</span>
-                            </label>
-                            <label class="flex items-center gap-1">
-                                <input type="radio" name="estado" value="activo" {{ request('estado') == 'activo' ? 'checked' : '' }} class="text-amber-500">
-                                <span class="text-zinc-300 text-sm">Activos</span>
-                            </label>
-                            <label class="flex items-center gap-1">
-                                <input type="radio" name="estado" value="inactivo" {{ request('estado') == 'inactivo' ? 'checked' : '' }} class="text-amber-500">
-                                <span class="text-zinc-300 text-sm">Inactivos</span>
-                            </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <!-- Estado -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-zinc-300 mb-2">Estado</label>
+                            <div class="flex flex-wrap gap-2 sm:gap-3">
+                                <label class="flex items-center gap-1.5 cursor-pointer touch-manipulation">
+                                    <input type="radio" name="estado" value="" {{ !request('estado') ? 'checked' : '' }} class="text-amber-500 w-4 h-4">
+                                    <span class="text-zinc-300 text-xs sm:text-sm">Todos</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 cursor-pointer touch-manipulation">
+                                    <input type="radio" name="estado" value="activo" {{ request('estado') == 'activo' ? 'checked' : '' }} class="text-amber-500 w-4 h-4">
+                                    <span class="text-zinc-300 text-xs sm:text-sm">Activos</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 cursor-pointer touch-manipulation">
+                                    <input type="radio" name="estado" value="inactivo" {{ request('estado') == 'inactivo' ? 'checked' : '' }} class="text-amber-500 w-4 h-4">
+                                    <span class="text-zinc-300 text-xs sm:text-sm">Inactivos</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Día -->
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-zinc-300 mb-2">Día de la semana</label>
+                            <select name="dia" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm sm:text-base min-h-[44px]">
+                                <option value="">Todos los días</option>
+                                <option value="lunes" {{ request('dia') == 'lunes' ? 'selected' : '' }}>Lunes</option>
+                                <option value="martes" {{ request('dia') == 'martes' ? 'selected' : '' }}>Martes</option>
+                                <option value="miercoles" {{ request('dia') == 'miercoles' ? 'selected' : '' }}>Miércoles</option>
+                                <option value="jueves" {{ request('dia') == 'jueves' ? 'selected' : '' }}>Jueves</option>
+                                <option value="viernes" {{ request('dia') == 'viernes' ? 'selected' : '' }}>Viernes</option>
+                                <option value="sabado" {{ request('dia') == 'sabado' ? 'selected' : '' }}>Sábado</option>
+                                <option value="domingo" {{ request('dia') == 'domingo' ? 'selected' : '' }}>Domingo</option>
+                            </select>
                         </div>
                     </div>
 
-                    <!-- Día -->
-                    <div>
-                        <label class="block text-sm font-medium text-zinc-300 mb-2">Día de la semana</label>
-                        <select name="dia" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                            <option value="">Todos los días</option>
-                            <option value="lunes" {{ request('dia') == 'lunes' ? 'selected' : '' }}>Lunes</option>
-                            <option value="martes" {{ request('dia') == 'martes' ? 'selected' : '' }}>Martes</option>
-                            <option value="miercoles" {{ request('dia') == 'miercoles' ? 'selected' : '' }}>Miércoles</option>
-                            <option value="jueves" {{ request('dia') == 'jueves' ? 'selected' : '' }}>Jueves</option>
-                            <option value="viernes" {{ request('dia') == 'viernes' ? 'selected' : '' }}>Viernes</option>
-                            <option value="sabado" {{ request('dia') == 'sabado' ? 'selected' : '' }}>Sábado</option>
-                            <option value="domingo" {{ request('dia') == 'domingo' ? 'selected' : '' }}>Domingo</option>
-                        </select>
-                    </div>
-
                     <!-- Botones de acción -->
-                    <div class="flex gap-2">
-                        <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-                            <i class="fas fa-filter"></i>
-                            Aplicar Filtros
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                        <button type="submit" class="bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px] touch-manipulation flex-1 sm:flex-initial">
+                            <i class="fas fa-filter text-sm"></i>
+                            <span>Aplicar Filtros</span>
                         </button>
                         @if(request()->hasAny(['search', 'estado', 'dia']))
-                            <a href="{{ route('especial_dia.index') }}" class="bg-zinc-600 hover:bg-zinc-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-                                <i class="fas fa-broom"></i>
-                                Limpiar
+                            <a href="{{ route('especial_dia.index') }}" class="bg-zinc-600 hover:bg-zinc-500 active:bg-zinc-700 text-white py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base min-h-[44px] touch-manipulation flex-1 sm:flex-initial">
+                                <i class="fas fa-broom text-sm"></i>
+                                <span>Limpiar</span>
                             </a>
                         @endif
                     </div>
@@ -136,137 +141,144 @@
             </div>
 
             <!-- LISTA DE ESPECIALES CON BOTONES DE ACCIÓN -->
-            <div class="space-y-4">
+            <div class="space-y-3 sm:space-y-4">
                 @forelse($especiales as $especial)
                 <div class="dashboard-card {{ !$especial->activo ? 'opacity-60' : '' }} hover:border-amber-500/30 transition-all duration-300">
-                    <div class="flex items-center gap-6">
+                    <div class="flex flex-col sm:flex-row items-start gap-3 sm:gap-6">
                         <!-- Imagen del producto -->
-                        <div class="flex-shrink-0">
+                        <div class="flex-shrink-0 w-full sm:w-auto">
                             <img src="{{ $especial->producto->imagen_url ?? '/img/default-product.jpg' }}" 
                                 alt="{{ $especial->producto->nombre }}" 
-                                class="w-20 h-20 object-cover rounded-xl border border-zinc-700 bg-zinc-900">
+                                class="w-full sm:w-20 h-32 sm:h-20 object-cover rounded-xl border border-zinc-700 bg-zinc-900">
                         </div>
 
                         <!-- Información del especial -->
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="flex-1">
-                                    <!-- Nombre y estado -->
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <h3 class="text-xl font-bold text-white">{{ $especial->producto->nombre }}</h3>
-                                        <span class="{{ $especial->activo ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400' }} text-xs px-2 py-1 rounded flex items-center gap-1">
-                                            <i class="fas fa-circle text-xs"></i>
-                                            {{ $especial->activo ? 'Activo' : 'Inactivo' }}
-                                        </span>
-                                    </div>
-                                    
-                                    <!-- Etiquetas informativas -->
-                                    <div class="flex flex-wrap gap-2 mb-3">
-                                        <span class="bg-amber-500/20 text-amber-400 text-xs px-2 py-1 rounded font-medium">
-                                            {{ $especial->producto->categoria->nombre ?? 'Sin categoría' }}
-                                        </span>
-                                        
-                                        @if($especial->dia_semana)
-                                            <span class="bg-blue-600/20 text-blue-400 text-xs px-2 py-1 rounded font-medium">
-                                                {{ ucfirst($especial->dia_semana) }}
+                        <div class="flex-1 min-w-0 w-full">
+                            <div class="flex flex-col gap-3">
+                                <!-- Nombre y estado -->
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                                            <h3 class="text-lg sm:text-xl font-bold text-white">{{ $especial->producto->nombre }}</h3>
+                                            <span class="{{ $especial->activo ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400' }} text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0">
+                                                <i class="fas fa-circle text-[6px]"></i>
+                                                {{ $especial->activo ? 'Activo' : 'Inactivo' }}
                                             </span>
-                                        @endif
+                                        </div>
                                         
-                                        @if($especial->fecha_especifica)
-                                            <span class="bg-purple-600/20 text-purple-400 text-xs px-2 py-1 rounded font-medium">
-                                                {{ \Carbon\Carbon::parse($especial->fecha_especifica)->format('d/m/Y') }}
+                                        <!-- Etiquetas informativas -->
+                                        <div class="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                                            <span class="bg-amber-500/20 text-amber-400 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded font-medium">
+                                                {{ $especial->producto->categoria->nombre ?? 'Sin categoría' }}
                                             </span>
-                                        @endif
-                                        
-                                        @if($especial->fecha_inicio && $especial->fecha_fin)
-                                            <span class="bg-indigo-600/20 text-indigo-400 text-xs px-2 py-1 rounded font-medium">
-                                                {{ \Carbon\Carbon::parse($especial->fecha_inicio)->format('d/m') }} - {{ \Carbon\Carbon::parse($especial->fecha_fin)->format('d/m/Y') }}
+                                            
+                                            @if($especial->dia_semana)
+                                                <span class="bg-blue-600/20 text-blue-400 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded font-medium">
+                                                    {{ ucfirst($especial->dia_semana) }}
+                                                </span>
+                                            @endif
+                                            
+                                            @if($especial->fecha_especifica)
+                                                <span class="bg-purple-600/20 text-purple-400 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded font-medium">
+                                                    {{ \Carbon\Carbon::parse($especial->fecha_especifica)->format('d/m/Y') }}
+                                                </span>
+                                            @endif
+                                            
+                                            @if($especial->fecha_inicio && $especial->fecha_fin)
+                                                <span class="bg-indigo-600/20 text-indigo-400 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded font-medium">
+                                                    {{ \Carbon\Carbon::parse($especial->fecha_inicio)->format('d/m') }} - {{ \Carbon\Carbon::parse($especial->fecha_fin)->format('d/m/Y') }}
+                                                </span>
+                                            @endif
+                                            
+                                            <span class="bg-zinc-700/50 text-zinc-300 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
+                                                Prior: {{ $especial->prioridad ?? 1 }}
                                             </span>
-                                        @endif
-                                        
-                                        <span class="bg-zinc-700/50 text-zinc-300 text-xs px-2 py-1 rounded">
-                                            Prioridad: {{ $especial->prioridad ?? 1 }}
-                                        </span>
-                                    </div>
+                                        </div>
 
-                                    <!-- PRECIOS Y DESCUENTOS -->
-                                    <div class="flex items-center gap-3 mb-2">
-                                        @php
-                                            $precioOriginal = $especial->producto->precio;
-                                            $precioFinal = $especial->getPrecioFinal();
-                                            $tieneDescuento = $precioFinal < $precioOriginal;
-                                        @endphp
+                                        <!-- PRECIOS Y DESCUENTOS -->
+                                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                                            @php
+                                                $precioOriginal = $especial->producto->precio;
+                                                $precioFinal = $especial->getPrecioFinal();
+                                                $tieneDescuento = $precioFinal < $precioOriginal;
+                                            @endphp
 
-                                        @if($tieneDescuento)
-                                            <!-- Con descuento -->
-                                            <span class="text-zinc-400 line-through text-lg">${{ number_format($precioOriginal, 2) }}</span>
-                                            <span class="text-green-400 font-bold text-2xl">${{ number_format($precioFinal, 2) }}</span>
-                                            <span class="bg-red-500/20 text-red-400 text-sm px-3 py-1 rounded-full font-bold">
-                                                @if($especial->descuento_porcentaje)
-                                                    -{{ $especial->descuento_porcentaje }}% OFF
-                                                @else
-                                                    ¡Precio especial!
-                                                @endif
-                                            </span>
+                                            @if($tieneDescuento)
+                                                <!-- Con descuento -->
+                                                <span class="text-zinc-400 line-through text-base sm:text-lg">${{ number_format($precioOriginal, 2) }}</span>
+                                                <span class="text-green-400 font-bold text-xl sm:text-2xl">${{ number_format($precioFinal, 2) }}</span>
+                                                <span class="bg-red-500/20 text-red-400 text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-bold">
+                                                    @if($especial->descuento_porcentaje)
+                                                        -{{ $especial->descuento_porcentaje }}% OFF
+                                                    @else
+                                                        ¡Especial!
+                                                    @endif
+                                                </span>
+                                            @else
+                                                <!-- Sin descuento (precio normal) -->
+                                                <span class="text-green-400 font-bold text-xl sm:text-2xl">${{ number_format($precioOriginal, 2) }}</span>
+                                                <span class="bg-zinc-600/50 text-zinc-300 text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
+                                                    Precio regular
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        <!-- Descripción -->
+                                        @if($especial->descripcion_especial)
+                                            <p class="text-zinc-400 text-xs sm:text-sm line-clamp-2">{{ $especial->descripcion_especial }}</p>
                                         @else
-                                            <!-- Sin descuento (precio normal) -->
-                                            <span class="text-green-400 font-bold text-2xl">${{ number_format($precioOriginal, 2) }}</span>
-                                            <span class="bg-zinc-600/50 text-zinc-300 text-sm px-3 py-1 rounded-full">
-                                                Precio regular
-                                            </span>
+                                            <p class="text-zinc-500 text-xs sm:text-sm italic">Sin descripción</p>
                                         @endif
                                     </div>
-
-                                    <!-- Descripción -->
-                                    @if($especial->descripcion_especial)
-                                        <p class="text-zinc-400 text-sm">{{ $especial->descripcion_especial }}</p>
-                                    @else
-                                        <p class="text-zinc-500 text-sm italic">Sin descripción adicional</p>
-                                    @endif
                                 </div>
 
-                                <!-- BOTONES DE ACCIÓN - EDICIÓN Y ELIMINACIÓN -->
-                                <div class="flex flex-col gap-2 flex-shrink-0">
+                                <!-- BOTONES DE ACCIÓN - MÓVIL OPTIMIZADOS -->
+                                <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 pt-3 border-t border-zinc-700/50">
                                     <!-- Botón Ver -->
-                                    <a href="{{ route('especial_dia.show', $especial) }}" 
-                                    class="bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center min-w-[100px] group"
-                                    title="Ver detalles">
-                                        <i class="fas fa-eye group-hover:scale-110 transition-transform"></i> 
-                                        <span>Ver</span>
-                                    </a>
+                                    @can('ver-especiales')
+                                        <a href="{{ route('especial_dia.show', $especial) }}" 
+                                        class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm min-h-[40px] sm:min-h-[44px] group touch-manipulation">
+                                            <i class="fas fa-eye text-xs sm:text-sm group-hover:scale-110 transition-transform"></i> 
+                                            <span>Ver</span>
+                                        </a>
+                                    @endcan
                                     
                                     <!-- Botón Editar -->
-                                    <a href="{{ route('especial_dia.edit', $especial) }}" 
-                                    class="bg-amber-600 hover:bg-amber-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center min-w-[100px] group"
-                                    title="Editar especial">
-                                        <i class="fas fa-edit group-hover:scale-110 transition-transform"></i> 
-                                        <span>Editar</span>
-                                    </a>
+                                    @can('editar-especial')
+                                        <a href="{{ route('especial_dia.edit', $especial) }}" 
+                                        class="bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm min-h-[40px] sm:min-h-[44px] group touch-manipulation">
+                                            <i class="fas fa-edit text-xs sm:text-sm group-hover:scale-110 transition-transform"></i> 
+                                            <span>Editar</span>
+                                        </a>
+                                    @endcan
 
                                     <!-- Botón Activar/Desactivar -->
-                                    <button type="button"
-                                            @click="showModal = true; 
-                                                    modalAction = 'toggle'; 
-                                                    modalUrl = '{{ route('especial_dia.toggle', $especial) }}'; 
-                                                    modalMsg = '¿{{ $especial->activo ? 'Desactivar' : 'Activar' }} el especial de {{ $especial->producto->nombre }}?'; 
-                                                    modalEspecial = {{ $especial->id }};"
-                                            class="py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center {{ $especial->activo ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-green-600 hover:bg-green-500' }} text-white min-w-[100px] group"
-                                            title="{{ $especial->activo ? 'Desactivar' : 'Activar' }} especial">
-                                        <i class="fas fa-{{ $especial->activo ? 'pause' : 'play' }} group-hover:scale-110 transition-transform"></i> 
-                                        <span>{{ $especial->activo ? 'Desactivar' : 'Activar' }}</span>
-                                    </button>
+                                    @can('activar-especial')
+                                        <button type="button"
+                                                @click="showModal = true; 
+                                                        modalAction = 'toggle'; 
+                                                        modalUrl = '{{ route('especial_dia.toggle', $especial) }}'; 
+                                                        modalMsg = '¿{{ $especial->activo ? 'Desactivar' : 'Activar' }} el especial de {{ $especial->producto->nombre }}?'; 
+                                                        modalEspecial = {{ $especial->id }};"
+                                                class="py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm {{ $especial->activo ? 'bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-700' : 'bg-green-600 hover:bg-green-500 active:bg-green-700' }} text-white min-h-[40px] sm:min-h-[44px] group touch-manipulation">
+                                            <i class="fas fa-{{ $especial->activo ? 'pause' : 'play' }} text-xs sm:text-sm group-hover:scale-110 transition-transform"></i> 
+                                            <span class="hidden sm:inline">{{ $especial->activo ? 'Desactivar' : 'Activar' }}</span>
+                                            <span class="sm:hidden">{{ $especial->activo ? 'Pausa' : 'Activo' }}</span>
+                                        </button>
+                                    @endcan
 
                                     <!-- Botón Eliminar -->
-                                    <button type="button"
-                                            @click="showModal = true; 
-                                                    modalAction = 'eliminar'; 
-                                                    modalUrl = '{{ route('especial_dia.destroy', $especial) }}'; 
-                                                    modalMsg = '¿Eliminar permanentemente el especial de {{ $especial->producto->nombre }}? Esta acción no se puede deshacer.';"
-                                            class="bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-sm justify-center min-w-[100px] group"
-                                            title="Eliminar especial">
-                                        <i class="fas fa-trash group-hover:scale-110 transition-transform"></i> 
-                                        <span>Eliminar</span>
-                                    </button>
+                                    @can('eliminar-especial')
+                                        <button type="button"
+                                                @click="showModal = true; 
+                                                        modalAction = 'eliminar'; 
+                                                        modalUrl = '{{ route('especial_dia.destroy', $especial) }}'; 
+                                                        modalMsg = '¿Eliminar permanentemente el especial de {{ $especial->producto->nombre }}? Esta acción no se puede deshacer.';"
+                                                class="bg-red-600 hover:bg-red-500 active:bg-red-700 text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm min-h-[40px] sm:min-h-[44px] group touch-manipulation">
+                                            <i class="fas fa-trash text-xs sm:text-sm group-hover:scale-110 transition-transform"></i> 
+                                            <span>Eliminar</span>
+                                        </button>
+                                    @endcan
                                 </div>
                             </div>
                         </div>
@@ -274,18 +286,20 @@
                 </div>
                 @empty
                 <!-- Estado vacío -->
-                <div class="dashboard-card text-center py-16">
-                    <div class="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-star text-zinc-600 text-3xl"></i>
+                <div class="dashboard-card text-center py-12 sm:py-16">
+                    <div class="w-20 sm:w-24 h-20 sm:h-24 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                        <i class="fas fa-star text-zinc-600 text-2xl sm:text-3xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-3">No hay especiales configurados</h3>
-                    <p class="text-zinc-400 mb-6 max-w-md mx-auto">
+                    <h3 class="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">No hay especiales configurados</h3>
+                    <p class="text-zinc-400 text-sm sm:text-base mb-4 sm:mb-6 max-w-md mx-auto px-4">
                         Aún no has creado ningún especial del día. Comienza agregando tu primera oferta especial.
                     </p>
-                    <a href="{{ route('especial_dia.create') }}" 
-                       class="bg-amber-600 hover:bg-amber-500 text-white py-3 px-6 rounded-lg transition-colors inline-flex items-center gap-2 font-medium">
-                        <i class="fas fa-plus"></i> Crear Primer Especial
-                    </a>
+                    @can('crear-especial')
+                        <a href="{{ route('especial_dia.create') }}" 
+                           class="bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white py-3 px-6 rounded-lg transition-colors inline-flex items-center justify-center gap-2 font-medium text-sm sm:text-base min-h-[44px] touch-manipulation">
+                            <i class="fas fa-plus"></i> Crear Primer Especial
+                        </a>
+                    @endcan
                 </div>
                 @endforelse
             </div>

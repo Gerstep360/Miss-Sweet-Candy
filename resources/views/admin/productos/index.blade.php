@@ -2,6 +2,29 @@
 <x-layouts.app :title="__('Gestión de Productos - Café Aroma')">
     <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Mensajes de éxito/error -->
+            @if(session('success'))
+            <div class="dashboard-card bg-green-500/10 border-green-500/30 mb-6">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-green-400 font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+            @endif
+
+            @if(session('error'))
+            <div class="dashboard-card bg-red-500/10 border-red-500/30 mb-6">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-red-400 font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+            @endif
+
             <!-- Header -->
             <div class="dashboard-card mb-8">
                 <div class="flex items-center justify-between">
@@ -46,10 +69,10 @@
                         </a>
                         @endcan
                         @can('eliminar-productos')
-                        <form action="{{ route('productos.destroy', $producto) }}" method="POST" class="inline">
+                        <form action="{{ route('productos.destroy', $producto) }}" method="POST" class="inline" onsubmit="return confirm('⚠️ ¿Estás seguro de eliminar este producto?\n\n{{ $producto->nombre }}\n\nEsta acción no se puede deshacer.')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="bg-red-600 hover:bg-red-500 text-white py-2 px-3 rounded-lg transition-colors" onclick="return confirm('¿Estás seguro?')" title="Eliminar">
+                            <button type="submit" class="bg-red-600 hover:bg-red-500 text-white py-2 px-3 rounded-lg transition-colors" title="Eliminar">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
