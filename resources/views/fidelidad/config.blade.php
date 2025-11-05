@@ -152,7 +152,7 @@
                             </p>
                         </div>
 
-                        <!-- Estado del Programa -->
+                        <!-- Estado del Programa - VERSIÓN CORREGIDA -->
                         <div>
                             <label class="block text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                 <i class="fas fa-power-off text-red-400"></i>
@@ -163,11 +163,11 @@
                                     <div class="relative">
                                         <input type="checkbox" name="activo" value="1" 
                                                {{ ($config['activo'] ?? true) ? 'checked' : '' }} 
-                                               class="sr-only">
-                                        <div class="block bg-zinc-700 w-14 h-8 rounded-full transition-colors duration-200 {{ ($config['activo'] ?? true) ? 'bg-green-500' : '' }}"></div>
-                                        <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-200 {{ ($config['activo'] ?? true) ? 'transform translate-x-6' : '' }}"></div>
+                                               class="sr-only peer">
+                                        <div class="w-14 h-8 bg-zinc-700 peer-checked:bg-green-500 rounded-full transition-colors duration-200"></div>
+                                        <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-200 peer-checked:translate-x-6"></div>
                                     </div>
-                                    <span class="text-white font-medium">
+                                    <span class="text-white font-medium peer-checked:text-green-400 transition-colors">
                                         {{ ($config['activo'] ?? true) ? 'Programa Activo' : 'Programa Inactivo' }}
                                     </span>
                                 </label>
@@ -273,6 +273,14 @@
             border-radius: 0.75rem;
             padding: 1.5rem;
             backdrop-filter: blur(10px);
+        }
+        
+        /* Estilos específicos para el toggle */
+        .peer:checked + div {
+            background-color: #10B981 !important;
+        }
+        .peer:checked + div + div {
+            transform: translateX(1.5rem);
         }
     </style>
 </x-layouts.app>

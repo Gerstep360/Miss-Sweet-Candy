@@ -124,6 +124,11 @@ class Pedido extends Model
         return $query->where('estado', 'anulado');
     }
 
+    // En app/Models/Pedido.php
+    public function movimientosFidelidad()
+    {
+        return $this->morphMany(FidelidadMovimiento::class, 'origen');
+    }
     /**
      * Accesor para obtener el nombre del tipo
      */

@@ -145,6 +145,12 @@ class CobroCajaController extends Controller
             };
 
             $pedido->update(['estado' => $nuevoEstado]);
+            $fidelidadController1 = new \App\Http\Controllers\FidelidadController();
+
+            $fidelidadController1->pedidoPuedeAcumularPuntos($pedido) ;
+            if($fidelidadController1 == true){
+                    $puntosAcumulados = $fidelidadController1->acumularPuntosPorPedido($pedido);
+                }
 
             // Liberar mesa si aplica y el pedido está completado
             if ($pedido->tipo === 'mesa' && $pedido->mesa) {

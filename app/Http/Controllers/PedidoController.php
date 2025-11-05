@@ -499,61 +499,59 @@ class PedidoController extends BaseController
     /**
      * Cambiar el estado del pedido
      */
-    public function cambiarEstado(Request $request, Pedido $pedido)
+   public function cambiarEstado(Request $request, Pedido $pedido)
     {
-        // 🔒 SEGURIDAD: Solo cajero y admin pueden cambiar estado
         try {
-            if ($pedido->tipo === 'mesa') {
-                $this->authorize('editar-pedidos-mesa');
-            } else {
-                $this->authorize('editar-pedidos-mostrador');
-            }
+            $this->authorize($pedido->tipo === 'mesa' ? 'editar-pedidos-mesa' : 'editar-pedidos-mostrador');
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return redirect()->route('403'); // Redirige a tu página personalizada
+            return redirect()->route('403');
         }
 
         $validated = $request->validate([
             'estado' => 'required|in:pendiente,confirmado,en_preparacion,preparado,en_reparto,entregado,servido,retirado,anulado,cancelado',
-            'motivo_anulacion' => 'required_if:estado,anulado,cancelado|nullable|string|max:255',
+            'motivo_anulacion' => 'required_if:estado,anulado|nullable|string|max:255',
         ]);
 
         DB::beginTransaction();
 
-        //MODIFICACION PARA FIDELIDAD
-            try {
-                $estadoAnterior = $pedido->estado;
-                $pedido->estado = $validated['estado'];
+        try {
+            $estadoAnterior = $pedido->estado;
+            $pedido->estado = $validated['estado'];
+            
+            if (in_array($validated['estado'], ['anulado']) && isset($validated['motivo_anulacion'])) {
+                $pedido->motivo_anulacion = $validated['motivo_anulacion'];
+            }
+            
+            $pedido->save();
 
-                // Si el pedido se completa, acumular puntos de fidelidad
-                if (in_array($validated['estado'], ['entregado', 'servido', 'retirado', 'pagado']) && 
-                    $estadoAnterior !== $validated['estado'] &&
-                    $pedido->cliente_id) {
-                    
-                    try {
-                        $fidelidadController = new FidelidadController();
-                        if ($fidelidadController->isProgramaActivo()) {
-                            $puntosAcumulados = $fidelidadController->acumularPuntosPorPedido($pedido);
-                            
-                            // Opcional: agregar mensaje informativo
-                            session()->flash('info', "Se acumularon {$puntosAcumulados} puntos de fidelidad para el cliente.");
-                        }
-                    } catch (\Exception $e) {
-                        // Log del error pero no revertir la transacción del pedido
-                        \Log::error('Error al acumular puntos de fidelidad: ' . $e->getMessage());
-                    }
+            // ✅ Acumular puntos si corresponde
+            $fidelidadController1 = new \App\Http\Controllers\FidelidadController();
+
+            // Definir estados que acumulan puntos
+            $estadosQueAcumulan = ['cancelado'];
+            
+            if (in_array($validated['estado'], $estadosQueAcumulan) && 
+                $fidelidadController->pedidoPuedeAcumularPuntos($pedido)) {
+                if($fidelidadController == true){
+                    $puntosAcumulados = $fidelidadController1->acumularPuntosPorPedido($pedido);
                 }
-
+            }
 
             DB::commit();
 
+            BitacoraController::registrar('cambiar estado', 'Pedido', $pedido->id);
             return back()->with('success', "Estado del pedido cambiado de '{$estadoAnterior}' a '{$validated['estado']}'.");
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error("Error en cambiarEstado para pedido #{$pedido->id}: " . $e->getMessage());
             return back()->with('error', 'Error al cambiar el estado: ' . $e->getMessage());
         }
-        BitacoraController::registrar('cambiar estado', 'Pedido', $pedido->id);
     }
+
+
+
+
 
     /**
      * Anular un item del pedido
@@ -678,5 +676,37 @@ class PedidoController extends BaseController
                 ]);
             }
         }
+    }
+
+    /**
+ * Reparar puntos para pedidos existentes que no acumularon puntos
+ */
+    public function repararPuntosPedidos()
+    {
+        $this->authorize('gestionar-pedidos');
+
+        $pedidosSinPuntos = Pedido::whereIn('estado', ['entregado', 'servido', 'retirado'])
+            ->whereNotNull('cliente_id')
+            ->whereDoesntHave('movimientosFidelidad')
+            ->get();
+
+        $procesados = 0;
+        $errores = 0;
+
+        foreach ($pedidosSinPuntos as $pedido) {
+            try {
+                $fidelidadController = new \App\Http\Controllers\FidelidadController();
+                if ($fidelidadController->isProgramaActivo()) {
+                    $fidelidadController->acumularPuntosPorPedido($pedido);
+                    $procesados++;
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error reparando puntos para pedido #{$pedido->id}: " . $e->getMessage());
+                $errores++;
+            }
+        }
+
+        BitacoraController::registrar('reparar puntos pedidos', 'Pedido', null);
+        return back()->with('success', "Se acumularon puntos para {$procesados} pedidos. Errores: {$errores}");
     }
 }

@@ -10,18 +10,23 @@ return new class extends Migration
     {
         Schema::create('fidelidad_movimientos', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('cliente_id'); // Cambiar el nombre
+            $table->unsignedBigInteger('cliente_id');
             $table->integer('puntos');
-            $table->string('tipo'); // ganancia, canje, etc.
+            $table->enum('tipo', ['acumulo', 'canje']);
             $table->string('descripcion');
-            $table->morphs('origen');
+            $table->string('origen_type')->nullable(); // Para relación polimórfica
+            $table->unsignedBigInteger('origen_id')->nullable(); // Para relación polimórfica
             $table->timestamps();
 
-            // Referenciar user_id en lugar de id
+            // Foreign key CORRECTA - referencia a users.id
             $table->foreign('cliente_id')
-                  ->references('user_id')
-                  ->on('clientes_perfil')
+                  ->references('id')
+                  ->on('users')
                   ->onDelete('cascade');
+
+            // Índices para mejor performance
+            $table->index('cliente_id');
+            $table->index(['origen_type', 'origen_id']);
         });
     }
 

@@ -24,18 +24,20 @@ class FidelidadConfig extends Model
      * Obtener configuración como array asociativo
      */
     public static function getConfig()
-    {
-        return static::all()->pluck('valor', 'clave')->toArray();
-    }
+{
+    return static::all()->mapWithKeys(function ($item) {
+        return [$item->clave => $item->valor]; // Aquí se aplica el accessor getValorAttribute
+    })->toArray();
+}
 
     /**
      * Obtener un valor específico de configuración
      */
     public static function getValor($clave, $default = null)
-    {
-        $config = static::where('clave', $clave)->first();
-        return $config ? $config->valor : $default;
-    }
+{
+    $config = static::where('clave', $clave)->first();
+    return $config ? $config->valor : $default; // Se aplica el accessor automáticamente
+}
 
     /**
      * Actualizar o crear configuración

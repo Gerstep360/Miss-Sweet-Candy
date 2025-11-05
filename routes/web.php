@@ -44,3 +44,6 @@ require __DIR__.'/especial_dia.php';
 
 // Feedback
 require __DIR__.'/feedback.php';
+
+
+Route::get('/admin/promociones', [App\Http\Controllers\PromocionController::class, 'index'])->name('promociones.index');
