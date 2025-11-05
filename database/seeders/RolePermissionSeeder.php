@@ -106,6 +106,16 @@ class RolePermissionSeeder extends Seeder
             // Permisos generales
             'ver-pedidos',
             'cambiar-estado-pedidos',
+
+            
+                // 👇 AGREGAR ESTA LÍNEA NUEVA cu19
+            'hacer-reserva',  // CU19 - Reservas de Mesa Online
+            'gestionar-reservas-cajero',
+            'crear-reserva-manual',
+            'confirmar-llegada-cliente',
+            'cancelar-reserva-cajero',
+            'marcar-no-show',
+
         ];
 
         /* -----------------------------------------------------------------
@@ -176,6 +186,14 @@ class RolePermissionSeeder extends Seeder
             'cambiar-estado-pedidos',
             'ver-dashboard-cajero',
             'ver-categorias',
+
+            //cu19 permiso cajera
+             // 👇 AGREGAR PERMISOS DE RESERVAS PARA CAJERO
+            'gestionar-reservas-cajero',
+            'crear-reserva-manual', 
+            'confirmar-llegada-cliente',
+            'cancelar-reserva-cajero',
+            'marcar-no-show',
         ]);
 
         // 3) CLIENTE
@@ -188,6 +206,9 @@ class RolePermissionSeeder extends Seeder
             
             // Ver sus propios pedidos
             'ver-pedidos',
+
+            //HACER PEDIDOS ONLINE
+            'hacer-reserva',  // CU19 - Reservas de Mesa Online
         ]);
 
         // 4) BARISTA

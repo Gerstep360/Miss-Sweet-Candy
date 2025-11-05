@@ -133,36 +133,43 @@
         </div>
         @endcanany
 
-        {{-- ===== Operaciones ===== --}}
-        @canany(['ver-mesas', 'ver-pedidos'])
-        <div class="nav-group">
-          <button class="nav-group-header"
-                  onclick="toggleSection('operaciones')"
-                  aria-controls="operaciones-section"
-                  aria-expanded="false">
-            <div class="flex items-center gap-2 flex-1">
-              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+{{-- ===== Operaciones ===== --}}
+@canany(['ver-mesas', 'ver-pedidos', 'gestionar-reservas-cajero'])
+<div class="nav-group">
+    <button class="nav-group-header"
+            onclick="toggleSection('operaciones')"
+            aria-controls="operaciones-section"
+            aria-expanded="false">
+        <div class="flex items-center gap-2 flex-1">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-              </svg>
-              <span>Operaciones</span>
-            </div>
-            <svg id="operaciones-icon" class="w-4 h-4 nav-group-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
-          </button>
-          <div id="operaciones-section" class="nav-group-content" hidden>
-            <flux:navlist variant="outline" class="space-y-1 mt-2">
-              @can('ver-mesas')
-              <flux:navlist.item icon="table-cells" :href="route('mesas.index')" :current="request()->routeIs('mesas.*')" wire:navigate class="nav-item-child">
-                Mesas
-              </flux:navlist.item>
-              @endcan
-            </flux:navlist>
-          </div>
+            <span>Operaciones</span>
         </div>
-        @endcanany
-
-        {{-- ===== Ventas & Caja ===== --}}
+        <svg id="operaciones-icon" class="w-4 h-4 nav-group-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
+    <div id="operaciones-section" class="nav-group-content" hidden>
+        <flux:navlist variant="outline" class="space-y-1 mt-2">
+            @can('ver-mesas')
+            <flux:navlist.item icon="table-cells" :href="route('mesas.index')" :current="request()->routeIs('mesas.*')" wire:navigate class="nav-item-child">
+                Mesas
+            </flux:navlist.item>
+            @endcan
+                        
+            {{-- LÍNEA CORREGIDA --}}
+      @can('gestionar-reservas-cajero')
+      <flux:navlist.item icon="calendar" :href="route('cajero.reservas.index')" :current="request()->routeIs('cajero.reservas.*')" wire:navigate class="nav-item-child">
+          Reservas
+      </flux:navlist.item>
+      @endcan
+            {{-- 👆 HASTA AQUÍ --}}
+            
+        </flux:navlist>
+    </div>
+</div>
+@endcanany        {{-- ===== Ventas & Caja ===== --}}
         @canany(['ver-cobros', 'ver-reporte-caja'])
         <div class="nav-group">
           <button class="nav-group-header"

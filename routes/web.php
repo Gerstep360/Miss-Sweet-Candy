@@ -12,6 +12,11 @@ require __DIR__.'/admin.php';
 require __DIR__.'/cajero/mesas.php';
 require __DIR__.'/cajero/pedidos.php';
 require __DIR__.'/cajero/cobro_caja.php';
+require __DIR__.'/cajero/reservas.php'; //cu19
+
+require __DIR__.'/reservas.php';  //cu19 cliente
+
+
 
 // API
 require __DIR__.'/api.php';
