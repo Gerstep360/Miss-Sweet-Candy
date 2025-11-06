@@ -15,9 +15,17 @@ class AlergenoController extends Controller
      */
     public function index()
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('ver-alergenos')) {
+            abort(403, 'No tienes permiso para ver los alérgenos.');
+        }
+
         $alergenos = Alergeno::withCount('productos')
                              ->orderBy('nombre')
                              ->paginate(15);
+
+        // Registrar en bitácora
+        BitacoraController::registrar('alergenos_listados', 'alergeno', null, auth()->id());
 
         return view('alergenos.index', compact('alergenos'));
     }
@@ -27,6 +35,14 @@ class AlergenoController extends Controller
      */
     public function create()
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('crear-alergenos')) {
+            abort(403, 'No tienes permiso para crear alérgenos.');
+        }
+
+        // Registrar en bitácora
+        BitacoraController::registrar('alergeno_create_view', 'alergeno', null, auth()->id());
+
         return view('alergenos.create');
     }
 
@@ -35,6 +51,11 @@ class AlergenoController extends Controller
      */
     public function store(Request $request)
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('crear-alergenos')) {
+            abort(403, 'No tienes permiso para crear alérgenos.');
+        }
+
         $validated = $request->validate([
             'nombre' => 'required|string|max:100|unique:alergenos,nombre',
             'icono' => 'nullable|string|max:50',
@@ -49,7 +70,10 @@ class AlergenoController extends Controller
         ]);
 
         try {
-            Alergeno::create($validated);
+            $alergeno = Alergeno::create($validated);
+
+            // Registrar en bitácora
+            BitacoraController::registrar('alergeno_creado', 'alergeno', $alergeno->id, auth()->id());
 
             return redirect()
                 ->route('alergenos.index')
@@ -67,6 +91,14 @@ class AlergenoController extends Controller
      */
     public function edit(Alergeno $alergeno)
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('editar-alergenos')) {
+            abort(403, 'No tienes permiso para editar alérgenos.');
+        }
+
+        // Registrar en bitácora
+        BitacoraController::registrar('alergeno_edit_view', 'alergeno', $alergeno->id, auth()->id());
+
         return view('alergenos.edit', compact('alergeno'));
     }
 
@@ -75,6 +107,11 @@ class AlergenoController extends Controller
      */
     public function update(Request $request, Alergeno $alergeno)
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('editar-alergenos')) {
+            abort(403, 'No tienes permiso para editar alérgenos.');
+        }
+
         $validated = $request->validate([
             'nombre' => 'required|string|max:100|unique:alergenos,nombre,' . $alergeno->id,
             'icono' => 'nullable|string|max:50',
@@ -89,6 +126,9 @@ class AlergenoController extends Controller
 
         try {
             $alergeno->update($validated);
+
+            // Registrar en bitácora
+            BitacoraController::registrar('alergeno_actualizado', 'alergeno', $alergeno->id, auth()->id());
 
             return redirect()
                 ->route('alergenos.index')
@@ -106,8 +146,14 @@ class AlergenoController extends Controller
      */
     public function destroy(Alergeno $alergeno)
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('eliminar-alergenos')) {
+            abort(403, 'No tienes permiso para eliminar alérgenos.');
+        }
+
         try {
             $nombre = $alergeno->nombre;
+            $alergenoId = $alergeno->id;
             $productosAfectados = $alergeno->productos()->count();
 
             if ($productosAfectados > 0) {
@@ -116,6 +162,9 @@ class AlergenoController extends Controller
             }
 
             $alergeno->delete();
+
+            // Registrar en bitácora
+            BitacoraController::registrar('alergeno_eliminado', 'alergeno', $alergenoId, auth()->id());
 
             return redirect()
                 ->route('alergenos.index')
@@ -131,9 +180,17 @@ class AlergenoController extends Controller
      */
     public function productos(Alergeno $alergeno)
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('ver-alergenos')) {
+            abort(403, 'No tienes permiso para ver los alérgenos.');
+        }
+
         $productos = $alergeno->productos()
                               ->with('categoria')
                               ->paginate(20);
+
+        // Registrar en bitácora
+        BitacoraController::registrar('alergeno_productos_listados', 'alergeno', $alergeno->id, auth()->id());
 
         return view('alergenos.productos', compact('alergeno', 'productos'));
     }
@@ -143,8 +200,16 @@ class AlergenoController extends Controller
      */
     public function gestionarProducto(Producto $producto)
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('gestionar-alergenos-productos')) {
+            abort(403, 'No tienes permiso para gestionar alérgenos de productos.');
+        }
+
         $alergenos = Alergeno::activos()->orderBy('nombre')->get();
         $alergenosAsignados = $producto->alergenos->pluck('id')->toArray();
+
+        // Registrar en bitácora
+        BitacoraController::registrar('alergenos_producto_view', 'producto', $producto->id, auth()->id());
 
         return view('alergenos.gestionar-producto', compact('producto', 'alergenos', 'alergenosAsignados'));
     }
@@ -154,6 +219,11 @@ class AlergenoController extends Controller
      */
     public function actualizarProducto(Request $request, Producto $producto)
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('gestionar-alergenos-productos')) {
+            abort(403, 'No tienes permiso para gestionar alérgenos de productos.');
+        }
+
         $validated = $request->validate([
             'alergenos' => 'nullable|array',
             'alergenos.*' => 'exists:alergenos,id',
@@ -179,6 +249,9 @@ class AlergenoController extends Controller
 
             DB::commit();
 
+            // Registrar en bitácora
+            BitacoraController::registrar('alergenos_producto_actualizados', 'producto', $producto->id, auth()->id());
+
             return redirect()
                 ->route('productos.index')
                 ->with('success', "✅ Alérgenos del producto '{$producto->nombre}' actualizados exitosamente");
@@ -194,11 +267,19 @@ class AlergenoController extends Controller
      */
     public function toggleActivo(Alergeno $alergeno)
     {
+        // Verificar permiso
+        if (!auth()->check() || !auth()->user()->can('editar-alergenos')) {
+            abort(403, 'No tienes permiso para cambiar el estado de alérgenos.');
+        }
+
         try {
             $alergeno->activo = !$alergeno->activo;
             $alergeno->save();
 
             $estado = $alergeno->activo ? 'activado' : 'desactivado';
+
+            // Registrar en bitácora
+            BitacoraController::registrar('alergeno_estado_cambiado', 'alergeno', $alergeno->id, auth()->id());
 
             return back()->with('success', "✅ Alérgeno '{$alergeno->nombre}' {$estado} exitosamente");
         } catch (\Exception $e) {

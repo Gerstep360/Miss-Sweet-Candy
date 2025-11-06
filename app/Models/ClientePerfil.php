@@ -163,7 +163,7 @@ class ClientePerfil extends Model
     /**
      * Lista de niveles de severidad
      */
-    public static function nivelesSeверidad(): array
+    public static function nivelesSeveridad(): array
     {
         return [
             'leve' => 'Leve (molestias menores)',

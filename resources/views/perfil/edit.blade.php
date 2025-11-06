@@ -209,7 +209,7 @@
                                             </label>
                                             <select :name="'alergias[' + index + '][severidad]'" x-model="alergia.severidad"
                                                     class="w-full px-4 py-2.5 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                                                @foreach($nivelesSeверidad as $key => $descripcion)
+                                                @foreach($nivelesSeveridad as $key => $descripcion)
                                                     <option value="{{ $key }}">{{ ucfirst($key) }} - {{ $descripcion }}</option>
                                                 @endforeach
                                             </select>

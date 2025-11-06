@@ -17,6 +17,11 @@ class ClientePerfilController extends Controller
      */
     public function show()
     {
+        // Verificar autenticación
+        if (!auth()->check()) {
+            abort(403, 'No tienes permiso para ver este perfil.');
+        }
+
         $user = Auth::user();
         $perfil = $user->perfil;
 
@@ -25,11 +30,14 @@ class ClientePerfilController extends Controller
             $perfil = $user->obtenerOCrearPerfil();
         }
 
+        // Registrar en bitácora
+        BitacoraController::registrar('perfil_visto', 'perfil', $perfil->user_id, auth()->id());
+
         return view('perfil.show', [
             'user' => $user,
             'perfil' => $perfil,
             'preferenciasDisponibles' => ClientePerfil::preferenciasDisponibles(),
-            'nivelesSeверidad' => ClientePerfil::nivelesSeверidad(),
+            'nivelesSeveridad' => ClientePerfil::nivelesSeveridad(),
         ]);
     }
 
@@ -38,6 +46,11 @@ class ClientePerfilController extends Controller
      */
     public function edit()
     {
+        // Verificar autenticación
+        if (!auth()->check()) {
+            abort(403, 'No tienes permiso para editar este perfil.');
+        }
+
         $user = Auth::user();
         $perfil = $user->perfil;
 
@@ -46,11 +59,14 @@ class ClientePerfilController extends Controller
             $perfil = $user->obtenerOCrearPerfil();
         }
 
+        // Registrar en bitácora
+        BitacoraController::registrar('perfil_edit_view', 'perfil', $perfil->user_id, auth()->id());
+
         return view('perfil.edit', [
             'user' => $user,
             'perfil' => $perfil,
             'preferenciasDisponibles' => ClientePerfil::preferenciasDisponibles(),
-            'nivelesSeверidad' => ClientePerfil::nivelesSeверidad(),
+            'nivelesSeveridad' => ClientePerfil::nivelesSeveridad(),
         ]);
     }
 
@@ -127,6 +143,9 @@ class ClientePerfilController extends Controller
                     'tiene_preferencias' => count($validated['preferencias'] ?? []) > 0,
                 ]);
 
+                // Registrar en bitácora
+                BitacoraController::registrar('perfil_actualizado', 'perfil', $perfil->user_id, auth()->id());
+
                 return redirect()->route('perfil.show')
                     ->with('success', '✅ Perfil actualizado correctamente');
 
@@ -177,6 +196,9 @@ class ClientePerfilController extends Controller
             ], 404);
         }
 
+        // Registrar en bitácora
+        BitacoraController::registrar('perfil_consultado_cajero', 'perfil', $user->id, auth()->id());
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -207,6 +229,9 @@ class ClientePerfilController extends Controller
 
         $user = User::findOrFail($userId);
         $perfil = $user->perfil;
+
+        // Registrar en bitácora
+        BitacoraController::registrar('perfil_consulta_vista_cajero', 'perfil', $user->id, auth()->id());
 
         return view('perfil.consultar', [
             'user' => $user,
@@ -244,6 +269,9 @@ class ClientePerfilController extends Controller
                     'tiene_alergias_graves' => $user->perfil ? $user->perfil->tieneAlergiasGraves() : false,
                 ];
             });
+
+        // Registrar en bitácora
+        BitacoraController::registrar('clientes_buscados', 'perfil', null, auth()->id());
 
         return response()->json([
             'success' => true,
@@ -295,6 +323,9 @@ class ClientePerfilController extends Controller
                       ->where('preferencias', '!=', '[]');
                 })->count(),
         ];
+
+        // Registrar en bitácora
+        BitacoraController::registrar('perfiles_listados_cajero', 'perfil', null, auth()->id());
 
         return view('perfil.consultar-todos', [
             'clientes' => $clientes,

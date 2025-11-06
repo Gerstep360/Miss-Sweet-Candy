@@ -49,6 +49,9 @@ class FeedbackController extends Controller
         // Estadísticas generales
         $estadisticas = $this->calcularEstadisticas($periodo);
 
+        // Registrar en bitácora
+        BitacoraController::registrar('feedbacks_listados_admin', 'feedback', null, auth()->id());
+
         return view('admin.feedback.index', compact('feedbacks', 'estadisticas', 'periodo', 'tipo', 'estado'));
     }
 
@@ -68,6 +71,9 @@ class FeedbackController extends Controller
             ->with(['pedido'])
             ->latest('created_at')
             ->paginate(10);
+
+        // Registrar en bitácora
+        BitacoraController::registrar('mis_feedbacks_listados', 'feedback', null, auth()->id());
 
         return view('admin.feedback.mis-feedbacks', compact('feedbacks'));
     }
@@ -90,6 +96,9 @@ class FeedbackController extends Controller
             ->latest()
             ->take(10)
             ->get();
+
+        // Registrar en bitácora
+        BitacoraController::registrar('feedback_create_view', 'feedback', null, auth()->id());
 
         return view('admin.feedback.create', compact('pedidosSinFeedback'));
     }
@@ -214,6 +223,9 @@ class FeedbackController extends Controller
         // DEBUG: Feedback creado exitosamente
         \Log::info('Feedback Store - Feedback Creado:', ['id' => $feedback->id, 'cliente_id' => $feedback->cliente_id]);
 
+        // Registrar en bitácora
+        BitacoraController::registrar('feedback_creado', 'feedback', $feedback->id, auth()->id());
+
         return redirect()->route('feedback.show', $feedback)
             ->with('success', '¡Gracias por tu feedback! Nos ayuda a mejorar nuestro servicio.');
     }
@@ -238,6 +250,9 @@ class FeedbackController extends Controller
         }
 
         $feedback->load(['cliente', 'pedido.items.producto']);
+
+        // Registrar en bitácora
+        BitacoraController::registrar('feedback_visto', 'feedback', $feedback->id, auth()->id());
 
         return view('admin.feedback.show', compact('feedback'));
     }
@@ -267,13 +282,16 @@ class FeedbackController extends Controller
         // Productos con mejor calificación
         $productosMejorCalificados = $this->obtenerProductosMejorCalificados(10);
 
+        // Registrar en bitácora
+        BitacoraController::registrar('estadisticas_feedback_vistas', 'feedback', null, auth()->id());
+
         return view('admin.feedback.estadisticas', compact(
             'estadisticas',
             'tendencias',
             'productosPeorCalificados',
             'productosMejorCalificados',
             'periodo'
-        ));
+        )); 
     }
 
     /**

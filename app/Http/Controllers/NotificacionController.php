@@ -15,11 +15,19 @@ class NotificacionController extends Controller
     // Lista de notificaciones para el usuario autenticado
     public function index(Request $request)
     {
+        // Asegurar usuario autenticado
+        if (!auth()->check()) {
+            abort(403, 'No tienes permiso para ver las notificaciones.');
+        }
+
         $usuario = auth()->user();
-        
+
         $notificaciones = Notificacion::where('usuario_destino_id', $usuario->id)
             ->orderByDesc('id')
             ->paginate(20);
+
+        // Registrar en bitácora que el usuario consultó su lista de notificaciones
+        BitacoraController::registrar('notificaciones_listadas', 'notificacion', null, $usuario->id);
 
         return view('notificaciones.index', compact('notificaciones'));
     }
@@ -40,6 +48,9 @@ class NotificacionController extends Controller
             BitacoraController::registrar('notificacion_leida', 'notificacion', $notificacion->id);
         }
 
+        // Registrar en bitácora que el usuario vio la notificación
+        BitacoraController::registrar('notificacion_vista', 'notificacion', $notificacion->id, auth()->id());
+
         return view('notificaciones.show', compact('notificacion'));
     }
 
@@ -57,7 +68,7 @@ class NotificacionController extends Controller
         }
 
         $notificacion->marcarComoLeida();
-        BitacoraController::registrar('notificacion_leida', 'notificacion', $notificacion->id);
+        BitacoraController::registrar('notificacion_leida', 'notificacion', $notificacion->id, auth()->id());
 
         // Si es una petición AJAX, retornar JSON
         if (request()->expectsJson()) {
@@ -74,12 +85,15 @@ class NotificacionController extends Controller
     public function marcarTodasLeidas()
     {
         $usuario = auth()->user();
+        if (!auth()->check()) {
+            abort(403, 'No tienes permiso para modificar las notificaciones.');
+        }
         
         Notificacion::where('usuario_destino_id', $usuario->id)
             ->where('leido', false)
             ->update(['leido' => true]);
 
-        BitacoraController::registrar('notificaciones_marcadas_leidas', 'notificacion', null);
+        BitacoraController::registrar('notificaciones_marcadas_leidas', 'notificacion', null, $usuario->id);
 
         return redirect()->back()->with('success', 'Todas las notificaciones fueron marcadas como leídas.');
     }
@@ -87,12 +101,19 @@ class NotificacionController extends Controller
     // Obtener notificaciones no leídas (para AJAX/API)
     public function noLeidas()
     {
+        if (!auth()->check()) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
+
         $usuario = auth()->user();
-        
+
         $notificaciones = Notificacion::where('usuario_destino_id', $usuario->id)
             ->where('leido', false)
             ->orderByDesc('id')
             ->get();
+
+        // Registrar en bitácora (consulta AJAX de notificaciones no leídas)
+        BitacoraController::registrar('notificaciones_consultadas', 'notificacion', null, $usuario->id);
 
         return response()->json([
             'count' => $notificaciones->count(),
@@ -106,6 +127,9 @@ class NotificacionController extends Controller
         $this->authorize('crear-notificacion');
 
         $usuarios = User::where('activo', true)->orderBy('name')->get();
+
+        // Registrar en bitácora que se abrió la vista para crear notificación
+        BitacoraController::registrar('notificacion_create_view', 'notificacion', null, auth()->id());
         
         return view('admin.notificaciones.create', compact('usuarios'));
     }
@@ -160,6 +184,9 @@ class NotificacionController extends Controller
         $notificaciones = $query->orderByDesc('id')->paginate(20);
         $usuarios = User::where('activo', true)->orderBy('name')->get();
 
+        // Registrar en bitácora que el admin consultó las notificaciones
+        BitacoraController::registrar('notificaciones_listadas_admin', 'notificacion', null, auth()->id());
+
         return view('admin.notificaciones.index', compact('notificaciones', 'usuarios'));
     }
 
@@ -182,7 +209,7 @@ class NotificacionController extends Controller
 
         // Obtener administradores y cajeros para notificar
         $usuariosANotificar = User::role(['administrador', 'cajero'])
-            ->where('activo', true)
+          
             ->get();
 
         $mensaje = "Producto agotado: {$producto->nombre}. Stock anterior: {$stockAntes}. Origen: {$origen}.";
@@ -208,7 +235,6 @@ class NotificacionController extends Controller
     {
         // Obtener todos los baristas activos
         $baristas = User::role('barista')
-            ->where('activo', true)
             ->get();
 
         if ($baristas->isEmpty()) {
@@ -272,7 +298,6 @@ class NotificacionController extends Controller
 
         // También notificar a todos los cajeros activos (por si el cajero original no está disponible)
         $otrosCajeros = User::role(['cajero', 'administrador'])
-            ->where('activo', true)
             ->where('id', '!=', $pedido->cajero_id)
             ->get();
 
