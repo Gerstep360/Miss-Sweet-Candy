@@ -53,6 +53,26 @@ class FeedbackController extends Controller
     }
 
     /**
+     * Display client's own feedbacks - CLIENTE
+     */
+    public function misFeedbacks(Request $request)
+    {
+        try {
+            $this->authorize('ver-mis-feedbacks');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
+        // Solo feedbacks del cliente autenticado
+        $feedbacks = Feedback::where('cliente_id', auth()->id())
+            ->with(['pedido'])
+            ->latest('created_at')
+            ->paginate(10);
+
+        return view('admin.feedback.mis-feedbacks', compact('feedbacks'));
+    }
+
+    /**
      * Show the form for creating a new resource - CLIENTE
      */
     public function create(Request $request)

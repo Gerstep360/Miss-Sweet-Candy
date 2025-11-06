@@ -207,8 +207,13 @@
       </x-sidebar.group>
       @endcanany
 
-      @canany(['crear-feedback','ver-estadisticas-feedback'])
+      @canany(['crear-feedback','ver-mis-feedbacks','ver-estadisticas-feedback'])
       <x-sidebar.group id="feedback" icon="chat-bubble-left-right" text="Feedbacks">
+        @can('ver-mis-feedbacks')
+        <flux:navlist.item icon="rectangle-stack" :href="route('feedback.mis-feedbacks')" :current="request()->routeIs('feedback.mis-feedbacks')" wire:navigate class="nav-item-child">
+          Mis Feedbacks
+        </flux:navlist.item>
+        @endcan
         @can('crear-feedback')
         <flux:navlist.item icon="pencil-square" :href="route('feedback.create')" :current="request()->routeIs('feedback.create')" wire:navigate class="nav-item-child">
           Crear Feedback
@@ -216,7 +221,7 @@
         @endcan
         @can('ver-estadisticas-feedback')
         <flux:navlist.item icon="chart-bar" :href="route('feedback.index')" :current="request()->routeIs('feedback.index')" wire:navigate class="nav-item-child">
-          Lista de Feedbacks
+          Ver Todos
         </flux:navlist.item>
         <flux:navlist.item icon="chart-pie" :href="route('feedback.estadisticas')" :current="request()->routeIs('feedback.estadisticas')" wire:navigate class="nav-item-child">
           Estadísticas

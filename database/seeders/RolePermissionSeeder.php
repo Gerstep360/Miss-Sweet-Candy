@@ -136,6 +136,7 @@ class RolePermissionSeeder extends Seeder
 
             //feedback
             'crear-feedback',
+            'ver-mis-feedbacks', // Para clientes
             'ver-estadisticas-feedback',
 
             // CU22 - Perfil de Cliente
@@ -255,6 +256,7 @@ class RolePermissionSeeder extends Seeder
             
             // Feedback
             'crear-feedback',
+            'ver-mis-feedbacks',
 
             // CU22 - Perfil de Cliente
             'ver-mi-perfil',

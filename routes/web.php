@@ -33,7 +33,7 @@ require __DIR__.'/inventario.php';
 require __DIR__.'/reportes.php';
 
 require __DIR__.'/auth.php';
-//require __DIR__.'/error/error.php';
+require __DIR__.'/error/error.php';
 require __DIR__.'/Bitacora/bitacora.php';
 require __DIR__.'/barista/barista.php';
 
