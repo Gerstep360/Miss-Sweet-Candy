@@ -5,6 +5,7 @@
             return {
                 items: [],
                 errors: {},
+                clienteId: null,
 
                 init() {
                     // Escuchar evento de productos seleccionados
@@ -26,6 +27,15 @@
 
                 get cantidadTotal() {
                     return this.items.reduce((sum, item) => sum + item.cantidad, 0);
+                },
+
+                onClienteChange(e) {
+                    this.clienteId = e.target.value || null;
+                    // Actualizar el selector de productos con el nuevo clienteId
+                    if (window.productSelectorData) {
+                        window.productSelectorData.clienteId = this.clienteId;
+                        window.productSelectorData.validarAlergias();
+                    }
                 },
 
                 eliminarProducto(productoId) {
@@ -149,6 +159,7 @@
                                 <div>
                                     <label class="block text-zinc-300 font-medium mb-2">Cliente</label>
                                     <select name="cliente_id" 
+                                            @change="onClienteChange"
                                             class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                         <option value="">Sin cliente...</option>
                                         @foreach($clientes as $cliente)

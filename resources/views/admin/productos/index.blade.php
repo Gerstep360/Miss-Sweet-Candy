@@ -61,6 +61,13 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
+                        @can('gestionar-alergenos-productos')
+                        <a href="{{ route('productos.alergenos.gestionar', $producto) }}" class="bg-red-700 hover:bg-red-600 text-white py-2 px-3 rounded-lg transition-colors" title="Gestionar Alérgenos">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1-1.964-1-2.732 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </a>
+                        @endcan
                         @can('editar-productos')
                         <a href="{{ route('productos.edit', $producto) }}" class="bg-zinc-700 hover:bg-zinc-600 text-white py-2 px-3 rounded-lg transition-colors" title="Editar">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

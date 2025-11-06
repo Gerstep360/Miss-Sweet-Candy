@@ -5,7 +5,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use App\Models\EspecialDelDia;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Relations\HasOne; 
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany; 
 
 class Producto extends Model
 {
@@ -84,6 +85,74 @@ class Producto extends Model
     public function inventario()
     {
         return $this->hasOne(InventarioProducto::class, 'producto_id');
+    }
+
+    /**
+     * Alérgenos asociados a este producto
+     */
+    public function alergenos(): BelongsToMany
+    {
+        return $this->belongsToMany(Alergeno::class, 'alergeno_producto')
+                    ->withPivot('nivel_presencia')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Verificar si el producto contiene algún alérgeno específico
+     */
+    public function contieneAlergeno(string $nombreAlergeno): bool
+    {
+        return $this->alergenos()
+                    ->where('nombre', $nombreAlergeno)
+                    ->where('activo', true)
+                    ->exists();
+    }
+
+    /**
+     * Verificar si el producto contiene alérgenos que el cliente tiene registrados
+     */
+    public function esAptoParaCliente($clienteId): array
+    {
+        $cliente = \App\Models\User::find($clienteId);
+        
+        if (!$cliente || !$cliente->tienePerfil()) {
+            return ['apto' => true, 'advertencias' => []];
+        }
+
+        $perfil = $cliente->perfil;
+        $alergiasCliente = $perfil->alergias ?? [];
+        $advertencias = [];
+
+        // Obtener alérgenos del producto
+        $alergenosProducto = $this->alergenos()
+                                  ->where('activo', true)
+                                  ->get();
+
+        foreach ($alergiasCliente as $alergia) {
+            $nombreAlergia = $alergia['nombre'] ?? '';
+            $severidad = $alergia['severidad'] ?? 'leve';
+
+            // Buscar coincidencias (comparación case-insensitive)
+            $coincidencia = $alergenosProducto->first(function($alergeno) use ($nombreAlergia) {
+                return stripos($alergeno->nombre, $nombreAlergia) !== false 
+                    || stripos($nombreAlergia, $alergeno->nombre) !== false;
+            });
+
+            if ($coincidencia) {
+                $advertencias[] = [
+                    'alergeno' => $coincidencia->nombre,
+                    'severidad' => $severidad,
+                    'nivel_presencia' => $coincidencia->pivot->nivel_presencia,
+                    'icono' => $coincidencia->icono,
+                    'color' => $coincidencia->color,
+                ];
+            }
+        }
+
+        return [
+            'apto' => empty($advertencias),
+            'advertencias' => $advertencias,
+        ];
     }
 
     /**

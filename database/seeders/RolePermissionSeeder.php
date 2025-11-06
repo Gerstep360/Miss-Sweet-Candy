@@ -137,6 +137,18 @@ class RolePermissionSeeder extends Seeder
             //feedback
             'crear-feedback',
             'ver-estadisticas-feedback',
+
+            // CU22 - Perfil de Cliente
+            'ver-mi-perfil',
+            'editar-mi-perfil',
+            'consultar-perfil-cliente', // Para cajeros
+
+            // CU22 - Gestión de Alérgenos (ADMIN)
+            'ver-alergenos',
+            'crear-alergenos',
+            'editar-alergenos',
+            'eliminar-alergenos',
+            'gestionar-alergenos-productos',
         ];
 
         /* -----------------------------------------------------------------
@@ -225,6 +237,9 @@ class RolePermissionSeeder extends Seeder
             'cambiar-estado-pedidos',
             'ver-dashboard-cajero',
             'ver-categorias',
+
+            // CU22 - Consultar perfiles de clientes
+            'consultar-perfil-cliente',
         ]);
 
         // 3) CLIENTE
@@ -240,6 +255,10 @@ class RolePermissionSeeder extends Seeder
             
             // Feedback
             'crear-feedback',
+
+            // CU22 - Perfil de Cliente
+            'ver-mi-perfil',
+            'editar-mi-perfil',
         ]);
 
         // 4) BARISTA (por el momento no tiene muchos permisos, pero se deja para los proximos casos de uso)

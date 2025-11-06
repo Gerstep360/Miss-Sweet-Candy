@@ -69,7 +69,7 @@ class PedidoController extends BaseController
             
         $clientes = User::role('cliente')->get();
         
-        $productos = Producto::with(['categoria', 'inventario', 'especialVigente'])
+        $productos = Producto::with(['categoria', 'inventario', 'especialVigente', 'alergenos'])
             ->orderBy('nombre')
             ->get()
             ->each->append(['imagen_url','precio_vigente','tiene_oferta','porcentaje_oferta','ahorro_oferta']);
@@ -86,7 +86,7 @@ class PedidoController extends BaseController
         
         BitacoraController::registrar('crear', 'Pedido', null);
 
-        return view('admin.pedidos.create-mesa', compact('mesas', 'clientes', 'productos', 'categorias', 'promociones'));
+        return view('admin.pedidos.create-mostrador', compact('clientes', 'productos', 'categorias', 'promociones'));
     }
 
     /**

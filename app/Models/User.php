@@ -102,4 +102,28 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(\App\Models\Pedido::class, 'cliente_id');
     }
+
+    /**
+     * Relación con el perfil del cliente
+     */
+    public function perfil()
+    {
+        return $this->hasOne(\App\Models\ClientePerfil::class, 'user_id');
+    }
+
+    /**
+     * Verificar si el usuario tiene perfil de cliente
+     */
+    public function tienePerfil(): bool
+    {
+        return $this->perfil()->exists();
+    }
+
+    /**
+     * Obtener o crear perfil del cliente
+     */
+    public function obtenerOCrearPerfil()
+    {
+        return $this->perfil()->firstOrCreate(['user_id' => $this->id]);
+    }
 }

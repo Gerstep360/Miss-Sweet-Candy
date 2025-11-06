@@ -89,8 +89,8 @@
       </x-sidebar.group>
       @endcanany
 
-      @canany(['ver-productos','ver-categorias','ver-horarios'])
-      <x-sidebar.group id="cafeteria" icon="building-storefront" text="Cafetería">
+      @canany(['ver-productos','ver-categorias','ver-horarios','ver-alergenos'])
+      <x:sidebar.group id="cafeteria" icon="building-storefront" text="Cafetería">
         @can('ver-productos')
         <flux:navlist.item icon="cube" :href="route('productos.index')" :current="request()->routeIs('productos.*')" wire:navigate class="nav-item-child">
           Productos
@@ -106,10 +106,15 @@
           Horarios
         </flux:navlist.item>
         @endcan
+        @can('ver-alergenos')
+        <flux:navlist.item icon="shield-exclamation" :href="route('alergenos.index')" :current="request()->routeIs('alergenos.*')" wire:navigate class="nav-item-child">
+          Alérgenos
+        </flux:navlist.item>
+        @endcan
       </x-sidebar.group>
       @endcanany
 
-      @canany(['ver-mesas','ver-promociones','gestionar-pedidos-barista'])
+      @canany(['ver-mesas','ver-promociones','gestionar-pedidos-barista','consultar-perfil-cliente'])
       <x-sidebar.group id="operaciones" icon="operaciones" text="Operaciones">
         @can('ver-mesas')
         <flux:navlist.item icon="table-cells" :href="route('mesas.index')" :current="request()->routeIs('mesas.*')" wire:navigate class="nav-item-child">
@@ -124,6 +129,11 @@
         @can('gestionar-pedidos-barista')
         <flux:navlist.item icon="beaker" :href="route('barista.pedidos.index')" :current="request()->routeIs('barista.pedidos.*')" wire:navigate class="nav-item-child">
           Pedidos Barista
+        </flux:navlist.item>
+        @endcan
+        @can('consultar-perfil-cliente')
+        <flux:navlist.item icon="users" :href="route('perfil.consultar.todos')" :current="request()->routeIs('perfil.consultar.todos')" wire:navigate class="nav-item-child">
+          Consultar Perfiles
         </flux:navlist.item>
         @endcan
       </x-sidebar.group>
@@ -235,8 +245,13 @@
 
       {{-- Mi Cuenta --}}
       <x-sidebar.group id="cuenta" icon="user" text="Mi Cuenta">
+        @can('ver-mi-perfil')
+        <flux:navlist.item icon="identification" :href="route('perfil.show')" :current="request()->routeIs('perfil.*')" wire:navigate class="nav-item-child">
+          Mi Perfil de Cliente
+        </flux:navlist.item>
+        @endcan
         <flux:navlist.item icon="user" :href="route('settings.profile')" :current="request()->routeIs('settings.profile')" wire:navigate class="nav-item-child">
-          Mi Perfil
+          Configuración de Cuenta
         </flux:navlist.item>
         <flux:navlist.item icon="lock-closed" :href="route('settings.password')" :current="request()->routeIs('settings.password')" wire:navigate class="nav-item-child">
           Cambiar Contraseña
@@ -299,6 +314,131 @@
 
   {{-- ===== Contenido ===== --}}
   {{ $slot }}
+
+  {{-- ===== MODAL DE BÚSQUEDA DE CLIENTES (para cajeros) ===== --}}
+  @can('consultar-perfil-cliente')
+  <div id="modal-buscar-cliente" class="fixed inset-0 z-[90] hidden">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="cerrarBuscarClienteModal()"></div>
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800">
+      <div class="p-6 border-b border-zinc-800">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-2xl font-bold text-white">Buscar Cliente</h2>
+          <button onclick="cerrarBuscarClienteModal()" class="p-2 rounded-lg hover:bg-zinc-800 transition-colors">
+            <svg class="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="relative">
+          <input type="text" id="input-buscar-cliente" placeholder="Buscar por nombre o email..." 
+                 class="w-full px-4 py-3 pl-12 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder-zinc-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-colors"
+                 oninput="buscarClientes(this.value)">
+          <svg class="w-5 h-5 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </div>
+      <div id="resultados-clientes" class="p-6 max-h-96 overflow-y-auto custom-scrollbar">
+        <p class="text-center text-zinc-400 text-sm py-8">Escribe para buscar clientes...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function buscarClienteModal() {
+      const modal = document.getElementById('modal-buscar-cliente');
+      if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => document.getElementById('input-buscar-cliente')?.focus(), 100);
+      }
+    }
+
+    function cerrarBuscarClienteModal() {
+      const modal = document.getElementById('modal-buscar-cliente');
+      if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        document.getElementById('input-buscar-cliente').value = '';
+        document.getElementById('resultados-clientes').innerHTML = '<p class="text-center text-zinc-400 text-sm py-8">Escribe para buscar clientes...</p>';
+      }
+    }
+
+    let timeoutBusqueda = null;
+    async function buscarClientes(query) {
+      clearTimeout(timeoutBusqueda);
+      
+      if (!query || query.length < 2) {
+        document.getElementById('resultados-clientes').innerHTML = '<p class="text-center text-zinc-400 text-sm py-8">Escribe al menos 2 caracteres...</p>';
+        return;
+      }
+
+      timeoutBusqueda = setTimeout(async () => {
+        try {
+          const meta = document.querySelector('meta[name="csrf-token"]');
+          if (!meta) return;
+
+          const response = await fetch(`/api/clientes/buscar?q=${encodeURIComponent(query)}`, {
+            headers: {
+              'X-CSRF-TOKEN': meta.content,
+              'Accept': 'application/json'
+            }
+          });
+
+          if (!response.ok) throw new Error('Error al buscar');
+
+          const data = await response.json();
+          mostrarResultados(data.data);
+        } catch (error) {
+          console.error('Error:', error);
+          document.getElementById('resultados-clientes').innerHTML = '<p class="text-center text-red-400 text-sm py-8">Error al buscar clientes</p>';
+        }
+      }, 300);
+    }
+
+    function mostrarResultados(clientes) {
+      const container = document.getElementById('resultados-clientes');
+      
+      if (!clientes || clientes.length === 0) {
+        container.innerHTML = '<p class="text-center text-zinc-400 text-sm py-8">No se encontraron clientes</p>';
+        return;
+      }
+
+      container.innerHTML = clientes.map(cliente => `
+        <a href="/clientes/${cliente.id}/perfil" 
+           class="block bg-zinc-800/30 hover:bg-zinc-800/50 border border-zinc-700 hover:border-amber-500/50 rounded-lg p-4 mb-3 transition-all duration-200 group">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span class="text-white font-bold text-lg">${cliente.name.substring(0, 2).toUpperCase()}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-white font-medium truncate">${cliente.name}</p>
+                ${cliente.tiene_alergias_graves ? '<span class="bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded-full font-bold animate-pulse">🚨 ALERGIAS GRAVES</span>' : ''}
+                ${cliente.tiene_alergias && !cliente.tiene_alergias_graves ? '<span class="bg-orange-500/20 text-orange-400 text-xs px-2 py-0.5 rounded-full">⚠️ Alergias</span>' : ''}
+              </div>
+              <p class="text-zinc-400 text-sm truncate">${cliente.email}</p>
+              ${cliente.telefono !== 'N/A' ? `<p class="text-zinc-500 text-xs mt-0.5">📞 ${cliente.telefono}</p>` : ''}
+            </div>
+            <svg class="w-5 h-5 text-zinc-500 group-hover:text-amber-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    // Cerrar con Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('modal-buscar-cliente');
+        if (modal && !modal.classList.contains('hidden')) {
+          cerrarBuscarClienteModal();
+        }
+      }
+    });
+  </script>
+  @endcan
 
   {{-- ===== PANEL DERECHO (desktop) - Se cierra al hacer clic fuera ===== --}}
   <div id="notif-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[79] hidden"></div>

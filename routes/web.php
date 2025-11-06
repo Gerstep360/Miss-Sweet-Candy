@@ -41,3 +41,9 @@ require __DIR__.'/especial_dia.php';
 
 // Feedback
 require __DIR__.'/feedback.php';
+
+// Perfil de Cliente (CU22)
+require __DIR__.'/perfil.php';
+
+// Alérgenos (CU22)
+require __DIR__.'/alergenos.php';
