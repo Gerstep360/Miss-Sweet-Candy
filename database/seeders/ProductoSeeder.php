@@ -25,6 +25,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Taza',
                 'precio' => 20,
                 'imagen' => 'img/productos/JZMXfBxxo7mgGBGtoy3mbPU0TClHXbzW3zGzHPy2.png',
+                'prep_time_minutes' => 2,
             ],
             [
                 'nombre' => 'Café Espresso',
@@ -32,6 +33,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Taza',
                 'precio' => 25,
                 'imagen' => 'img/productos/vodMGgn8ZqeuCFSqu0yBPlzevsJWXKrGvfH2pb5V.jpg',
+                'prep_time_minutes' => 2,
             ],
 
             // Latte
@@ -41,6 +43,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Taza',
                 'precio' => 30,
                 'imagen' => 'img/productos/latte_vainilla.jpg',
+                'prep_time_minutes' => 2,
             ],
             [
                 'nombre' => 'Latte Caramelo',
@@ -48,6 +51,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Taza',
                 'precio' => 32,
                 'imagen' => 'img/productos/latte_caramelo.jpg',
+                'prep_time_minutes' => 2,
             ],
 
             // Postres y dulces
@@ -57,6 +61,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Porción',
                 'precio' => 15,
                 'imagen' => 'img/productos/masitas_chocolate.jpg',
+                'prep_time_minutes' => 2,
             ],
             [
                 'nombre' => 'Masitas de Limón',
@@ -64,6 +69,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Porción',
                 'precio' => 15,
                 'imagen' => 'img/productos/masitas_limon.jpg',
+                'prep_time_minutes' => 2,
             ],
 
             [
@@ -72,6 +78,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Unidad',
                 'precio' => 18,
                 'imagen' => 'img/productos/minitorta_frutilla.jpg',
+                'prep_time_minutes' => 2,
             ],
             [
                 'nombre' => 'Minitorta de Chocolate',
@@ -79,6 +86,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Unidad',
                 'precio' => 18,
                 'imagen' => 'img/productos/minitorta_chocolate.jpg',
+                'prep_time_minutes' => 2,
             ],
 
             [
@@ -87,6 +95,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Porción',
                 'precio' => 25,
                 'imagen' => 'img/productos/torta_selva_negra.jpg',
+                'prep_time_minutes' => 2,
             ],
             [
                 'nombre' => 'Torta de Zanahoria',
@@ -94,6 +103,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Porción',
                 'precio' => 25,
                 'imagen' => 'img/productos/torta_zanahoria.jpg',
+                'prep_time_minutes' => 2,
             ],
 
             [
@@ -102,6 +112,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Porción',
                 'precio' => 22,
                 'imagen' => 'img/productos/postre_tres_leches.jpg',
+                'prep_time_minutes' => 2,
             ],
             [
                 'nombre' => 'Postre Flan',
@@ -109,6 +120,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Porción',
                 'precio' => 20,
                 'imagen' => 'img/productos/postre_flan.jpg',
+                'prep_time_minutes' => 2,
             ],
 
             // Snacks y salados
@@ -118,6 +130,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Unidad',
                 'precio' => 10,
                 'imagen' => 'img/productos/saltena_pollo.jpg',
+                'prep_time_minutes' => 2,
             ],
             [
                 'nombre' => 'Salteña de Carne',
@@ -125,6 +138,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Unidad',
                 'precio' => 10,
                 'imagen' => 'img/productos/saltena_carne.jpg',
+                'prep_time_minutes' => 2,
             ],
 
             // Helados
@@ -134,6 +148,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Porción',
                 'precio' => 12,
                 'imagen' => 'img/productos/helado_vainilla.jpg',
+                'prep_time_minutes' => 2,
             ],
             [
                 'nombre' => 'Helado de Chocolate',
@@ -141,6 +156,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Porción',
                 'precio' => 12,
                 'imagen' => 'img/productos/helado_chocolate.jpg',
+                'prep_time_minutes' => 2,
             ],
 
             //prueba (parece que si soporta Gif, ideal para presentaciones llamativas)
@@ -150,6 +166,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => 'Taza',
                 'precio' => 22,
                 'imagen' => 'img/productos/tLqcNV7GKin48PYbZr9JZXAdASeYLXLhxr74NVVE.gif',
+                'prep_time_minutes' => 2,
             ],
         ];
 
@@ -161,6 +178,7 @@ class ProductoSeeder extends Seeder
                 'unidad' => $p['unidad'],
                 'precio' => $p['precio'],
                 'imagen' => $p['imagen'],
+                'prep_time_minutes' => $p['prep_time_minutes'] ?? 2,
             ]);
         }
     }

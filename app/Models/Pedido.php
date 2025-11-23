@@ -25,13 +25,38 @@ class Pedido extends Model
         'telefono_contacto',
         'canal',
         'notas',
+        'token',
+        'eta_minutes',
+        'started_at',
+        'ready_at',
+        'delivered_at',
     ];
 
     protected $casts = [
         'programado_para' => 'datetime',
         'gps_lat' => 'decimal:7',
         'gps_lng' => 'decimal:7',
+        'started_at' => 'datetime',
+        'ready_at' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
+
+    // ==============================
+    // HOOK: genera token ANTES de insertar
+    // ==============================
+    protected static function booted()
+    {
+        static::creating(function (Pedido $pedido) {
+            if (empty($pedido->token)) {
+                $pedido->token = self::generarTokenPorTipo($pedido->tipo);
+            }
+
+            // ETA puede quedar null y recalcularse después
+            if ($pedido->eta_minutes === null) {
+                $pedido->eta_minutes = 0;
+            }
+        });
+    }
 
     /**
      * Relación con el cliente
@@ -258,4 +283,42 @@ class Pedido extends Model
         return in_array($this->estado, ['preparado', 'servido', 'retirado', 'entregado']) 
                && !$this->estaCobrado();
     }
+
+    public static function generarTokenPorTipo(string $tipo): string
+{
+    $prefix = match($tipo) {
+        'mesa' => 'M',
+        'mostrador' => 'A',
+        'web' => 'W',
+        default => 'A',
+    };
+
+    // Busca el último token de ese tipo para continuar secuencia
+    $last = self::where('tipo', $tipo)
+        ->whereNotNull('token')
+        ->latest('id')
+        ->first();
+
+    $num = 1;
+    if ($last && preg_match('/\d+/', $last->token, $m)) {
+        $num = (int)$m[0] + 1;
+    }
+
+    return $prefix . str_pad((string)$num, 3, '0', STR_PAD_LEFT);
+}
+
+public function calcularEtaPorProductos(): int
+{
+    // max(tiempo_item) como te expliqué
+    $max = $this->items->map(function($it){
+        $t = (int)($it->producto->prep_time_minutes ?? 1);
+        return $t * (int)$it->cantidad;
+    })->max() ?? 1;
+
+    // penalidad por cola simple
+    $enPrep = self::where('estado','en_preparacion')->count();
+    $penalidad = $enPrep * 2;
+
+    return $max + $penalidad;
+}
 }

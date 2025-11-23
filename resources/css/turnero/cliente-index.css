@@ -1,0 +1,98 @@
+/* Animaciones para cliente-index */
+
+/* Entrada de tarjeta */
+.card-enter {
+    animation: cardEnter 0.4s ease-out;
+}
+
+@keyframes cardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Salida de tarjeta */
+.card-leave {
+    animation: cardLeave 0.3s ease-in forwards;
+}
+
+@keyframes cardLeave {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+}
+
+/* Pulse cuando pasa a LISTO */
+.card-ready.card-pulse {
+    animation: cardReadyPulse 1.1s ease-out;
+}
+
+@keyframes cardReadyPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+    40% {
+        box-shadow: 0 0 0 12px rgba(34, 197, 94, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+/* Subtle glow para tarjetas LISTO */
+.card-ready {
+    position: relative;
+}
+
+.card-ready::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.card-ready:hover::before {
+    opacity: 1;
+}
+
+/* Estado pill animado */
+.estado-pill {
+    transition: all 0.3s ease;
+}
+
+/* ETA value pulse suave */
+.eta-value {
+    transition: color 0.3s ease;
+}
+
+/* Hover effects */
+.card-enter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card-enter,
+    .card-leave,
+    .card-ready.card-pulse {
+        animation: none !important;
+    }
+    
+    * {
+        transition: none !important;
+    }
+}

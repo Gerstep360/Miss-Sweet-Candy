@@ -76,9 +76,12 @@ class BaristaController extends Controller
         DB::beginTransaction();
 
         try {
-            $pedido->update(['estado' => 'en_preparacion']);
+            $pedido->update([
+                'estado' => 'en_preparacion',
+                'started_at' => now(),
+            ]);
             $pedido->items()->update(['estado_item' => 'en_preparacion']);
-
+            event(new \App\Events\PedidoActualizado($pedido));
             DB::commit();
 
             BitacoraController::registrar('cambiar estado a en_preparacion', 'Pedido Barista', $pedido->id, auth()->id());
@@ -109,9 +112,13 @@ class BaristaController extends Controller
         DB::beginTransaction();
 
         try {
-            $pedido->update(['estado' => 'preparado']);
+            $pedido->update([
+                'estado' => 'preparado',
+                'ready_at' => now(),
+            ]);
             $pedido->items()->update(['estado_item' => 'preparado']);
 
+            event(new \App\Events\PedidoActualizado($pedido));
             DB::commit();
 
             BitacoraController::registrar('cambiar estado a preparado', 'Pedido Barista', $pedido->id, auth()->id());

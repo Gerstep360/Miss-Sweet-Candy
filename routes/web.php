@@ -19,6 +19,7 @@ require __DIR__.'/cierres_caja.php';
 
 // Turnos de caja
 require __DIR__.'/turnos_caja.php';
+require __DIR__.'/turnos.php';
 
 // API
 require __DIR__.'/api.php';

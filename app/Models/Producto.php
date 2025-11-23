@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Producto extends Model
 {
     protected $fillable = [
-        'categoria_id', 'nombre', 'unidad', 'precio', 'imagen'
+        'categoria_id', 'nombre', 'unidad', 'precio', 'imagen', 'prep_time_minutes'
     ];
 
     public function categoria()

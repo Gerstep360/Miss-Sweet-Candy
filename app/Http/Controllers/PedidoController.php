@@ -200,11 +200,22 @@ class PedidoController extends BaseController
             $totalPedido = $pedido->items()->sum('subtotal_item');
             $pedido->update(['total' => $totalPedido]);
 
+            // ✅ AQUÍ va token + ETA (ya existen items, entonces se puede calcular)
+            $pedido->token = $this->generarToken($pedido->tipo);
+            $pedido->eta_minutes = $this->calcularEtaPorProductos($pedido);
+            $pedido->save();
+
             // Cambiar estado de la mesa a ocupada
             $mesa->update(['estado' => 'ocupada']);
 
             // Registrar en bitácora
             BitacoraController::registrar('crear', 'Pedido', $pedido->id);
+
+            // ✅ Broadcast PERO después de commit (seguro)
+            // Laravel sugiere afterCommit / ShouldDispatchAfterCommit
+            DB::afterCommit(function () use ($pedido) {
+                event(new \App\Events\PedidoActualizado($pedido));
+            });
 
             DB::commit();
 
@@ -295,8 +306,18 @@ class PedidoController extends BaseController
             $totalPedido = $pedido->items()->sum('subtotal_item');
             $pedido->update(['total' => $totalPedido]);
 
+            // ✅ AQUÍ va token + ETA
+            $pedido->token = $this->generarToken($pedido->tipo);
+            $pedido->eta_minutes = $this->calcularEtaPorProductos($pedido);
+            $pedido->save();
+
             // Registrar en bitácora
             BitacoraController::registrar('crear', 'Pedido', $pedido->id);
+
+            // ✅ Broadcast seguro post-commit
+            DB::afterCommit(function () use ($pedido) {
+                event(new \App\Events\PedidoActualizado($pedido));
+            });
 
             DB::commit();
 
@@ -543,13 +564,12 @@ class PedidoController extends BaseController
             }
 
             // Si se completa el pedido (entregado/servido/retirado), liberar mesa
-            if (in_array($validated['estado'], ['entregado', 'servido', 'retirado']) && $pedido->tipo === 'mesa' && $pedido->mesa) {
-                $pedido->mesa->update(['estado' => 'libre']);
+            if (in_array($validated['estado'], ['retirado','servido','entregado'])) {
+                $pedido->delivered_at = now();
             }
 
             $pedido->save();
-
-            DB::commit();
+            event(new \App\Events\PedidoActualizado($pedido));
 
             // 🔔 NOTIFICACIONES según el cambio de estado
             if ($validated['estado'] === 'preparado' || $validated['estado'] === 'listo') {
@@ -695,4 +715,36 @@ class PedidoController extends BaseController
             }
         }
     }
+    private function generarToken(string $tipo): string
+{
+    $prefijo = match($tipo){
+        'mesa' => 'M',
+        'mostrador' => 'A',
+        'web' => 'W',
+        default => 'A'
+    };
+
+    $ultimo = Pedido::where('token','like', $prefijo.'%')
+        ->orderByDesc('id')
+        ->value('token');
+
+    $num = $ultimo ? intval(substr($ultimo,1)) + 1 : 1;
+
+    return $prefijo . str_pad((string)$num, 3, '0', STR_PAD_LEFT); // A001
 }
+
+private function calcularEtaPorProductos(Pedido $pedido): int
+{
+    // 1) max tiempo base de productos del pedido
+    $maxItemTime = $pedido->items()
+        ->join('productos','productos.id','=','pedido_items.producto_id')
+        ->max('productos.prep_time_minutes') ?? 1;
+
+    // 2) penalidad por carga actual
+    $penalty = Pedido::where('estado','en_preparacion')->count() * 2;
+
+    return $maxItemTime + $penalty;
+}
+
+}
+

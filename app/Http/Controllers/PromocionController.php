@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Promocion;
-use App\Models\Producto;
-use App\Models\Categoria;
-use App\Models\User;
-use App\Models\Notificacion;
 use App\Mail\PromocionCreada;
-use Illuminate\Support\Facades\Mail;
+use App\Models\Categoria;
+use App\Models\Notificacion;
+use App\Models\Producto;
+use App\Models\Promocion;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Auth\Access\AuthorizationException;
-use App\Http\Controllers\BitacoraController;
+use Illuminate\Support\Facades\Mail;
 
 class PromocionController extends BaseController
 {
@@ -32,7 +31,7 @@ class PromocionController extends BaseController
 
         $promociones = Promocion::orderBy('prioridad')->orderBy('nombre')->get();
         BitacoraController::registrar('ver lista', 'Promocion', null);
-        
+
         return view('admin.promociones.index', compact('promociones'));
     }
 
@@ -85,7 +84,7 @@ class PromocionController extends BaseController
         ]);
 
         DB::beginTransaction();
-        
+
         try {
             // 1. Crear la promoción
             $promocion = Promocion::create([
@@ -104,14 +103,14 @@ class PromocionController extends BaseController
             ]);
 
             // 2. Asociar productos si los hay
-            if (!empty($datosValidados['productos'])) {
+            if (! empty($datosValidados['productos'])) {
                 foreach ($datosValidados['productos'] as $productoId) {
                     $promocion->productos()->attach($productoId, ['cantidad_requerida' => 1]);
                 }
             }
 
             // 3. Asociar categorías si las hay
-            if (!empty($datosValidados['categorias'])) {
+            if (! empty($datosValidados['categorias'])) {
                 foreach ($datosValidados['categorias'] as $categoriaId) {
                     $promocion->categorias()->attach($categoriaId, ['cantidad_requerida' => 1]);
                 }
@@ -126,18 +125,19 @@ class PromocionController extends BaseController
             DB::commit();
 
             BitacoraController::registrar('creado', 'Promocion', $promocion->id);
-            
+
             return redirect()
                 ->route('promociones.index')
-                ->with('success', '✅ Promoción creada exitosamente' . ($promocion->activo ? ' y notificada a los usuarios.' : '.'));
-                
+                ->with('success', '✅ Promoción creada exitosamente'.($promocion->activo ? ' y notificada a los usuarios.' : '.'));
+
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error al crear promoción: ' . $e->getMessage());
+            Log::error('Error al crear promoción: '.$e->getMessage());
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', '❌ Error al crear la promoción: ' . $e->getMessage());
+                ->with('error', '❌ Error al crear la promoción: '.$e->getMessage());
         }
     }
 
@@ -152,7 +152,7 @@ class PromocionController extends BaseController
 
         $promocion = Promocion::with(['productos', 'categorias'])->findOrFail($id);
         BitacoraController::registrar('ver', 'Promocion', $promocion->id);
-        
+
         return view('admin.promociones.show', compact('promocion'));
     }
 
@@ -236,6 +236,7 @@ class PromocionController extends BaseController
         $promocion->categorias()->sync($categoriasData);
 
         BitacoraController::registrar('actualizado', 'Promocion', $promocion->id);
+
         return redirect()->route('promociones.index')->with('success', 'Promoción actualizada correctamente');
     }
 
@@ -252,6 +253,7 @@ class PromocionController extends BaseController
         $promocion->delete();
 
         BitacoraController::registrar('eliminado', 'Promocion', $promocion->id);
+
         return redirect()->route('promociones.index')->with('success', 'Promoción eliminada correctamente');
     }
 
@@ -260,7 +262,7 @@ class PromocionController extends BaseController
      * NOTIFICACIONES Y EMAILS
      * ========================================
      */
-    
+
     /**
      * Notificar a usuarios sobre nueva promoción
      */
@@ -269,10 +271,10 @@ class PromocionController extends BaseController
         try {
             // Construir mensaje de notificación
             $mensaje = $this->construirMensajePromocion($promocion);
-            
+
             // Obtener usuarios activos
             $usuarios = User::where('activo', true)->get();
-            
+
             // Crear notificación para cada usuario
             foreach ($usuarios as $usuario) {
                 Notificacion::create([
@@ -284,11 +286,11 @@ class PromocionController extends BaseController
                     'url' => route('promociones.show', $promocion->id),
                 ]);
             }
-            
+
             Log::info("Notificaciones creadas para promoción: {$promocion->nombre}");
-            
+
         } catch (\Exception $e) {
-            Log::error('Error al crear notificaciones: ' . $e->getMessage());
+            Log::error('Error al crear notificaciones: '.$e->getMessage());
         }
     }
 
@@ -313,22 +315,22 @@ class PromocionController extends BaseController
                     Mail::to($usuario->email)->send(new PromocionCreada($promocion));
                     $emailsEnviados++;
                 } catch (\Exception $e) {
-                    Log::warning("Error al enviar email a {$usuario->email}: " . $e->getMessage());
+                    Log::warning("Error al enviar email a {$usuario->email}: ".$e->getMessage());
                 }
             }
-            
+
             // Contar usuarios sin verificar (para debug)
             $emailsNoVerificados = User::whereNull('email_verified_at')
                 ->whereNotNull('email')
                 ->count();
-            
+
             Log::info("📧 Emails de promoción enviados: {$emailsEnviados} usuarios verificados para '{$promocion->nombre}'");
             if ($emailsNoVerificados > 0) {
                 Log::info("⚠️ {$emailsNoVerificados} usuarios no recibieron el email (email no verificado)");
             }
-            
+
         } catch (\Exception $e) {
-            Log::error('Error al enviar emails de promoción: ' . $e->getMessage());
+            Log::error('Error al enviar emails de promoción: '.$e->getMessage());
         }
     }
 
@@ -338,23 +340,23 @@ class PromocionController extends BaseController
     private function construirMensajePromocion(Promocion $promocion): string
     {
         $mensaje = "Nueva promoción: {$promocion->nombre}";
-        
+
         // Agregar información del descuento
         if ($promocion->tipo === 'porcentaje') {
             $mensaje .= " - {$promocion->valor}% de descuento";
         } elseif ($promocion->tipo === 'monto_fijo') {
-            $mensaje .= " - $" . number_format($promocion->valor, 2) . " de descuento";
+            $mensaje .= ' - $'.number_format($promocion->valor, 2).' de descuento';
         } elseif ($promocion->tipo === '2x1') {
-            $mensaje .= " - ¡Paga 1 y lleva 2!";
+            $mensaje .= ' - ¡Paga 1 y lleva 2!';
         } elseif ($promocion->tipo === 'combo') {
-            $mensaje .= " - Combo especial";
+            $mensaje .= ' - Combo especial';
         }
-        
+
         // Agregar vigencia si está definida
         if ($promocion->fecha_fin) {
-            $mensaje .= " válida hasta el " . $promocion->fecha_fin->format('d/m/Y');
+            $mensaje .= ' válida hasta el '.$promocion->fecha_fin->format('d/m/Y');
         }
-        
+
         return $mensaje;
     }
 }
