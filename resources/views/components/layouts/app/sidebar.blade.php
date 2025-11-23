@@ -176,6 +176,11 @@
           Reportes de Ventas
         </flux:navlist.item>
         @endcan
+        @can('ver-reportes')
+        <flux:navlist.item icon="currency-dollar" :href="route('reportes.exportar.index')" :current="request()->routeIs('reportes.ventas.*')" wire:navigate class="nav-item-child">
+          Reportes Generales
+        </flux:navlist.item>
+        @endcan
       </x-sidebar.group>
       @endcanany
 
