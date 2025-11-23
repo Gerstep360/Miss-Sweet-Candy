@@ -1,0 +1,104 @@
+@startuml CU23_Colaboracion
+
+' Configuración para hacerlo más horizontal
+skinparam backgroundColor #FFFFFF
+skinparam actorStyle awesome
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 150
+
+' Estilos
+skinparam participant {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    FontSize 10
+}
+
+skinparam actor {
+    BackgroundColor #90CAF9
+    BorderColor #1976D2
+}
+
+skinparam database {
+    BackgroundColor #FFE0B2
+    BorderColor #F57C00
+}
+
+' Participantes en una línea horizontal
+actor Cliente
+participant "Controller" as ctrl
+participant "Pedido" as ped
+participant "Item" as itm
+participant "Producto" as prod
+participant "Inventario" as inv
+participant "User" as usr
+participant "Bitacora" as bit
+database "DB" as db
+
+' ============================================
+' FLUJO 1: CONSULTAR HISTORIAL
+' ============================================
+== Consultar Historial ==
+
+Cliente -> ctrl : 1: GET /historial
+ctrl -> usr : 2: Auth::id()
+usr --> ctrl : 3: cliente_id
+ctrl -> ped : 4: where(cliente_id)
+ped -> db : 5: SELECT
+db --> ped : 6: registros
+ped --> ctrl : 7: Collection
+ctrl -> ctrl : 8: calcularEstadisticas()
+ctrl -> bit : 9: registrar()
+ctrl --> Cliente : 10: view(historial)
+
+' ============================================
+' FLUJO 2: REORDENAR PEDIDO
+' ============================================
+== Reordenar Pedido ==
+
+Cliente -> ctrl : 11: POST /reordenar
+ctrl -> ped : 12: findOrFail(id)
+ctrl -> db : 13: beginTransaction()
+ctrl -> prod : 14: verificar
+prod -> inv : 15: stock_actual
+inv --> prod : 16: disponible
+prod --> ctrl : 17: validado
+ctrl -> ped : 18: create(nuevo)
+ctrl -> itm : 19: create(items)
+ctrl -> inv : 20: decrementarStock()
+ctrl -> bit : 21: registrar()
+ctrl -> db : 22: commit()
+ctrl --> Cliente : 23: redirect(success)
+
+' ============================================
+' FLUJO 3: ESTADÍSTICAS
+' ============================================
+== Ver Estadisticas ==
+
+Cliente -> ctrl : 24: GET /estadisticas
+ctrl -> ped : 25: where(cliente_id)
+ped -> db : 26: COUNT, SUM
+db --> ped : 27: agregados
+ped --> ctrl : 28: datos
+ctrl -> itm : 29: mas pedidos
+itm -> db : 30: GROUP BY
+db --> itm : 31: top 10
+itm --> ctrl : 32: resultados
+ctrl -> bit : 33: registrar()
+ctrl --> Cliente : 34: view(stats)
+
+note over ctrl
+  **HistorialPedidosClienteController**
+  Gestiona historial, reorden y estadísticas
+end note
+
+note over ped
+  **Modelo Pedido**
+  Entidad central del sistema
+end note
+
+note over inv
+  **Control de Stock**
+  Descuenta al reordenar
+end note
+
+@enduml

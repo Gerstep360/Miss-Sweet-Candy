@@ -1,0 +1,170 @@
+@startuml CU23_Historial_Pedidos_Cliente
+
+' Configuración
+skinparam backgroundColor #FEFEFE
+skinparam actorStyle awesome
+skinparam sequenceMessageAlign center
+
+' Estilos
+skinparam participant {
+    BackgroundColor LightYellow
+    BorderColor Black
+}
+
+skinparam note {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+}
+
+' ============================================
+' PARTICIPANTES
+' ============================================
+actor Cliente as cliente
+participant "HistorialPedidos\nClienteController" as controller
+participant "Pedido" as pedido
+participant "PedidoItem" as item
+participant "Producto" as producto
+participant "Inventario\nProducto" as inventario
+participant "User" as user
+participant "Bitacora\nController" as bitacora
+database "Database" as db
+
+' ============================================
+' FLUJO 1: CONSULTAR HISTORIAL
+' ============================================
+== Flujo 1: Consultar Historial ==
+
+cliente -> controller : 1: GET /cliente/historial
+activate controller
+
+controller -> user : 2: Auth::id()
+activate user
+user --> controller : 3: cliente_id
+deactivate user
+
+controller -> pedido : 4: where('cliente_id', id)
+activate pedido
+
+pedido -> db : 5: SELECT * FROM pedidos
+activate db
+db --> pedido : 6: registros
+deactivate db
+
+pedido --> controller : 7: Collection<Pedido>
+deactivate pedido
+
+controller -> controller : 8: calcularEstadisticas()
+
+controller -> bitacora : 9: registrar('consulta_historial')
+activate bitacora
+deactivate bitacora
+
+controller --> cliente : 10: view('historial.index')
+deactivate controller
+
+' ============================================
+' FLUJO 2: REORDENAR PEDIDO
+' ============================================
+== Flujo 2: Reordenar Pedido ==
+
+cliente -> controller : 11: POST /historial/{id}/reordenar
+activate controller
+
+controller -> pedido : 12: findOrFail(id)
+activate pedido
+pedido --> controller : 13: pedido original
+deactivate pedido
+
+controller -> db : 14: beginTransaction()
+activate db
+
+controller -> producto : 15: verificar disponibilidad
+activate producto
+
+producto -> inventario : 16: stock_actual >= cantidad?
+activate inventario
+inventario --> producto : 17: true/false
+deactivate inventario
+
+producto --> controller : 18: productos validados
+deactivate producto
+
+controller -> pedido : 19: create(nuevo pedido)
+activate pedido
+pedido --> controller : 20: nuevo pedido creado
+deactivate pedido
+
+controller -> item : 21: create(items)
+activate item
+item --> controller : 22: items creados
+deactivate item
+
+controller -> inventario : 23: decrementarStock(cantidad)
+activate inventario
+deactivate inventario
+
+controller -> bitacora : 24: registrar('pedido_reordenado')
+activate bitacora
+deactivate bitacora
+
+controller -> db : 25: commit()
+deactivate db
+
+controller --> cliente : 26: redirect()->with('success')
+deactivate controller
+
+' ============================================
+' FLUJO 3: VER ESTADÍSTICAS
+' ============================================
+== Flujo 3: Ver Estadísticas ==
+
+cliente -> controller : 27: GET /historial/estadisticas
+activate controller
+
+controller -> pedido : 28: where('cliente_id')
+activate pedido
+
+pedido -> db : 29: SELECT COUNT(*), SUM(total)
+activate db
+db --> pedido : 30: estadísticas básicas
+deactivate db
+
+pedido --> controller : 31: datos agregados
+deactivate pedido
+
+controller -> item : 32: productos más pedidos
+activate item
+
+item -> db : 33: SELECT con JOIN y GROUP BY
+activate db
+db --> item : 34: top 10 productos
+deactivate db
+
+item --> controller : 35: resultados
+deactivate item
+
+controller -> bitacora : 36: registrar('consulta_estadisticas')
+activate bitacora
+deactivate bitacora
+
+controller --> cliente : 37: view('estadisticas')
+deactivate controller
+
+note right of controller
+  **Métodos principales:**
+  - index(): Lista historial
+  - show(): Detalle pedido
+  - reordenar(): Formulario
+  - storeReorden(): Crear pedido
+  - estadisticas(): Métricas
+  - exportar(): PDF/Excel
+end note
+
+note right of pedido
+  **Relaciones:**
+  - belongsTo(User)
+  - hasMany(PedidoItem)
+  - hasMany(CobroCaja)
+end note
+
+@enduml

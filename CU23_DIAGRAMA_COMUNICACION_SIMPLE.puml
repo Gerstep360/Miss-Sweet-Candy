@@ -1,0 +1,161 @@
+@startuml CU23_Historial_Pedidos_Cliente_Simple
+
+' Configuración
+skinparam backgroundColor #FFFFFF
+skinparam actorStyle awesome
+skinparam sequenceMessageAlign center
+
+' Estilos
+skinparam participant {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+}
+
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #F57F17
+}
+
+' ============================================
+' PARTICIPANTES
+' ============================================
+actor Cliente as cliente
+participant "Historial\nController" as controller
+participant "Pedido" as pedido
+participant "PedidoItem" as item
+participant "Producto" as producto
+participant "Inventario" as inventario
+participant "Bitacora" as bitacora
+database "DB" as db
+
+' ============================================
+' FLUJO 1: CONSULTAR HISTORIAL
+' ============================================
+== Consultar Historial ==
+
+cliente -> controller : 1: GET /cliente/historial\n(fecha, tipo, estado)
+activate controller
+
+controller -> controller : 2: Auth::id()
+
+controller -> pedido : 3: where('cliente_id')\n->with(['items', 'mesa'])
+activate pedido
+
+pedido -> db : 4: SELECT * FROM pedidos
+activate db
+db --> pedido : 5: Collection
+deactivate db
+
+pedido --> controller : 6: pedidos paginados
+deactivate pedido
+
+controller -> controller : 7: calcularEstadisticas()
+
+controller -> bitacora : 8: registrar()
+activate bitacora
+deactivate bitacora
+
+controller --> cliente : 9: view('historial.index')
+deactivate controller
+
+' ============================================
+' FLUJO 2: REORDENAR PEDIDO
+' ============================================
+== Reordenar Pedido ==
+
+cliente -> controller : 10: POST /historial/{id}/reordenar
+activate controller
+
+controller -> pedido : 11: findOrFail(id)
+activate pedido
+deactivate pedido
+
+controller -> db : 12: beginTransaction()
+activate db
+
+controller -> producto : 13: verificar disponibilidad
+activate producto
+
+producto -> inventario : 14: stock_actual >= cantidad?
+activate inventario
+inventario --> producto : 15: true/false
+deactivate inventario
+
+producto --> controller : 16: validado
+deactivate producto
+
+controller -> pedido : 17: create(nuevo pedido)
+activate pedido
+deactivate pedido
+
+controller -> item : 18: create(items)
+activate item
+deactivate item
+
+controller -> inventario : 19: decrementarStock()
+activate inventario
+deactivate inventario
+
+controller -> bitacora : 20: registrar()
+activate bitacora
+deactivate bitacora
+
+controller -> db : 21: commit()
+deactivate db
+
+controller --> cliente : 22: redirect()->success
+deactivate controller
+
+' ============================================
+' FLUJO 3: VER ESTADÍSTICAS
+' ============================================
+== Ver Estadísticas ==
+
+cliente -> controller : 23: GET /historial/estadisticas
+activate controller
+
+controller -> pedido : 24: where('cliente_id')
+activate pedido
+
+pedido -> db : 25: SELECT COUNT(*), SUM(total)
+activate db
+db --> pedido : 26: estadísticas
+deactivate db
+
+pedido --> controller : 27: datos agregados
+deactivate pedido
+
+controller -> item : 28: productos más pedidos
+activate item
+
+item -> db : 29: SELECT con JOIN
+activate db
+db --> item : 30: top 10
+deactivate db
+
+item --> controller : 31: resultados
+deactivate item
+
+controller -> bitacora : 32: registrar()
+activate bitacora
+deactivate bitacora
+
+controller --> cliente : 33: view('estadisticas')
+deactivate controller
+
+note right of controller
+  **HistorialPedidosClienteController**
+  • Consultas con filtros
+  • Reorden de pedidos
+  • Estadísticas personalizadas
+  • Exportación de datos
+end note
+
+note right of inventario
+  **Control de Stock**
+  Al reordenar se descuenta
+  automáticamente y se
+  verifican alertas
+end note
+
+@enduml

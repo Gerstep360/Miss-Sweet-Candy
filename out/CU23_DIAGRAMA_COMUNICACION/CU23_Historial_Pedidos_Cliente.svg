@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="490px" preserveAspectRatio="none" style="width:416px;height:490px;background:#000000;" version="1.1" viewBox="0 0 416 490" width="416px" zoomAndPan="magnify"><defs/><g><rect fill="#040403" height="1" style="stroke:#040403;stroke-width:1.0;" width="1" x="0" y="0"/><text fill="#33FF02" font-family="sans-serif" font-size="12" font-style="italic" font-weight="bold" lengthAdjust="spacing" textLength="114" x="5" y="17">PlantUML 1.2021.00</text><text fill="#33FF02" font-family="sans-serif" font-size="12" font-style="italic" font-weight="bold" lengthAdjust="spacing" textLength="0" x="8" y="32.0938"/><text fill="#33FF02" font-family="sans-serif" font-size="12" font-style="italic" font-weight="bold" lengthAdjust="spacing" textLength="344" x="5" y="47.1875">&lt;b&gt;This version of PlantUML is 1778 days old, so you should</text><text fill="#33FF02" font-family="sans-serif" font-size="12" font-style="italic" font-weight="bold" lengthAdjust="spacing" textLength="338" x="5" y="62.2813">&lt;b&gt;consider upgrading from https://plantuml.com/download</text><rect fill="#33FF02" height="22.6094" style="stroke:#33FF02;stroke-width:1.0;" width="300" x="5" y="73.375"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="155" x="6" y="88.375">[From string (line 28) ]</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="0" x="9" y="109.9844"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="300" x="5" y="127.5938">@startuml CU23_Historial_Pedidos_Cliente</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="0" x="9" y="145.2031"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="145" x="5" y="162.8125">left to right direction</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="264" x="5" y="180.4219">skinparam backgroundColor #FEFEFE</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="216" x="5" y="198.0313">skinparam actorStyle awesome</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="0" x="9" y="215.6406"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="121" x="5" y="233.25">skinparam class {</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="209" x="21" y="250.8594">BackgroundColor LightYellow</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="129" x="21" y="268.4688">BorderColor Black</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="121" x="21" y="286.0781">ArrowColor Black</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="5" x="5" y="303.6875">}</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="0" x="9" y="321.2969"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="117" x="5" y="338.9063">skinparam note {</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="194" x="21" y="356.5156">BackgroundColor LightBlue</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="155" x="21" y="374.125">BorderColor DarkBlue</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="5" x="5" y="391.7344">}</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="0" x="9" y="409.3438"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="162" x="5" y="426.9531">actor Cliente as cliente</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="0" x="9" y="444.5625"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="404" x="5" y="462.1719">object ":HistorialPedidosClienteController" as controller {</text><text fill="#FF0000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="95" x="9" y="479.7813">Syntax Error?</text><!--MD5=[0c1484aa858932a07176a36522274fb3]
+@startuml CU23_Historial_Pedidos_Cliente
+
+' Configuración para diagrama horizontal
+left to right direction
+skinparam backgroundColor #FEFEFE
+skinparam actorStyle awesome
+
+' Estilos
+skinparam class {
+    BackgroundColor LightYellow
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam note {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+}
+
+' ============================================
+' ACTORES
+' ============================================
+actor Cliente as cliente
+
+' ============================================
+' CONTROLADORES Y CLASES
+' ============================================
+object ":HistorialPedidosClienteController" as controller {
+    +index()
+    +show()
+    +reordenar()
+    +storeReorden()
+    +estadisticas()
+    +exportar()
+    +buscar()
+}
+
+object ":Pedido" as pedido {
+    id
+    cliente_id
+    tipo
+    estado
+    total
+}
+
+object ":PedidoItem" as pedidoItem {
+    id
+    pedido_id
+    producto_id
+    cantidad
+    precio_unitario
+}
+
+object ":Producto" as producto {
+    id
+    nombre
+    precio
+    activo
+}
+
+object ":InventarioProducto" as inventario {
+    id
+    producto_id
+    stock_actual
+}
+
+object ":User" as user {
+    id
+    name
+    email
+}
+
+object ":BitacoraController" as bitacora {
+    +registrar()
+}
+
+object ":DB" as database {
+    +transaction()
+    +table()
+}
+
+' ============================================
+' COMUNICACIONES CON NUMERACIÓN
+' ============================================
+
+' Flujo 1: Consultar Historial
+cliente -> controller : 1: GET /cliente/historial
+controller -> user : 2: Auth::id()
+controller -> pedido : 3: where(cliente_id)
+pedido -> database : 4: consultar BD
+database - -> pedido : 5: registros
+pedido - -> controller : 6: Collection<Pedido>
+controller -> controller : 7: calcularEstadisticas()
+controller -> bitacora : 8: registrar()
+controller - -> cliente : 9: vista historial
+
+' Flujo 2: Ver Detalle
+cliente -> controller : 10: GET /cliente/historial/{id}
+controller -> pedido : 11: findOrFail(id)
+pedido -> database : 12: consultar con relaciones
+database - -> pedido : 13: pedido completo
+controller -> pedido : 14: verificar cliente_id
+controller -> pedido : 15: getPromocionesAplicadas()
+controller -> bitacora : 16: registrar()
+controller - -> cliente : 17: vista detalle
+
+' Flujo 3: Reordenar Pedido
+cliente -> controller : 18: GET /historial/{id}/reordenar
+controller -> pedido : 19: findOrFail(id)
+controller -> producto : 20: verificar disponibilidad
+producto -> inventario : 21: stock_actual
+inventario - -> producto : 22: stock disponible
+producto - -> controller : 23: productos disponibles
+controller - -> cliente : 24: formulario reorden
+
+cliente -> controller : 25: POST /historial/{id}/reordenar
+controller -> database : 26: beginTransaction()
+controller -> pedido : 27: create(nuevo pedido)
+controller -> pedidoItem : 28: create(items)
+controller -> inventario : 29: decrementarStock()
+controller -> bitacora : 30: registrar()
+controller -> database : 31: commit()
+controller - -> cliente : 32: redirect con éxito
+
+' Flujo 4: Ver Estadísticas
+cliente -> controller : 33: GET /historial/estadisticas
+controller -> pedido : 34: where(cliente_id)
+controller -> database : 35: consultas agregadas
+database - -> controller : 36: estadísticas
+controller -> pedidoItem : 37: productos más pedidos
+pedidoItem -> database : 38: GROUP BY producto
+database - -> pedidoItem : 39: top productos
+pedidoItem - -> controller : 40: resultados
+controller -> bitacora : 41: registrar()
+controller - -> cliente : 42: dashboard estadísticas
+
+' Flujo 5: Exportar Historial
+cliente -> controller : 43: GET /historial/exportar
+controller -> pedido : 44: where(cliente_id)
+pedido -> database : 45: consultar período
+database - -> pedido : 46: registros
+controller -> bitacora : 47: registrar()
+controller - -> cliente : 48: archivo descarga
+
+note right of controller
+  **Métodos principales:**
+  - index(): Lista historial
+  - show(): Detalle pedido
+  - reordenar(): Formulario
+  - storeReorden(): Crear pedido
+  - estadisticas(): Métricas
+  - exportar(): PDF/Excel
+  - buscar(): Búsqueda
+end note
+
+note bottom of pedido
+  **Relaciones:**
+  - belongsTo(User)
+  - hasMany(PedidoItem)
+  - hasMany(CobroCaja)
+  - hasOne(Feedback)
+end note
+
+note bottom of inventario
+  **Métodos:**
+  - incrementarStock()
+  - decrementarStock()
+  - requiereAlerta()
+end note
+
+@enduml
+
+@startuml CU23_Historial_Pedidos_Cliente
+
+left to right direction
+skinparam backgroundColor #FEFEFE
+skinparam actorStyle awesome
+
+skinparam class {
+    BackgroundColor LightYellow
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam note {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+}
+
+actor Cliente as cliente
+
+object ":HistorialPedidosClienteController" as controller {
+    +index()
+    +show()
+    +reordenar()
+    +storeReorden()
+    +estadisticas()
+    +exportar()
+    +buscar()
+}
+
+object ":Pedido" as pedido {
+    id
+    cliente_id
+    tipo
+    estado
+    total
+}
+
+object ":PedidoItem" as pedidoItem {
+    id
+    pedido_id
+    producto_id
+    cantidad
+    precio_unitario
+}
+
+object ":Producto" as producto {
+    id
+    nombre
+    precio
+    activo
+}
+
+object ":InventarioProducto" as inventario {
+    id
+    producto_id
+    stock_actual
+}
+
+object ":User" as user {
+    id
+    name
+    email
+}
+
+object ":BitacoraController" as bitacora {
+    +registrar()
+}
+
+object ":DB" as database {
+    +transaction()
+    +table()
+}
+
+
+cliente -> controller : 1: GET /cliente/historial
+controller -> user : 2: Auth::id()
+controller -> pedido : 3: where(cliente_id)
+pedido -> database : 4: consultar BD
+database - -> pedido : 5: registros
+pedido - -> controller : 6: Collection<Pedido>
+controller -> controller : 7: calcularEstadisticas()
+controller -> bitacora : 8: registrar()
+controller - -> cliente : 9: vista historial
+
+cliente -> controller : 10: GET /cliente/historial/{id}
+controller -> pedido : 11: findOrFail(id)
+pedido -> database : 12: consultar con relaciones
+database - -> pedido : 13: pedido completo
+controller -> pedido : 14: verificar cliente_id
+controller -> pedido : 15: getPromocionesAplicadas()
+controller -> bitacora : 16: registrar()
+controller - -> cliente : 17: vista detalle
+
+cliente -> controller : 18: GET /historial/{id}/reordenar
+controller -> pedido : 19: findOrFail(id)
+controller -> producto : 20: verificar disponibilidad
+producto -> inventario : 21: stock_actual
+inventario - -> producto : 22: stock disponible
+producto - -> controller : 23: productos disponibles
+controller - -> cliente : 24: formulario reorden
+
+cliente -> controller : 25: POST /historial/{id}/reordenar
+controller -> database : 26: beginTransaction()
+controller -> pedido : 27: create(nuevo pedido)
+controller -> pedidoItem : 28: create(items)
+controller -> inventario : 29: decrementarStock()
+controller -> bitacora : 30: registrar()
+controller -> database : 31: commit()
+controller - -> cliente : 32: redirect con éxito
+
+cliente -> controller : 33: GET /historial/estadisticas
+controller -> pedido : 34: where(cliente_id)
+controller -> database : 35: consultas agregadas
+database - -> controller : 36: estadísticas
+controller -> pedidoItem : 37: productos más pedidos
+pedidoItem -> database : 38: GROUP BY producto
+database - -> pedidoItem : 39: top productos
+pedidoItem - -> controller : 40: resultados
+controller -> bitacora : 41: registrar()
+controller - -> cliente : 42: dashboard estadísticas
+
+cliente -> controller : 43: GET /historial/exportar
+controller -> pedido : 44: where(cliente_id)
+pedido -> database : 45: consultar período
+database - -> pedido : 46: registros
+controller -> bitacora : 47: registrar()
+controller - -> cliente : 48: archivo descarga
+
+note right of controller
+  **Métodos principales:**
+  - index(): Lista historial
+  - show(): Detalle pedido
+  - reordenar(): Formulario
+  - storeReorden(): Crear pedido
+  - estadisticas(): Métricas
+  - exportar(): PDF/Excel
+  - buscar(): Búsqueda
+end note
+
+note bottom of pedido
+  **Relaciones:**
+  - belongsTo(User)
+  - hasMany(PedidoItem)
+  - hasMany(CobroCaja)
+  - hasOne(Feedback)
+end note
+
+note bottom of inventario
+  **Métodos:**
+  - incrementarStock()
+  - decrementarStock()
+  - requiereAlerta()
+end note
+
+@enduml
+
+PlantUML version 1.2021.00(Sun Jan 10 06:25:05 GMT-04:00 2021)
+(MIT source distribution)
+Java Runtime: Java(TM) SE Runtime Environment
+JVM: Java HotSpot(TM) 64-Bit Server VM
+Default Encoding: UTF-8
+Language: es
+Country: ES
+--></g></svg>

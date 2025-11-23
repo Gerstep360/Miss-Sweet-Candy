@@ -1,0 +1,112 @@
+@startuml CU23_Historial_Pedidos_Colaboracion
+
+' Configuración
+skinparam backgroundColor #FFFFFF
+skinparam actorStyle awesome
+
+' Estilos para objetos
+skinparam object {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    FontSize 10
+}
+
+skinparam actor {
+    BackgroundColor #BBDEFB
+    BorderColor #1976D2
+}
+
+skinparam database {
+    BackgroundColor #FFE0B2
+    BorderColor #F57C00
+}
+
+' ============================================
+' ACTORES Y OBJETOS
+' ============================================
+actor Cliente as cliente
+
+object ":HistorialPedidos\nClienteController" as controller
+
+object ":Pedido" as pedido
+
+object ":PedidoItem" as item
+
+object ":Producto" as producto
+
+object ":Inventario\nProducto" as inventario
+
+object ":User" as user
+
+object ":Bitacora\nController" as bitacora
+
+database ":Database" as db
+
+' ============================================
+' POSICIONAMIENTO
+' ============================================
+cliente -[hidden]right-> controller
+controller -[hidden]right-> user
+controller -[hidden]down-> pedido
+pedido -[hidden]right-> item
+item -[hidden]right-> producto
+producto -[hidden]right-> inventario
+inventario -[hidden]down-> db
+controller -[hidden]down-> bitacora
+
+' ============================================
+' INTERACCIONES NUMERADAS
+' ============================================
+
+' Flujo 1: Consultar Historial
+cliente --> controller : 1: GET /cliente/historial
+controller --> user : 2: Auth::id()
+controller --> pedido : 3: where(cliente_id)
+pedido --> db : 4: SELECT
+db ..> pedido : 5: Collection
+pedido ..> controller : 6: pedidos
+controller --> controller : 7: calcularEstadisticas()
+controller --> bitacora : 8: registrar()
+controller ..> cliente : 9: view(historial)
+
+' Flujo 2: Reordenar Pedido
+cliente --> controller : 10: POST /reordenar
+controller --> pedido : 11: findOrFail(id)
+controller --> db : 12: beginTransaction()
+controller --> producto : 13: verificar disponibilidad
+producto --> inventario : 14: stock_actual
+inventario ..> producto : 15: stock disponible
+producto ..> controller : 16: validado
+controller --> pedido : 17: create(nuevo)
+controller --> item : 18: create(items)
+controller --> inventario : 19: decrementarStock()
+controller --> bitacora : 20: registrar()
+controller --> db : 21: commit()
+controller ..> cliente : 22: redirect(success)
+
+' Flujo 3: Estadísticas
+cliente --> controller : 23: GET /estadisticas
+controller --> pedido : 24: where(cliente_id)
+pedido --> db : 25: COUNT, SUM
+db ..> pedido : 26: agregados
+controller --> item : 27: productos más pedidos
+item --> db : 28: GROUP BY
+db ..> item : 29: top 10
+controller --> bitacora : 30: registrar()
+controller ..> cliente : 31: view(estadisticas)
+
+' ============================================
+' LEYENDA
+' ============================================
+legend right
+  **Flujos principales:**
+  1-9: Consultar Historial
+  10-22: Reordenar Pedido
+  23-31: Ver Estadísticas
+  
+  **Notación:**
+  → Llamada/Solicitud
+  ⇢ Respuesta/Retorno
+endlegend
+
+@enduml

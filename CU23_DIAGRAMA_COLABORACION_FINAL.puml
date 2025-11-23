@@ -1,0 +1,96 @@
+@startuml CU23_Colaboracion
+
+skinparam backgroundColor #FFFFFF
+skinparam actorStyle awesome
+
+skinparam object {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+}
+
+skinparam database {
+    BackgroundColor #FFE0B2
+    BorderColor #F57C00
+}
+
+' Objetos
+actor Cliente
+object Controller
+object Pedido
+object Item
+object Producto
+object Inventario
+object User
+object Bitacora
+database DB
+
+' Posicionamiento
+Cliente -[hidden]-> Controller
+Controller -[hidden]-> User
+Controller -[hidden]down-> Pedido
+Pedido -[hidden]-> Item
+Item -[hidden]-> Producto
+Producto -[hidden]-> Inventario
+Pedido -[hidden]down-> DB
+
+' Flujo 1: Consultar Historial
+Cliente -> Controller : 1: GET /historial
+Controller -> User : 2: Auth::id()
+User --> Controller : 3: cliente_id
+Controller -> Pedido : 4: where(cliente_id)
+Pedido -> DB : 5: SELECT
+DB --> Pedido : 6: registros
+Pedido --> Controller : 7: Collection
+Controller -> Controller : 8: calcularEstadisticas()
+Controller -> Bitacora : 9: registrar()
+Controller --> Cliente : 10: view(historial)
+
+' Flujo 2: Reordenar
+Cliente -> Controller : 11: POST /reordenar
+Controller -> Pedido : 12: findOrFail(id)
+Controller -> DB : 13: beginTransaction()
+Controller -> Producto : 14: verificar
+Producto -> Inventario : 15: stock_actual
+Inventario --> Producto : 16: disponible
+Producto --> Controller : 17: validado
+Controller -> Pedido : 18: create(nuevo)
+Controller -> Item : 19: create(items)
+Controller -> Inventario : 20: decrementarStock()
+Controller -> Bitacora : 21: registrar()
+Controller -> DB : 22: commit()
+Controller --> Cliente : 23: redirect(success)
+
+' Flujo 3: Estadísticas
+Cliente -> Controller : 24: GET /estadisticas
+Controller -> Pedido : 25: where(cliente_id)
+Pedido -> DB : 26: COUNT, SUM
+DB --> Pedido : 27: agregados
+Pedido --> Controller : 28: datos
+Controller -> Item : 29: mas pedidos
+Item -> DB : 30: GROUP BY
+DB --> Item : 31: top 10
+Item --> Controller : 32: resultados
+Controller -> Bitacora : 33: registrar()
+Controller --> Cliente : 34: view(stats)
+
+note right of Controller
+  HistorialPedidos
+  ClienteController
+  
+  Gestiona:
+  - Historial
+  - Reorden
+  - Estadísticas
+end note
+
+note bottom of Pedido
+  Modelo Pedido
+  Entidad central
+end note
+
+note bottom of Inventario
+  Control de Stock
+  Descuenta al reordenar
+end note
+
+@enduml

@@ -1,0 +1,262 @@
+@startuml Diagrama_Componentes_Usuarios
+
+' Configuración
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+
+' Estilos
+skinparam package {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 12
+    FontStyle bold
+}
+
+skinparam component {
+    BackgroundColor #BBDEFB
+    BorderColor #1565C0
+    FontSize 10
+}
+
+skinparam interface {
+    BackgroundColor #FFF9C4
+    BorderColor #F57F17
+}
+
+skinparam database {
+    BackgroundColor #FFE0B2
+    BorderColor #F57C00
+}
+
+' ============================================
+' PAQUETE PRINCIPAL: USUARIOS
+' ============================================
+package "Paquete Usuarios" {
+    
+    ' ============================================
+    ' CAPA DE PRESENTACIÓN
+    ' ============================================
+    package "Presentación" #E8F5E9 {
+        component [Login View\n(Livewire)] as loginView
+        component [Register View\n(Livewire)] as registerView
+        component [User Management\nViews] as userViews
+        component [Profile View] as profileView
+    }
+    
+    ' ============================================
+    ' CAPA DE CONTROLADORES
+    ' ============================================
+    package "Controladores" #FFF9C4 {
+        component [UserController] as userCtrl
+        component [Logout Action\n(Livewire)] as logoutAction
+        component [VerifyEmail\nController] as verifyCtrl
+    }
+    
+    ' ============================================
+    ' CAPA DE MODELOS
+    ' ============================================
+    package "Modelos" #E1BEE7 {
+        component [User Model] as userModel
+        component [Role Model\n(Spatie)] as roleModel
+        component [Permission Model\n(Spatie)] as permModel
+    }
+    
+    ' ============================================
+    ' CAPA DE SERVICIOS
+    ' ============================================
+    package "Servicios" #C8E6C9 {
+        component [Authentication\nService] as authService
+        component [Authorization\nService] as authzService
+        component [Email Verification\nService] as emailService
+    }
+    
+    ' ============================================
+    ' MIDDLEWARE
+    ' ============================================
+    package "Middleware" #FFCCBC {
+        component [Auth Middleware] as authMiddleware
+        component [Guest Middleware] as guestMiddleware
+        component [Verified Middleware] as verifiedMiddleware
+        component [Permission\nMiddleware] as permMiddleware
+    }
+}
+
+' ============================================
+' COMPONENTES EXTERNOS
+' ============================================
+package "Componentes Externos" {
+    component [Laravel Auth] as laravelAuth
+    component [Spatie Permission] as spatiePermission
+    component [Livewire] as livewire
+    component [BitacoraController] as bitacora
+}
+
+' ============================================
+' BASE DE DATOS
+' ============================================
+database "Base de Datos" {
+    component [users] as usersTable
+    component [roles] as rolesTable
+    component [permissions] as permsTable
+    component [model_has_roles] as modelRolesTable
+    component [model_has_permissions] as modelPermsTable
+    component [password_reset_tokens] as passwordResetTable
+}
+
+' ============================================
+' INTERFACES
+' ============================================
+interface "HTTP Request" as httpRequest
+interface "Authentication API" as authAPI
+interface "Authorization API" as authzAPI
+interface "Database API" as dbAPI
+
+' ============================================
+' RELACIONES - PRESENTACIÓN
+' ============================================
+httpRequest --> loginView
+httpRequest --> registerView
+httpRequest --> userViews
+httpRequest --> profileView
+
+loginView --> authMiddleware
+registerView --> guestMiddleware
+userViews --> authMiddleware
+userViews --> permMiddleware
+profileView --> authMiddleware
+
+' ============================================
+' RELACIONES - CONTROLADORES
+' ============================================
+loginView ..> livewire : usa
+registerView ..> livewire : usa
+logoutAction ..> livewire : usa
+
+userViews --> userCtrl
+loginView --> authService
+logoutAction --> authService
+registerView --> authService
+verifyCtrl --> emailService
+
+' ============================================
+' RELACIONES - MIDDLEWARE A SERVICIOS
+' ============================================
+authMiddleware --> authService
+guestMiddleware --> authService
+verifiedMiddleware --> emailService
+permMiddleware --> authzService
+
+' ============================================
+' RELACIONES - SERVICIOS A MODELOS
+' ============================================
+authService --> userModel
+authzService --> userModel
+authzService --> roleModel
+authzService --> permModel
+emailService --> userModel
+
+userCtrl --> userModel
+userCtrl --> roleModel
+userCtrl --> permModel
+
+' ============================================
+' RELACIONES - MODELOS A BD
+' ============================================
+userModel --> usersTable
+roleModel --> rolesTable
+permModel --> permsTable
+userModel --> modelRolesTable
+userModel --> modelPermsTable
+userModel --> passwordResetTable
+
+' ============================================
+' RELACIONES - COMPONENTES EXTERNOS
+' ============================================
+authService ..> laravelAuth : usa
+authzService ..> spatiePermission : usa
+roleModel ..> spatiePermission : extiende
+permModel ..> spatiePermission : extiende
+
+userCtrl --> bitacora : registra
+logoutAction --> bitacora : registra
+authService --> bitacora : registra
+
+' ============================================
+' INTERFACES
+' ============================================
+authService -up-> authAPI
+authzService -up-> authzAPI
+userModel -down-> dbAPI
+dbAPI -down-> usersTable
+
+' ============================================
+' NOTAS
+' ============================================
+note right of loginView
+  **Vistas Livewire**
+  - login.blade.php
+  - register.blade.php
+  - Componentes reactivos
+end note
+
+note right of userCtrl
+  **UserController**
+  CRUD de usuarios:
+  - index()
+  - create()
+  - store()
+  - edit()
+  - update()
+  - destroy()
+end note
+
+note right of userModel
+  **User Model**
+  Atributos:
+  - id, name, email
+  - password
+  - email_verified_at
+  
+  Traits:
+  - HasRoles
+  - Notifiable
+end note
+
+note bottom of spatiePermission
+  **Spatie Laravel Permission**
+  Sistema de roles y permisos:
+  - Roles: admin, cajero, cliente, etc.
+  - Permisos: ver-usuarios, editar-usuarios, etc.
+  - Asignación dinámica
+end note
+
+note bottom of usersTable
+  **Tablas de BD**
+  - users: datos de usuarios
+  - roles: roles del sistema
+  - permissions: permisos
+  - model_has_roles: asignación
+  - model_has_permissions: asignación
+end note
+
+' ============================================
+' LEYENDA
+' ============================================
+legend bottom left
+  **Diagrama de Componentes - Paquete Usuarios**
+  
+  **Capas:**
+  • Presentación: Vistas Livewire
+  • Controladores: Lógica de negocio
+  • Modelos: Entidades de datos
+  • Servicios: Lógica reutilizable
+  • Middleware: Filtros de seguridad
+  
+  **Dependencias externas:**
+  • Laravel Auth
+  • Spatie Permission
+  • Livewire
+  • BitacoraController
+endlegend
+
+@enduml
