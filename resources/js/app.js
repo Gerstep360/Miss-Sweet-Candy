@@ -1,4 +1,6 @@
 import './modal-store.js'
+// Sidebar - se ejecuta automáticamente cuando se carga
+import './layouts/app/sidebar.js'
 
 
 /**
@@ -8,3 +10,4 @@ import './modal-store.js'
  */
 
 import './echo';
+

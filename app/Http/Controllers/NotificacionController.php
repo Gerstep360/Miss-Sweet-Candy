@@ -7,6 +7,7 @@ use App\Models\Producto;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Events\NotificacionEnviada; // IMPORTANTE: El evento para Reverb
 
 class NotificacionController extends Controller
 {
@@ -15,21 +16,21 @@ class NotificacionController extends Controller
     // Lista de notificaciones para el usuario autenticado
     public function index(Request $request)
     {
-        // Asegurar usuario autenticado
         if (!auth()->check()) {
             abort(403, 'No tienes permiso para ver las notificaciones.');
         }
 
         $usuario = auth()->user();
-
+        $unread = Notificacion::where('usuario_destino_id', $usuario->id)
+            ->where('leido', false)
+            ->count();
         $notificaciones = Notificacion::where('usuario_destino_id', $usuario->id)
             ->orderByDesc('id')
             ->paginate(20);
 
-        // Registrar en bitácora que el usuario consultó su lista de notificaciones
         BitacoraController::registrar('notificaciones_listadas', 'notificacion', null, $usuario->id);
 
-        return view('notificaciones.index', compact('notificaciones'));
+        return view('notificaciones.index', compact('notificaciones', 'unread'));
     }
 
     // Ver una notificación específica
@@ -37,18 +38,15 @@ class NotificacionController extends Controller
     {
         $notificacion = Notificacion::findOrFail($id);
 
-        // Verificar que el usuario autenticado sea el destinatario
         if ($notificacion->usuario_destino_id !== auth()->id()) {
             abort(403, 'No tienes permiso para ver esta notificación.');
         }
 
-        // Marcar como leída si no lo está
         if (!$notificacion->leido) {
             $notificacion->marcarComoLeida();
             BitacoraController::registrar('notificacion_leida', 'notificacion', $notificacion->id);
         }
 
-        // Registrar en bitácora que el usuario vio la notificación
         BitacoraController::registrar('notificacion_vista', 'notificacion', $notificacion->id, auth()->id());
 
         return view('notificaciones.show', compact('notificacion'));
@@ -59,7 +57,6 @@ class NotificacionController extends Controller
     {
         $notificacion = Notificacion::findOrFail($id);
 
-        // Verificar que el usuario autenticado sea el destinatario
         if ($notificacion->usuario_destino_id !== auth()->id()) {
             if (request()->expectsJson()) {
                 return response()->json(['error' => 'No autorizado'], 403);
@@ -70,7 +67,6 @@ class NotificacionController extends Controller
         $notificacion->marcarComoLeida();
         BitacoraController::registrar('notificacion_leida', 'notificacion', $notificacion->id, auth()->id());
 
-        // Si es una petición AJAX, retornar JSON
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
@@ -98,7 +94,7 @@ class NotificacionController extends Controller
         return redirect()->back()->with('success', 'Todas las notificaciones fueron marcadas como leídas.');
     }
 
-    // Obtener notificaciones no leídas (para AJAX/API)
+    // Obtener notificaciones no leídas (para AJAX/API tradicional si falla WebSocket)
     public function noLeidas()
     {
         if (!auth()->check()) {
@@ -112,7 +108,6 @@ class NotificacionController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        // Registrar en bitácora (consulta AJAX de notificaciones no leídas)
         BitacoraController::registrar('notificaciones_consultadas', 'notificacion', null, $usuario->id);
 
         return response()->json([
@@ -128,7 +123,6 @@ class NotificacionController extends Controller
 
         $usuarios = User::where('activo', true)->orderBy('name')->get();
 
-        // Registrar en bitácora que se abrió la vista para crear notificación
         BitacoraController::registrar('notificacion_create_view', 'notificacion', null, auth()->id());
         
         return view('admin.notificaciones.create', compact('usuarios'));
@@ -156,6 +150,9 @@ class NotificacionController extends Controller
             'leido' => false,
         ]);
 
+        // 📡 BROADCAST A REVERB
+        broadcast(new NotificacionEnviada($notificacion));
+
         BitacoraController::registrar('notificacion_creada', 'notificacion', $notificacion->id);
 
         return redirect()->route('admin.notificaciones.index')->with('success', 'Notificación creada correctamente.');
@@ -168,7 +165,6 @@ class NotificacionController extends Controller
 
         $query = Notificacion::with('usuarioDestino');
 
-        // Filtros
         if ($request->filled('tipo')) {
             $query->where('tipo', $request->tipo);
         }
@@ -184,38 +180,29 @@ class NotificacionController extends Controller
         $notificaciones = $query->orderByDesc('id')->paginate(20);
         $usuarios = User::where('activo', true)->orderBy('name')->get();
 
-        // Registrar en bitácora que el admin consultó las notificaciones
         BitacoraController::registrar('notificaciones_listadas_admin', 'notificacion', null, auth()->id());
 
         return view('admin.notificaciones.index', compact('notificaciones', 'usuarios'));
     }
 
-    // Método estático para crear notificación de producto agotado
+    // ==================================================================================
+    // MÉTODOS ESTÁTICOS DE SISTEMA (Con Broadcasting)
+    // ==================================================================================
+
+    // Notificar producto agotado
     public static function notificarProductoAgotado($productoId, $stockAntes = null, $origen = 'sistema')
     {
         $producto = Producto::find($productoId);
         
-        if (!$producto) {
-            return;
-        }
+        if (!$producto) return;
 
-        // Registrar en bitácora/auditoría
-        BitacoraController::registrar(
-            'producto_agotado',
-            'producto',
-            $productoId,
-            auth()->check() ? auth()->id() : null
-        );
+        BitacoraController::registrar('producto_agotado', 'producto', $productoId, auth()->check() ? auth()->id() : null);
 
-        // Obtener administradores y cajeros para notificar
-        $usuariosANotificar = User::role(['administrador', 'cajero'])
-          
-            ->get();
-
+        $usuariosANotificar = User::role(['administrador', 'cajero'])->get();
         $mensaje = "Producto agotado: {$producto->nombre}. Stock anterior: {$stockAntes}. Origen: {$origen}.";
 
         foreach ($usuariosANotificar as $usuario) {
-            Notificacion::create([
+            $notificacion = Notificacion::create([
                 'tipo' => 'stock',
                 'canal' => 'panel',
                 'mensaje' => $mensaje,
@@ -224,31 +211,26 @@ class NotificacionController extends Controller
                 'rel_id' => $productoId,
                 'leido' => false,
             ]);
+
+            // 📡 BROADCAST
+            broadcast(new NotificacionEnviada($notificacion));
         }
     }
 
-    /**
-     * Notificar a baristas cuando hay un nuevo pedido
-     * Flujo: Cajero crea pedido → Barista recibe notificación
-     */
+    // Notificar a baristas nuevo pedido
     public static function notificarNuevoPedidoABarista($pedido)
     {
-        // Obtener todos los baristas activos
-        $baristas = User::role('barista')
-            ->get();
+        $baristas = User::role('barista')->get();
 
-        if ($baristas->isEmpty()) {
-            return;
-        }
+        if ($baristas->isEmpty()) return;
 
         $cajero = $pedido->cajero ? $pedido->cajero->name : 'Sistema';
         $mesa = $pedido->mesa ? "Mesa {$pedido->mesa->numero}" : 'Para llevar';
         $itemsCount = $pedido->items->count();
-
         $mensaje = "🆕 Nuevo pedido #{$pedido->id} de {$cajero} - {$mesa} ({$itemsCount} productos)";
 
         foreach ($baristas as $barista) {
-            Notificacion::create([
+            $notificacion = Notificacion::create([
                 'tipo' => 'pedido',
                 'canal' => 'panel',
                 'mensaje' => $mensaje,
@@ -257,34 +239,27 @@ class NotificacionController extends Controller
                 'rel_id' => $pedido->id,
                 'leido' => false,
             ]);
+
+            // 📡 BROADCAST
+            broadcast(new NotificacionEnviada($notificacion));
         }
 
-        // Registrar en bitácora
-        BitacoraController::registrar(
-            'pedido_notificado_barista',
-            'pedido',
-            $pedido->id,
-            auth()->check() ? auth()->id() : null
-        );
+        BitacoraController::registrar('pedido_notificado_barista', 'pedido', $pedido->id, auth()->check() ? auth()->id() : null);
     }
 
-    /**
-     * Notificar al cajero cuando el barista completa el pedido
-     * Flujo: Barista completa pedido → Cajero recibe notificación para entrega
-     */
+    // Notificar pedido listo (al cajero creador o a todos)
     public static function notificarPedidoListo($pedido)
     {
-        // Notificar al cajero que creó el pedido
+        // 1. Notificar al cajero específico
         if ($pedido->cajero_id) {
             $cajero = User::find($pedido->cajero_id);
             
             if ($cajero && $cajero->activo) {
                 $barista = $pedido->barista ? $pedido->barista->name : 'Barista';
                 $mesa = $pedido->mesa ? "Mesa {$pedido->mesa->numero}" : 'Para llevar';
-                
                 $mensaje = "✅ Pedido #{$pedido->id} listo para entregar - {$mesa} (Preparado por {$barista})";
 
-                Notificacion::create([
+                $notificacion = Notificacion::create([
                     'tipo' => 'pedido',
                     'canal' => 'panel',
                     'mensaje' => $mensaje,
@@ -293,10 +268,13 @@ class NotificacionController extends Controller
                     'rel_id' => $pedido->id,
                     'leido' => false,
                 ]);
+
+                // 📡 BROADCAST
+                broadcast(new NotificacionEnviada($notificacion));
             }
         }
 
-        // También notificar a todos los cajeros activos (por si el cajero original no está disponible)
+        // 2. Notificar a otros cajeros/admins como respaldo
         $otrosCajeros = User::role(['cajero', 'administrador'])
             ->where('id', '!=', $pedido->cajero_id)
             ->get();
@@ -306,7 +284,7 @@ class NotificacionController extends Controller
             $mensaje = "🔔 Pedido #{$pedido->id} listo para entregar - {$mesa}";
 
             foreach ($otrosCajeros as $cajero) {
-                Notificacion::create([
+                $notificacion = Notificacion::create([
                     'tipo' => 'pedido',
                     'canal' => 'panel',
                     'mensaje' => $mensaje,
@@ -315,39 +293,31 @@ class NotificacionController extends Controller
                     'rel_id' => $pedido->id,
                     'leido' => false,
                 ]);
+
+                // 📡 BROADCAST
+                broadcast(new NotificacionEnviada($notificacion));
             }
         }
 
-        // Registrar en bitácora
-        BitacoraController::registrar(
-            'pedido_listo_notificado',
-            'pedido',
-            $pedido->id,
-            auth()->check() ? auth()->id() : null
-        );
+        BitacoraController::registrar('pedido_listo_notificado', 'pedido', $pedido->id, auth()->check() ? auth()->id() : null);
     }
 
-    /**
-     * Notificar cuando se actualiza el estado de un pedido
-     */
+    // Notificar cambios de estado generales
     public static function notificarCambioEstadoPedido($pedido, $estadoAnterior, $estadoNuevo)
     {
         $destinatarios = [];
+        $mensaje = "";
 
-        // Determinar quién debe ser notificado según el cambio de estado
         switch ($estadoNuevo) {
             case 'en_preparacion':
-                // Notificar a baristas
                 $destinatarios = User::role('barista')->where('activo', true)->get();
                 $mensaje = "👨‍🍳 Pedido #{$pedido->id} asignado para preparación";
                 break;
 
             case 'listo':
-                // Notificar a cajeros (ya lo hace notificarPedidoListo)
-                return; // No duplicar notificaciones
+                return; // Ya manejado por notificarPedidoListo
 
             case 'completado':
-                // Notificar al barista que lo preparó (confirmación)
                 if ($pedido->barista_id) {
                     $destinatarios = collect([User::find($pedido->barista_id)])->filter();
                     $mensaje = "✅ Pedido #{$pedido->id} entregado al cliente";
@@ -355,7 +325,6 @@ class NotificacionController extends Controller
                 break;
 
             case 'cancelado':
-                // Notificar a todos los involucrados
                 $usuarios = collect();
                 if ($pedido->cajero_id) $usuarios->push(User::find($pedido->cajero_id));
                 if ($pedido->barista_id) $usuarios->push(User::find($pedido->barista_id));
@@ -367,10 +336,9 @@ class NotificacionController extends Controller
                 return;
         }
 
-        // Crear notificaciones
         foreach ($destinatarios as $usuario) {
             if ($usuario && $usuario->activo) {
-                Notificacion::create([
+                $notificacion = Notificacion::create([
                     'tipo' => 'pedido',
                     'canal' => 'panel',
                     'mensaje' => $mensaje,
@@ -379,16 +347,12 @@ class NotificacionController extends Controller
                     'rel_id' => $pedido->id,
                     'leido' => false,
                 ]);
+
+                // 📡 BROADCAST
+                broadcast(new NotificacionEnviada($notificacion));
             }
         }
 
-        // Registrar en bitácora
-        BitacoraController::registrar(
-            'pedido_cambio_estado',
-            'pedido',
-            $pedido->id,
-            auth()->check() ? auth()->id() : null,
-            ['estado_anterior' => $estadoAnterior, 'estado_nuevo' => $estadoNuevo]
-        );
+        BitacoraController::registrar('pedido_cambio_estado', 'pedido', $pedido->id, auth()->check() ? auth()->id() : null, ['estado_anterior' => $estadoAnterior, 'estado_nuevo' => $estadoNuevo]);
     }
 }

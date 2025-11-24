@@ -1,0 +1,160 @@
+/* resources/css/layouts/app/sidebar.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --sb-width: 280px;
+    --sb-bg-mobile: rgba(9, 9, 11, 0.98); 
+    --sb-bg-desktop: rgba(9, 9, 11, 0.75); 
+    --sb-border: rgba(255, 255, 255, 0.06);
+    --sb-accent: #f59e0b;
+    --sb-transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 1. SIDEBAR PRINCIPAL */
+#main-sidebar {
+    position: fixed !important;
+    top: 0; 
+    left: 0; 
+    bottom: 0;
+    width: 85vw;
+    max-width: 300px;
+    height: 100dvh;
+    z-index: 50; 
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: var(--sb-bg-mobile);
+    border-right: 1px solid var(--sb-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: var(--sb-transition);
+    will-change: transform;
+    box-shadow: 10px 0 30px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* 2. OVERLAY (SOLO MÓVIL) */
+#sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 40;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    opacity: 0;
+}
+
+/* --- REGLAS DE ESCRITORIO (>= 1024px) --- */
+@media (min-width: 1024px) {
+    /* Sidebar siempre visible y estático */
+    #main-sidebar {
+        width: var(--sb-width);
+        max-width: none;
+        background-color: var(--sb-bg-desktop);
+        box-shadow: none; 
+        transform: translateX(0) !important;
+        display: flex !important; /* Fuerza a que se muestre, ignorando Alpine o Tailwind */
+        opacity: 1 !important;
+    }
+
+    /* El contenido se empuja a la derecha */
+    main#main-content {
+        padding-left: var(--sb-width) !important;
+        transition: padding-left 0.3s ease;
+    }
+
+    /* Overlay DESAPARECE por completo */
+    #sidebar-overlay {
+        display: none !important;
+    }
+
+    /* 🔥 BOTONES MÓVILES: FORZAR OCULTAMIENTO 🔥 */
+    #mobile-controls {
+        display: none !important;
+    }
+}
+
+/* --- REGLAS DE MÓVIL (< 1024px) --- */
+@media (max-width: 1023.9px) {
+    /* Sidebar oculto por defecto */
+    #main-sidebar { 
+        transform: translateX(-100%); 
+    }
+    
+    /* Sidebar visible al abrir */
+    body.body-sidebar-open #main-sidebar { 
+        transform: translateX(0); 
+    }
+
+    /* Overlay visible al abrir */
+    body.body-sidebar-open #sidebar-overlay {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+/* 3. ESTILOS DE NAVEGACIÓN */
+[data-flux-navlist-group-heading] {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    color: #52525b;
+    padding: 1.75rem 1.25rem 0.75rem;
+    pointer-events: none;
+}
+
+.nav-item-single, .nav-item-child, [data-flux-navlist-item] {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.75rem 1rem;
+    margin: 4px 0.75rem;
+    border-radius: 0.75rem;
+    color: #a1a1aa;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.nav-item-single:hover, .nav-item-child:hover, [data-flux-navlist-item]:hover:not([data-current="true"]) {
+    color: #f4f4f5;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* ACTIVO */
+[data-flux-navlist-item][data-current="true"], .nav-item-single.active {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.02) 100%);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    box-shadow: inset 0 0 12px -4px rgba(245, 158, 11, 0.2);
+}
+
+[data-flux-navlist-item][data-current="true"] svg, .nav-item-single.active svg {
+    color: #fbbf24;
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+    transform: scale(1.05);
+    transition: transform 0.2s;
+}
+
+.nav-item-child { padding-left: 3rem; font-size: 0.85rem; color: #71717a; }
+.nav-item-child:hover { color: #d4d4d8; }
+.nav-item-child::before {
+    content: ''; position: absolute; left: 1.75rem; top: 50%;
+    transform: translateY(-50%); width: 4px; height: 1px; background-color: #3f3f46;
+}
+
+.nav-item-logout { margin-top: auto; margin-bottom: 1.5rem; color: #ef4444; opacity: 0.8; }
+.nav-item-logout:hover { background: rgba(239, 68, 68, 0.1); opacity: 1; border-color: rgba(239, 68, 68, 0.2); }
+
+#main-sidebar::-webkit-scrollbar { width: 4px; }
+#main-sidebar::-webkit-scrollbar-track { background: transparent; }
+#main-sidebar::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; }
+#main-sidebar:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }

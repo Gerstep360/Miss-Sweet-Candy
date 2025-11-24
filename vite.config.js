@@ -18,6 +18,7 @@ export default defineConfig({
                 'resources/css/turnero/cliente.css',
                 'resources/js/turnero/cliente-index.js',
                 'resources/css/turnero/cliente-index.css',
+                'resources/css/layouts/app/sidebar.css',
             ],
             refresh: true,
         }),

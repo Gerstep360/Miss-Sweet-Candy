@@ -1,10 +1,18 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-DOl2oTCW.css",
+    "file": "assets/app-BhD8ki5A.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
       "app.css"
+    ]
+  },
+  "resources/css/layouts/app/sidebar.css": {
+    "file": "assets/sidebar-5XwIb4XR.css",
+    "src": "resources/css/layouts/app/sidebar.css",
+    "isEntry": true,
+    "names": [
+      "sidebar.css"
     ]
   },
   "resources/css/turnero/cliente-index.css": {
@@ -32,7 +40,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CJfgvd3f.js",
+    "file": "assets/app-Cb3mnqJ8.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
