@@ -92,4 +92,33 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
             ->name('toggle');
     });
 
+    // Rutas para control de acceso
+   Route::controller(\App\Http\Controllers\ControlAccesoController::class)
+    ->prefix('control-acceso')
+    ->name('control-acceso.')
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/config-ips', 'configIps')->name('config-ips');
+        Route::get('/two-factor', 'twoFactor')->name('two-factor');
+        Route::post('/request-two-factor-code', 'requestTwoFactorCode')->name('request-two-factor-code');
+        Route::post('/enable-two-factor', 'enableTwoFactor')->name('enable-two-factor');
+        Route::post('/disable-two-factor', 'disableTwoFactor')->name('disable-two-factor');
+        Route::get('/backup-codes', 'showBackupCodes')->name('backup-codes');
+        Route::post('/generate-backup-codes', 'generateBackupCodes')->name('generate-backup-codes');
+        Route::post('/add-ip-whitelist', 'addIpToWhitelist')->name('add-ip-whitelist');
+        Route::delete('/remove-ip-whitelist/{id}', 'removeIpFromWhitelist')->name('remove-ip-whitelist');
+        Route::post('/verify-code', 'verifyTwoFactorCode')->name('verify-code');
+        Route::get('/recent-activity', 'getRecentActivity')->name('recent-activity');
+        Route::post('/import-ips', 'importIps')->name('import-ips');
+        Route::get('/bitacora', 'bitacora')->name('bitacora');
+         Route::get('/import-ips', 'showImportIpsForm')->name('import-ips-form');
+         Route::post('/add-ip-manual', 'addIpManual')->name('add-ip-manual');
+        Route::post('/add-to-whitelist', 'addToWhitelist')->name('add-to-whitelist');
+        Route::post('/add-to-blacklist', 'addToBlacklist')->name('add-to-blacklist');
+        Route::get('/export-ips', 'exportIps')->name('export-ips');
+        Route::post('/toggle-role-2fa', 'toggleRole2FA')->name('toggle-role-2fa');
+        Route::post('/force-enable-2fa', 'forceEnable2FA')->name('force-enable-2fa');
+        Route::post('/disable-user-2fa', 'disableUser2FA')->name('disable-user-2fa');
+    });
+
 });

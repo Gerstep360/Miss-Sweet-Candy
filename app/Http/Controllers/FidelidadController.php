@@ -456,9 +456,27 @@ public function pedidoPuedeAcumularPuntos(Pedido $pedido): bool
     private function obtenerRecompensasConfiguradas()
     {
         return [
-            ['id'=>1, 'nombre'=>'10% de descuento', 'puntos_requeridos'=>$this->configFidelidad['recompensa_descuento_10_puntos'] ?? 100],
-            ['id'=>2, 'nombre'=>'20% de descuento', 'puntos_requeridos'=>$this->configFidelidad['recompensa_descuento_20_puntos'] ?? 200],
-            ['id'=>3, 'nombre'=>'Producto gratis', 'puntos_requeridos'=>$this->configFidelidad['recompensa_producto_gratis_puntos'] ?? 500]
+            ['id'=>1, 'nombre'=>'10% de descuento','tipo'=>'descuento','descripcion'=>'Se necesitan 10 puntos para acceder', 'puntos_requeridos'=>$this->configFidelidad['recompensa_descuento_10_puntos'] ?? 100],
+            ['id'=>2, 'nombre'=>'20% de descuento','tipo'=>'descuento','descripcion'=>'Se necesitan 10 puntos para acceder', 'puntos_requeridos'=>$this->configFidelidad['recompensa_descuento_20_puntos'] ?? 200],
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            ['id'=>3, 'nombre'=>'Producto gratis','tipo'=>'producto','descripcion'=>'Se necesitan 10 puntos para acceder','puntos_requeridos'=>$this->configFidelidad['recompensa_producto_gratis_puntos'] ?? 500]
         ];
     }
 

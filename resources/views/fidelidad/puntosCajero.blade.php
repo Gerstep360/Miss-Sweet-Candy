@@ -504,7 +504,7 @@
                 }
 
                 // Enviar canje al servidor
-                fetch('/fidelidad/canjear-puntos-cajero', {
+                fetch('/fidelidad/canjearRecompensa', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

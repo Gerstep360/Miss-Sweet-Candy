@@ -13,11 +13,6 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable, HasRoles;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -26,22 +21,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'password_set',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
         'temporal_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -51,17 +36,47 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    /**
-     * The attributes that should have default values.
-     */
     protected $attributes = [
         'password_set' => true,
         'temporal_token' => null,
     ];
 
+    // === NUEVAS RELACIONES AGREGADAS ===
+    
     /**
-     * Get the user's initials
+     * Relación con autenticación de dos factores
      */
+    public function twoFactor()
+    {
+        return $this->hasOne(UserTwoFactor::class, 'user_id');
+    }
+
+    /**
+     * Relación con whitelist de IPs
+     */
+    public function ipWhitelists()
+    {
+        return $this->hasMany(IpWhitelist::class);
+    }
+
+    /**
+     * Relación con intentos de login
+     */
+    public function loginAttempts()
+    {
+        return $this->hasMany(LoginIntento::class, 'email', 'email');
+    }
+
+    /**
+     * Relación con auditorías
+     */
+    public function auditorias()
+    {
+        return $this->hasMany(Auditoria::class, 'usuario_id');
+    }
+
+    // === MÉTODOS EXISTENTES ===
+    
     public function initials(): string
     {
         return strtoupper(
@@ -73,21 +88,16 @@ class User extends Authenticatable implements MustVerifyEmail
         );
     }
 
-    /**
-     * Verificar si el usuario necesita establecer contraseña
-     */
     public function needsPasswordSetup(): bool
     {
         return !$this->password_set && !is_null($this->temporal_token);
     }
 
-    /**
-     * Verificar si el usuario está completamente activo
-     */
     public function isFullyActive(): bool
     {
         return $this->password_set && is_null($this->temporal_token);
     }
+
     public function cobrosRealizados()
     {
         return $this->hasMany(\App\Models\CobroCaja::class, 'cajero_id');
@@ -101,5 +111,44 @@ class User extends Authenticatable implements MustVerifyEmail
     public function misPedidos()
     {
         return $this->hasMany(\App\Models\Pedido::class, 'cliente_id');
+    }
+
+    // === NUEVOS MÉTODOS PARA SEGURIDAD ===
+    
+
+    /**
+     * Obtener intentos de login recientes
+     */
+    public function getRecentLoginAttempts($limit = 10)
+    {
+        return $this->loginAttempts()
+            ->latest('created_at')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Verificar si una IP está permitida para este usuario
+     */
+    public function isIpAllowed($ip): bool
+    {
+        if ($this->ipWhitelists->isEmpty()) {
+            return true; // Si no hay whitelist, todas las IPs están permitidas
+        }
+
+        return IpWhitelist::isIpAllowed($this->id, $ip);
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->twoFactor !== null;
+    }
+
+    // Método para contar usuarios con 2FA por rol
+    public static function getTwoFactorStatsByRole()
+    {
+        return \Spatie\Permission\Models\Role::withCount(['users', 'users as users_with_2fa_count' => function($query) {
+            $query->whereHas('twoFactor');
+        }])->get();
     }
 }
