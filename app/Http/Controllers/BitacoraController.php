@@ -26,16 +26,18 @@ class BitacoraController extends Controller
     }
 
     // Método estático para registrar acciones en la bitácora
+    // Ahora usa eventos para registro automático
     public static function registrar($accion, $entidad, $entidad_id = null, $usuario_id = null, $request = null)
     {
-        Auditoria::create([
-            'usuario_id' => $usuario_id ?? (auth()->check() ? auth()->id() : null),
-            'accion'     => $accion,
-            'entidad'    => $entidad,
-            'entidad_id' => $entidad_id ?? 0,
-            'ip'         => $request ? $request->ip() : request()->ip(),
-            'user_agent' => $request ? $request->userAgent() : request()->userAgent(),
-            'created_at' => now(),
-        ]);
+        // Disparar evento para registro automático
+        event(new \App\Events\AccionAuditable(
+            $accion,
+            $entidad,
+            $entidad_id,
+            $usuario_id,
+            $request ? $request->ip() : null,
+            $request ? $request->userAgent() : null,
+            $request
+        ));
     }
 }

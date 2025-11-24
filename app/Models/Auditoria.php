@@ -39,4 +39,68 @@ class Auditoria extends Model
             ? $this->created_at->format('d/m/Y H:i:s')
             : null;
     }
+
+    /**
+     * Scope para filtrar por acción
+     */
+    public function scopePorAccion($query, $accion)
+    {
+        return $query->where('accion', $accion);
+    }
+
+    /**
+     * Scope para filtrar por entidad
+     */
+    public function scopePorEntidad($query, $entidad)
+    {
+        return $query->where('entidad', $entidad);
+    }
+
+    /**
+     * Scope para filtrar por usuario
+     */
+    public function scopePorUsuario($query, $usuarioId)
+    {
+        return $query->where('usuario_id', $usuarioId);
+    }
+
+    /**
+     * Scope para filtrar por IP
+     */
+    public function scopePorIp($query, $ip)
+    {
+        return $query->where('ip', $ip);
+    }
+
+    /**
+     * Scope para filtrar por rango de fechas
+     */
+    public function scopePorRangoFechas($query, $desde, $hasta)
+    {
+        return $query->whereBetween('created_at', [$desde, $hasta]);
+    }
+
+    /**
+     * Scope para acciones de creación
+     */
+    public function scopeCreaciones($query)
+    {
+        return $query->whereIn('accion', ['crear', 'create', 'store']);
+    }
+
+    /**
+     * Scope para acciones de edición
+     */
+    public function scopeEdiciones($query)
+    {
+        return $query->whereIn('accion', ['editar', 'edit', 'update', 'actualizar', 'modificar']);
+    }
+
+    /**
+     * Scope para acciones de eliminación
+     */
+    public function scopeEliminaciones($query)
+    {
+        return $query->whereIn('accion', ['eliminar', 'delete', 'destroy', 'eliminado']);
+    }
 }

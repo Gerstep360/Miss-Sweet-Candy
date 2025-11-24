@@ -26,3 +26,4 @@ require __DIR__.'/auth.php';
 require __DIR__.'/error/403.php';
 require __DIR__.'/bitacora/bitacora.php';
 require __DIR__.'/barista/barista.php';
+require __DIR__.'/auditoria.php';

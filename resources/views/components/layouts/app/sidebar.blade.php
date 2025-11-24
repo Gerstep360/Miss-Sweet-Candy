@@ -48,7 +48,7 @@
         </flux:navlist>
 
         {{-- ===== Administración ===== --}}
-        @canany(['ver-usuarios', 'ver-roles', 'gestionar-permisos'])
+        @canany(['ver-usuarios', 'ver-roles', 'gestionar-permisos', 'ver-bitacora'])
         <div class="nav-group">
           <button class="nav-group-header"
                   onclick="toggleSection('admin')"
@@ -81,6 +81,11 @@
                 Permisos
               </flux:navlist.item>
               @endcan
+              @if(auth()->check() && auth()->user()->hasRole('administrador'))
+              <flux:navlist.item icon="document-text" :href="route('auditoria.index')" :current="request()->routeIs('auditoria.*')" wire:navigate class="nav-item-child">
+                Auditoría
+              </flux:navlist.item>
+              @endif
             </flux:navlist>
           </div>
         </div>
@@ -457,7 +462,7 @@
 
       // --------- Restaurar estado de grupos y abrir si hay item activo ----------
       document.addEventListener('DOMContentLoaded', ()=>{
-        const groups = ['admin','cafeteria','operaciones','ventas','cuenta']; // AGREGADO 'cafeteria'
+        const groups = ['admin','cafeteria','operaciones','ventas','barista','bitacora','cuenta'];
         groups.forEach(id=>{
           const sec = document.getElementById(`${id}-section`);
           const icon = document.getElementById(`${id}-icon`);

@@ -17,6 +17,8 @@ Route::middleware(['auth', 'can:gestionar-reservas-cajero'])->group(function () 
         Route::get('/{reserva}', [ReservaCajeroController::class, 'show'])->name('show');
         
         // Acciones
+        Route::post('/{reserva}/confirmar', [ReservaCajeroController::class, 'confirmar'])
+            ->name('confirmar');
         Route::post('/{reserva}/confirmar-llegada', [ReservaCajeroController::class, 'confirmarLlegada'])
             ->name('confirmar-llegada');
         Route::post('/{reserva}/cancelar', [ReservaCajeroController::class, 'cancelar'])

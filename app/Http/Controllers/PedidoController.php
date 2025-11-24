@@ -9,9 +9,9 @@ use App\Models\Mesa;
 use App\Models\Producto;
 use App\Models\Categoria;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request; //librerias
+use Illuminate\Support\Facades\Auth; // getiona la autotentificacion
+use Illuminate\Support\Facades\DB; // permite acceso ala base de datos y transc
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Http\Controllers\BitacoraController;
@@ -54,7 +54,7 @@ class PedidoController extends BaseController
     public function createMesa()
     {
         // 🔒 Solo cajero y admin pueden crear pedidos de mesa
-
+        // Autorizacion y seguridad
         try {
         $this->authorize('crear-pedidos-mesa');
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
@@ -65,9 +65,11 @@ class PedidoController extends BaseController
             ->whereNull('fusion_id')
             ->orderBy('nombre')
             ->get();
-            
+        //obtiene todos los clientes registrados en sistemas
         $clientes = User::role('cliente')->get();
-        
+        // Relacion con la categoria
+        //Evita el problema de n+1
+        // Ordena los productos alfabeticamente
         $productos = Producto::with('categoria')
             ->orderBy('nombre')
             ->get();
@@ -187,7 +189,7 @@ class PedidoController extends BaseController
     {
         // 🔒 Solo cajero y admin pueden crear pedidos de mostrador
  
-
+        // "Implementamos validaciones exhaustivas para pedidos en mesa:
         $validated = $request->validate([
             'cliente_id' => 'nullable|exists:users,id',
             'telefono_contacto' => 'nullable|string|max:30',

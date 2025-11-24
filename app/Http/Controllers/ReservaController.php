@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Reserva;
 use App\Models\Mesa;
 use App\Support\ReservaService;
+use App\Http\Controllers\BitacoraController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,16 +23,23 @@ class ReservaController extends Controller
      */
     public function index()
     {
-          $reservas = Reserva::delCliente(Auth::id())
-        ->with('mesa')
-        ->orderBy('fecha', 'desc')
-        ->orderBy('hora', 'desc')
-        ->get();
+        // 🔒 Solo clientes pueden ver sus reservas
+        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
+            abort(403, 'Solo los clientes pueden acceder a esta sección.');
+        }
 
-    return view('reservas.index', [
-        'reservas' => $reservas,
-        'reservaService' => $this->reservaService
-    ]);
+        $reservas = Reserva::delCliente(Auth::id())
+            ->with('mesa')
+            ->orderBy('fecha', 'desc')
+            ->orderBy('hora', 'desc')
+            ->get();
+
+        BitacoraController::registrar('ver lista', 'Reserva', null);
+
+        return view('reservas.index', [
+            'reservas' => $reservas,
+            'reservaService' => $this->reservaService
+        ]);
     }
 
     /**
@@ -39,6 +47,13 @@ class ReservaController extends Controller
      */
     public function create()
     {
+        // 🔒 Solo clientes pueden crear reservas online
+        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
+            abort(403, 'Solo los clientes pueden crear reservas online.');
+        }
+
+        BitacoraController::registrar('crear', 'Reserva', null);
+
         return view('reservas.create');
     }
 
@@ -66,10 +81,15 @@ class ReservaController extends Controller
     }
 
     /**
-     * Guardar nueva reserva
+     * Guardar nueva reserva (cliente online - se crea como pendiente)
      */
     public function store(Request $request)
     {
+        // 🔒 Solo clientes pueden crear reservas online
+        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
+            abort(403, 'Solo los clientes pueden crear reservas online.');
+        }
+
         $request->validate([
             'fecha' => 'required|date|after_or_equal:today',
             'hora' => 'required|date_format:H:i',
@@ -79,17 +99,21 @@ class ReservaController extends Controller
         ]);
 
         try {
+            // Crear reserva como PENDIENTE (el cajero la confirmará)
             $reserva = $this->reservaService->crearReserva(
                 Auth::id(),
                 $request->mesa_id,
                 $request->fecha,
                 $request->hora,
                 $request->numero_personas,
-                $request->observaciones
+                $request->observaciones,
+                false // false = pendiente (cliente online)
             );
 
+            BitacoraController::registrar('crear', 'Reserva', $reserva->id);
+
             return redirect()->route('reservas.show', $reserva->id)
-                ->with('success', '¡Reserva confirmada! Te hemos enviado un email de confirmación.');
+                ->with('success', '¡Reserva creada exitosamente! Está pendiente de confirmación. Te notificaremos cuando sea confirmada.');
 
         } catch (\Exception $e) {
             return redirect()->back()
@@ -103,17 +127,24 @@ class ReservaController extends Controller
      */
     public function show(Reserva $reserva)
     {
-       // Verificar que el cliente solo vea sus propias reservas
-    if ($reserva->cliente_id !== Auth::id()) {
-        abort(403, 'No tienes permiso para ver esta reserva.');
-    }
+        // 🔒 Solo clientes pueden ver sus reservas
+        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
+            abort(403, 'Solo los clientes pueden acceder a esta sección.');
+        }
 
-    $reserva->load('mesa');
+        // Verificar que el cliente solo vea sus propias reservas
+        if ($reserva->cliente_id !== Auth::id()) {
+            abort(403, 'No tienes permiso para ver esta reserva.');
+        }
 
-    return view('reservas.show', [
-        'reserva' => $reserva,
-        'reservaService' => $this->reservaService
-    ]);
+        $reserva->load('mesa');
+
+        BitacoraController::registrar('ver', 'Reserva', $reserva->id);
+
+        return view('reservas.show', [
+            'reserva' => $reserva,
+            'reservaService' => $this->reservaService
+        ]);
     }
 
     /**
@@ -121,6 +152,11 @@ class ReservaController extends Controller
      */
     public function edit(Reserva $reserva)
     {
+        // 🔒 Solo clientes pueden editar sus reservas
+        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
+            abort(403, 'Solo los clientes pueden editar reservas.');
+        }
+
         if ($reserva->cliente_id !== Auth::id()) {
             abort(403, 'No tienes permiso para editar esta reserva.');
         }
@@ -130,6 +166,8 @@ class ReservaController extends Controller
                 ->with('error', 'No puedes modificar una reserva cancelada o cumplida.');
         }
 
+        BitacoraController::registrar('editar', 'Reserva', $reserva->id);
+
         return view('reservas.edit', compact('reserva'));
     }
 
@@ -138,6 +176,11 @@ class ReservaController extends Controller
      */
     public function update(Request $request, Reserva $reserva)
     {
+        // 🔒 Solo clientes pueden actualizar sus reservas
+        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
+            abort(403, 'Solo los clientes pueden actualizar reservas.');
+        }
+
         if ($reserva->cliente_id !== Auth::id()) {
             abort(403, 'No tienes permiso para editar esta reserva.');
         }
@@ -158,6 +201,8 @@ class ReservaController extends Controller
                 $request->observaciones
             );
 
+            BitacoraController::registrar('actualizar', 'Reserva', $reserva->id);
+
             return redirect()->route('reservas.show', $reserva->id)
                 ->with('success', 'Reserva actualizada exitosamente.');
 
@@ -173,12 +218,19 @@ class ReservaController extends Controller
      */
     public function destroy(Reserva $reserva)
     {
+        // 🔒 Solo clientes pueden cancelar sus reservas
+        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
+            abort(403, 'Solo los clientes pueden cancelar reservas.');
+        }
+
         if ($reserva->cliente_id !== Auth::id()) {
             abort(403, 'No tienes permiso para cancelar esta reserva.');
         }
 
         try {
             $this->reservaService->cancelarReserva($reserva);
+
+            BitacoraController::registrar('cancelar', 'Reserva', $reserva->id);
 
             return redirect()->route('reservas.index')
                 ->with('success', 'Reserva cancelada exitosamente.');

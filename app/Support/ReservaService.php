@@ -55,12 +55,13 @@ public function verificarDisponibilidad(string $fecha, string $hora, int $numero
 
     /**
      * Verificar si una mesa específica está disponible
+     * Considera tanto reservas confirmadas como pendientes
      */
     private function mesaDisponible(int $mesaId, string $fecha, string $hora): bool
     {
         $reservaExistente = Reserva::where('mesa_id', $mesaId)
             ->where('fecha', $fecha)
-            ->where('estado', 'confirmada')
+            ->whereIn('estado', ['pendiente', 'confirmada']) // Considerar ambas
             ->whereTime('hora', '=', $hora)
             ->exists();
 
@@ -69,6 +70,7 @@ public function verificarDisponibilidad(string $fecha, string $hora, int $numero
 
     /**
      * Crear una nueva reserva
+     * @param bool $confirmada Si es true, se crea como confirmada (cajero), si es false como pendiente (cliente online)
      */
     public function crearReserva(
         int $clienteId,
@@ -76,7 +78,8 @@ public function verificarDisponibilidad(string $fecha, string $hora, int $numero
         string $fecha,
         string $hora,
         int $numeroPersonas,
-        ?string $observaciones = null
+        ?string $observaciones = null,
+        bool $confirmada = false
     ): Reserva {
         return DB::transaction(function () use (
             $clienteId,
@@ -84,7 +87,8 @@ public function verificarDisponibilidad(string $fecha, string $hora, int $numero
             $fecha,
             $hora,
             $numeroPersonas,
-            $observaciones
+            $observaciones,
+            $confirmada
         ) {
             // Verificar disponibilidad final antes de crear
             if (!$this->mesaDisponible($mesaId, $fecha, $hora)) {
@@ -97,32 +101,56 @@ public function verificarDisponibilidad(string $fecha, string $hora, int $numero
                 throw new \Exception("La mesa {$mesa->nombre} tiene capacidad para {$mesa->capacidad} personas.");
             }
 
-            // Crear la reserva
+            // Verificar horarios de negocio si la reserva es para confirmar inmediatamente
+            if ($confirmada && !$this->businessHours->isWithinBusinessHours($fecha, $hora)) {
+                throw new \Exception('La fecha y hora seleccionada está fuera del horario de atención.');
+            }
+
+            // Crear la reserva con estado según quién la crea
             $reserva = Reserva::create([
                 'cliente_id' => $clienteId,
                 'mesa_id' => $mesaId,
                 'fecha' => $fecha,
                 'hora' => $hora,
                 'numero_personas' => $numeroPersonas,
-                'estado' => 'confirmada',
+                'estado' => $confirmada ? 'confirmada' : 'pendiente',
                 'observaciones' => $observaciones,
             ]);
-
-            // Aquí podrías agregar:
-            // - Envío de email de confirmación
-            // - Notificación al personal
-            // - Generación de código QR
 
             Log::info("Nueva reserva creada", [
                 'reserva_id' => $reserva->id,
                 'cliente_id' => $clienteId,
                 'mesa_id' => $mesaId,
                 'fecha' => $fecha,
-                'hora' => $hora
+                'hora' => $hora,
+                'estado' => $reserva->estado,
+                'confirmada' => $confirmada
             ]);
 
             return $reserva;
         });
+    }
+
+    /**
+     * Confirmar una reserva pendiente (usado por cajero)
+     */
+    public function confirmarReserva(Reserva $reserva): void
+    {
+        if ($reserva->estado !== 'pendiente') {
+            throw new \Exception('Solo se pueden confirmar reservas pendientes.');
+        }
+
+        // Verificar que la mesa siga disponible
+        if (!$this->mesaDisponible($reserva->mesa_id, $reserva->fecha->toDateString(), $reserva->hora->format('H:i'))) {
+            throw new \Exception('La mesa ya no está disponible para esta fecha y hora.');
+        }
+
+        $reserva->update(['estado' => 'confirmada']);
+
+        Log::info("Reserva confirmada", [
+            'reserva_id' => $reserva->id,
+            'cliente_id' => $reserva->cliente_id
+        ]);
     }
 
     /**
