@@ -162,6 +162,10 @@ class RolePermissionSeeder extends Seeder
             'editar-alergenos',
             'eliminar-alergenos',
             'gestionar-alergenos-productos',
+
+
+            //pedidos en linea
+            'crear-pedidos-en-linea',
         ];
 
         /* -----------------------------------------------------------------
@@ -257,6 +261,8 @@ class RolePermissionSeeder extends Seeder
             // Turnero - Monitor y cola
             'ver-monitor-turnero',
             'ver-cola-turnero',
+
+
         ]);
 
         // 3) CLIENTE
@@ -281,6 +287,9 @@ class RolePermissionSeeder extends Seeder
             // Turnero - Ver sus propios pedidos
             'ver-turnero',
             'ver-monitor-turnero',
+
+                        //pedidos en linea
+            'crear-pedidos-en-linea',
         ]);
 
         // 4) BARISTA (por el momento no tiene muchos permisos, pero se deja para los proximos casos de uso)

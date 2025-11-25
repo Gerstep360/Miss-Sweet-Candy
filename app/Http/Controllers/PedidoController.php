@@ -414,7 +414,192 @@ class PedidoController extends BaseController
         }
         BitacoraController::registrar('editar', 'Pedido', $pedido->id);
     }
+/*
+    |--------------------------------------------------------------------------
+    | 🛒 MÓDULO PEDIDOS WEB (CLICK & COLLECT) - CU29
+    |--------------------------------------------------------------------------
+    */
 
+    /**
+     * Listado específico para pedidos Web (Para Cajeros/Cocina)
+     * Muestra los pedidos que entran por la web para preparar.
+     */
+    public function indexWeb(Request $request)
+    {
+        // 🔒 Solo personal autorizado puede ver la cola de pedidos web
+        try {
+            $this->authorize('ver-pedidos-web');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
+        $estado = $request->get('estado');
+
+        $query = Pedido::with(['cliente', 'items.producto'])
+            ->where('tipo', 'web');
+
+        // Filtro por estado opcional
+        if ($estado) {
+            $query->where('estado', $estado);
+        }
+
+        $pedidosWeb = $query->latest()->paginate(15);
+        
+        BitacoraController::registrar('ver lista web', 'Pedido', null);
+
+        // Retornamos una vista específica o reutilizamos la index pasando una flag
+        return view('admin.pedidos.index-web', compact('pedidosWeb', 'estado'));
+    }
+
+    /**
+     * Muestra el "Menú Digital" para el Cliente.
+     * Aquí el cliente selecciona sus productos desde su casa/oficina.
+     */
+    public function createWeb()
+    {
+        // 🔒 Solo clientes registrados pueden acceder
+        try {
+            $this->authorize('crear-pedidos-en-linea');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
+        // Cargar productos disponibles para venta web (stock > 0)
+        // Opcional: Podrías tener un campo 'visible_web' en Producto si quisieras ocultar algunos
+        
+        $productos = Producto::with(['categoria', 'inventario', 'especialVigente'])
+            ->orderBy('nombre')
+            ->get()
+            ->each->append(['imagen_url','precio_vigente','tiene_oferta','porcentaje_oferta','ahorro_oferta']);
+
+            
+        $categorias = Categoria::orderBy('nombre')->get();
+        // 🎁 CARGAR PROMOCIONES VIGENTES WEB
+        $promociones = \App\Models\Promocion::with(['productos'])
+            ->where('activo', true)
+            ->get()
+            ->filter(fn($p) => $p->esta_vigente)
+            ->values();
+
+        BitacoraController::registrar('iniciar pedido web', 'Pedido', null);
+
+        // Vista pública/cliente del menú
+        return view('client.pedidos.create', compact('productos', 'categorias', 'promociones'));
+    }
+
+    /**
+     * Procesa el pedido "Click & Collect" del cliente.
+     */
+    public function storeWeb(Request $request)
+    {
+        // 🔒 Validar que sea cliente
+        try {
+            $this->authorize('crear-pedidos-en-linea');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('403');
+        }
+
+        $validated = $request->validate([
+            // El cliente es el usuario autenticado, no se envía por request para evitar suplantación
+            'hora_recogida' => 'nullable|date_format:H:i|after:now', // Opcional: si quieres agendar
+            'productos'     => 'required|array|min:1',
+            'productos.*.producto_id' => 'required|exists:productos,id',
+            'productos.*.cantidad'    => 'required|integer|min:1',
+            'productos.*.notas'       => 'nullable|string|max:100', // "Sin cebolla", etc.
+            'notas_generales' => 'nullable|string|max:255',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // 1. Crear el Encabezado del Pedido
+            $pedido = Pedido::create([
+                'cliente_id'      => Auth::id(),
+                'atendido_por_id' => null, // Aún no lo atiende un cajero, es automático
+                'mesa_id'         => null,
+                'tipo'            => 'web', // 👈 Importante para el prefijo 'W'
+                'estado'          => 'pendiente', // Entra a cola de confirmación
+                'total'           => 0,
+                'notas'           => $validated['notas_generales'] ?? null,
+                // Podrías guardar la hora de recogida en 'notas' o una columna específica si tienes
+            ]);
+
+            // 2. Procesar Items
+            foreach ($validated['productos'] as $productoData) {
+                $producto = Producto::with('especialVigente')->findOrFail($productoData['producto_id']);
+                $inventario = InventarioProducto::where('producto_id', $producto->id)->lockForUpdate()->first();
+
+                // Validar Stock en tiempo real (Critical Check)
+                if (!$inventario || $inventario->stock_actual < $productoData['cantidad']) {
+                    throw new \Exception("Lo sentimos, el producto '{$producto->nombre}' ya no tiene stock suficiente.");
+                }
+
+                // Calcular precios (Misma lógica que mostrador)
+                $precioBase = (float) $producto->precio;
+                $precioUnitario = (float) $producto->precio_vigente; 
+                $descuentoItem = max(0, $precioBase - $precioUnitario);
+                $cantidad = (int) $productoData['cantidad'];
+                $subtotalItem = $precioUnitario * $cantidad;
+
+                // Crear Item
+                PedidoItem::create([
+                    'pedido_id'       => $pedido->id,
+                    'producto_id'     => $producto->id,
+                    'cantidad'        => $cantidad,
+                    'precio_unitario' => $precioUnitario,
+                    'descuento_item'  => $descuentoItem,
+                    'subtotal_item'   => $subtotalItem,
+                    'estado_item'     => 'pendiente',
+                    'destino'         => $producto->categoria->destino ?? 'cocina',
+                    'notas'           => $productoData['notas'] ?? null,
+                ]);
+
+                // 📦 DESCONTAR DEL INVENTARIO
+                $inventario->decrementarStock($cantidad);
+                
+                // Alertas de stock
+                if ($inventario->requiereAlerta()) {
+                    $this->generarAlertaStock($inventario, $producto);
+                }
+            }
+
+            // 3. Finalizar Cálculos
+            $totalPedido = $pedido->items()->sum('subtotal_item');
+            $pedido->update(['total' => $totalPedido]);
+
+            // Generar Token (W001, W002...)
+            $pedido->token = $this->generarToken('web');
+            
+            // Calcular ETA (Tiempo estimado para recoger)
+            $pedido->eta_minutes = $this->calcularEtaPorProductos($pedido);
+            $pedido->save();
+
+            // 4. Eventos y Logs
+            BitacoraController::registrar('crear web', 'Pedido', $pedido->id);
+
+            DB::afterCommit(function () use ($pedido) {
+                // Broadcast para actualizar pantalla de cocina/caja en tiempo real
+                event(new \App\Events\PedidoActualizado($pedido));
+            });
+
+            DB::commit();
+
+            // 🔔 NOTIFICAR A CAJEROS (Nuevo pedido web entrante)
+            // Es importante notificar al cajero para que "Acepte/Confirme" el pedido
+            \App\Http\Controllers\NotificacionController::notificarNuevoPedidoWeb($pedido);
+
+            // Retornar a la vista de seguimiento del cliente
+            return redirect()
+                ->route('client.pedidos.track', $pedido->token) // Asumiendo que tienes una ruta de tracking
+                ->with('success', '¡Tu pedido ha sido enviado! Espera la confirmación.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()
+                ->withErrors(['error' => 'Error al procesar tu pedido: ' . $e->getMessage()])
+                ->withInput();
+        }
+    }
     /**
      * Update the specified resource in storage.
      */
