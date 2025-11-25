@@ -187,11 +187,11 @@
                                 <!-- Información del movimiento -->
                                 <div>
                                     <h3 class="text-white font-semibold">
-                                        {{ $movimiento->motivo }}
+                                        {{ $movimiento->descripcion }}
                                     </h3>
                                     <p class="text-zinc-400 text-sm">
-                                        @if($movimiento->pedido)
-                                            Pedido #{{ $movimiento->pedido->id }}
+                                        @if($movimiento->origen && $movimiento->origen_type === 'App\\Models\\Pedido')
+                                            Pedido #{{ $movimiento->origen->id }}
                                         @endif
                                         • {{ $movimiento->created_at->format('d/m/Y H:i') }}
                                     </p>
@@ -211,11 +211,11 @@
                         </div>
                         
                         <!-- Información adicional si es canje -->
-                        @if($movimiento->tipo === 'canje' && $movimiento->recompensa_canjeada)
+                        @if($movimiento->tipo === 'canje')
                         <div class="mt-3 pt-3 border-t border-zinc-700">
                             <p class="text-sm text-zinc-300">
                                 <i class="fas fa-gift text-purple-400 mr-1"></i>
-                                Recompensa: {{ $movimiento->recompensa_canjeada }}
+                                Recompensa canjeada
                             </p>
                         </div>
                         @endif

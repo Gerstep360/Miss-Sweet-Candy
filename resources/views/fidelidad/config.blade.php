@@ -141,7 +141,7 @@
                                         Producto gratis
                                     </label>
                                     <input type="number" name="recompensa_producto_gratis_puntos" 
-                                           value="{{ $config['recompensa_producto_gratis_puntos'] ?? 150 }}" 
+                                           value="{{ $config['recompensa_producto_gratis_puntos'] ?? 500 }}" 
                                            min="0" max="1000"
                                            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
                                 </div>
@@ -152,7 +152,7 @@
                             </p>
                         </div>
 
-                        <!-- Estado del Programa - VERSIÓN CORREGIDA -->
+                        <!-- Estado del Programa - CORREGIDO -->
                         <div>
                             <label class="block text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                 <i class="fas fa-power-off text-red-400"></i>
@@ -161,13 +161,14 @@
                             <div class="flex items-center gap-3">
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <div class="relative">
+                                        <input type="hidden" name="activo" value="0">
                                         <input type="checkbox" name="activo" value="1" 
                                                {{ ($config['activo'] ?? true) ? 'checked' : '' }} 
                                                class="sr-only peer">
                                         <div class="w-14 h-8 bg-zinc-700 peer-checked:bg-green-500 rounded-full transition-colors duration-200"></div>
                                         <div class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-200 peer-checked:translate-x-6"></div>
                                     </div>
-                                    <span class="text-white font-medium peer-checked:text-green-400 transition-colors">
+                                    <span class="text-white font-medium">
                                         {{ ($config['activo'] ?? true) ? 'Programa Activo' : 'Programa Inactivo' }}
                                     </span>
                                 </label>

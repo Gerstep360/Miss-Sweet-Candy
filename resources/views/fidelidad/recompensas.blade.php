@@ -122,7 +122,7 @@
                             @if($recompensa['tipo'] === 'descuento')
                             <div class="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
                                 <span class="text-green-400 font-semibold text-lg">
-                                    {{ $recompensa['valor_descuento'] ?? 0 }}% DE DESCUENTO
+                                    {{ str_replace(['10% de ', '20% de ', 'descuento'], '', $recompensa['nombre']) }}
                                 </span>
                                 <p class="text-zinc-300 text-sm mt-1">En tu próxima compra</p>
                             </div>

@@ -102,14 +102,12 @@ class EspecialDelDiaController extends Controller implements HasMiddleware
   public function destroy(EspecialDelDia $especiale)
     {
         try {
-            \Log::info('Destroy method called for especial: ' . $especiale->id);
 
             $especiale->delete();
 
             return redirect()->route('especial_dia.index')
                 ->with('success', 'Especial eliminado correctamente');
         } catch (\Exception $e) {
-            \Log::error('Error deleting especial: ' . $e->getMessage());
             return back()->with('error', 'Error al eliminar el especial: ' . $e->getMessage());
         }
     }
@@ -125,7 +123,6 @@ class EspecialDelDiaController extends Controller implements HasMiddleware
             return redirect()->route('especial_dia.index')
                 ->with('success', 'Estado del especial actualizado correctamente');
         } catch (\Exception $e) {
-            \Log::error('Error al cambiar el estado: ' . $e->getMessage());
             return back()->with('error', 'No se pudo cambiar el estado');
         }
     }

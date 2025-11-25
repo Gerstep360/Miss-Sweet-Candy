@@ -1,3 +1,4 @@
+{{-- filepath: resources/views/fidelidad/puntosCajero.blade.php --}}
 <x-layouts.app :title="__('Gestión de Puntos - Cajero')">
     <div class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -302,7 +303,7 @@
                 const query = searchInput.value.trim();
                 if (!query) return;
 
-                fetch('/fidelidad/buscar-cliente?q=' + encodeURIComponent(query), {
+                fetch('{{ route("fidelidad.buscar-cliente") }}?q=' + encodeURIComponent(query), {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -385,7 +386,7 @@
             }
 
             function loadClientHistory(clientId) {
-                fetch('/fidelidad/historial-cliente/' + clientId, {
+              fetch('{{ route("fidelidad.historial-cliente", ":id") }}'.replace(':id', clientId), {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -489,22 +490,22 @@
                 const description = redeemDescription.value.trim();
 
                 if (!points || points <= 0) {
-                    alert('Ingresa una cantidad válida de puntos');
+                    showNotification('Ingresa una cantidad válida de puntos', 'error');
                     return;
                 }
 
                 if (points > currentClient.puntos_totales) {
-                    alert('El cliente no tiene suficientes puntos');
+                    showNotification('El cliente no tiene suficientes puntos', 'error');
                     return;
                 }
 
                 if (!description) {
-                    alert('Ingresa una descripción para el canje');
+                    showNotification('Ingresa una descripción para el canje', 'error');
                     return;
                 }
 
-                // Enviar canje al servidor
-                fetch('/fidelidad/canjearRecompensa', {
+                // Enviar canje al servidor - CORREGIDO: Usar ajustarPuntos en lugar de canjearRecompensa
+                fetch('{{ route("fidelidad.canjear-puntos-cajero") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -513,13 +514,14 @@
                     },
                     body: JSON.stringify({
                         cliente_id: currentClient.id,
+                        tipo: 'canje',
                         puntos: points,
-                        descripcion: description
+                        motivo: description
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
+                    if (data.success || !data.error) {
                         // Actualizar puntos del cliente
                         currentClient.puntos_totales -= points;
                         document.getElementById('totalPoints').textContent = currentClient.puntos_totales.toLocaleString();

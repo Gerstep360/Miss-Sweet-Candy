@@ -78,7 +78,7 @@
                                 </div>
                                 <span class="bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                                     @if(auth()->user()->hasRole('cliente'))
-                                        6 Disponibles
+                                        3 Disponibles
                                     @else
                                         Ver Catálogo
                                     @endif
@@ -148,7 +148,7 @@
                 </a>
                 @else
                 <!-- TARJETA PARA CAJEROS/ADMIN: GESTIÓN DE CLIENTES -->
-                <a href="{{ route('fidelidad.puntos-cajero') }}?vista=clientes" 
+                <a href="{{ route('fidelidad.puntos-cajero') }}" 
                    class="group relative overflow-hidden">
                     <div class="dashboard-card h-full bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/30 hover:border-blue-400/50 transition-all duration-500 transform hover:scale-105">
                         <div class="relative z-10">
