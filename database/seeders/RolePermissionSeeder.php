@@ -1,13 +1,12 @@
 <?php
+
 // filepath: c:\Users\German\Documents\Proyectos\PHP\Cafeteria\cafeteria\database\seeders\RolePermissionSeeder.php
 
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -20,13 +19,13 @@ class RolePermissionSeeder extends Seeder
         $permissions = [
             // CU01 - Iniciar sesión / Registrar (gestionado por Laravel Auth)
             // No requiere permisos específicos
-            
+
             // CU02 - Cerrar sesión (gestionado por Laravel Auth)
             // No requiere permisos específicos
-            //Bitacora
+            // Bitacora
             'ver-bitacora',
             'ver-detalle-bitacora',
-            //Barista
+            // Barista
             'gestionar-pedidos-barista',
             // CU03 - Gestión de Usuarios (ADMIN)
             'crear-usuarios',
@@ -34,6 +33,19 @@ class RolePermissionSeeder extends Seeder
             'editar-usuarios',
             'eliminar-usuarios',
             'activar-usuarios',
+
+            // Pedidos
+            'crear-pedidos',
+            'ver-pedidos',
+            'editar-pedidos',
+            'eliminar-pedidos',
+            'anular-pedidos',
+            'confirmar-pedidos',
+
+            // Turnero / Queue Display
+            'ver-turnero',           // Ver sus propios turnos
+            'ver-monitor-turnero',   // Ver monitor público
+            'ver-cola-turnero',      // Ver cola completa
 
             // CU04 - Gestión de Roles y Permisos (ADMIN)
             'crear-roles',
@@ -97,32 +109,32 @@ class RolePermissionSeeder extends Seeder
             // Permisos generales
             'ver-pedidos',
             'cambiar-estado-pedidos',
-            
+
             // CU15 - Inventario de Producto Terminado (ADMIN, ALMACENERO)
             'ver-inventario',
             'editar-inventario',
-            
+
             // Notificaciones
             'crear-notificacion',
             'ver-todas-notificaciones',
 
-            //reportes
+            // reportes
             'ver-reportes',
 
             // arqueos
             'realizar-arqueo',
             'ver-arqueos',
-            
-            //cierre de caja
+
+            // cierre de caja
             'cerrar-caja',
             'ver-cierres',
 
-            //turnos de caja
+            // turnos de caja
             'iniciar-turno',
             'cerrar-turno',
             'ver-turnos',
 
-            //especial del día
+            // especial del día
             'ver-especiales',
             'crear-especial',
             'editar-especial',
@@ -131,14 +143,32 @@ class RolePermissionSeeder extends Seeder
             'gestionar-fidelidad',
             'puntosCajero',
             //promociones
+            // promociones
             'ver-promociones',
             'crear-promociones',
             'editar-promociones',
             'eliminar-promociones',
 
-            //feedback
+            // feedback
             'crear-feedback',
+            'ver-mis-feedbacks', // Para clientes
             'ver-estadisticas-feedback',
+
+            // CU22 - Perfil de Cliente
+            'ver-mi-perfil',
+            'editar-mi-perfil',
+            'consultar-perfil-cliente', // Para cajeros
+
+            // CU22 - Gestión de Alérgenos (ADMIN)
+            'ver-alergenos',
+            'crear-alergenos',
+            'editar-alergenos',
+            'eliminar-alergenos',
+            'gestionar-alergenos-productos',
+
+
+            //pedidos en linea
+            'crear-pedidos-en-linea',
         ];
 
         /* -----------------------------------------------------------------
@@ -151,14 +181,14 @@ class RolePermissionSeeder extends Seeder
         /* -----------------------------------------------------------------
          | ROLES
          -----------------------------------------------------------------*/
-        $admin   = Role::firstOrCreate(['name' => 'administrador']);
-        $cajero  = Role::firstOrCreate(['name' => 'cajero']);
+        $admin = Role::firstOrCreate(['name' => 'administrador']);
+        $cajero = Role::firstOrCreate(['name' => 'cajero']);
         $cliente = Role::firstOrCreate(['name' => 'cliente']);
         $barista = Role::firstOrCreate(['name' => 'barista']);
         /* -----------------------------------------------------------------
          | Asignar permisos por rol
          -----------------------------------------------------------------*/
-        
+
         // 1) ADMINISTRADOR - Todos los permisos
         $admin->syncPermissions(Permission::all());
 
@@ -167,83 +197,104 @@ class RolePermissionSeeder extends Seeder
             // CU06 - Productos (solo ver y editar, no eliminar)
             'ver-productos',
             'editar-productos',
-            
+
             // CU07 - Horarios (solo ver)
             'ver-horarios',
-            
+
             // CU08 - Mesas
             'crear-mesas',
             'ver-mesas',
             'editar-mesas',
             'fusionar-mesas',
             'cambiar-estado-mesas',
-            
+
             // CU09 - Pedidos Mesa
             'crear-pedidos-mesa',
             'editar-pedidos-mesa',
             'ver-pedidos-mesa',
             'anular-pedidos-mesa',
-            
+
             // CU10 - Pedidos Mostrador
             'crear-pedidos-mostrador',
             'editar-pedidos-mostrador',
             'ver-pedidos-mostrador',
             'anular-pedidos-mostrador',
-            
+
             // CU11 - Cobros
             'crear-cobros',
             'ver-cobros',
             'cancelar-cobros',
             'confirmar-pago-qr',
             'ver-reporte-caja',
-            
+
             // CU12 - Menú Público
             'ver-menu-publico',
-            
+
             // Arqueos de Caja
             'realizar-arqueo',
             'ver-arqueos',
-            
+
             // Cierres de Caja
             'cerrar-caja',
             'ver-cierres',
-            
+
             // Turnos de Caja
             'iniciar-turno',
             'cerrar-turno',
             'ver-turnos',
-            
+
             // Reportes (del turno/caja)
             'ver-reportes',
-            
+
             // Especiales del Día (solo ver)
             'ver-especiales',
-            
+
             // CU15 - Inventario (solo ver)
             'ver-inventario',
-            
+
             // Generales
             'ver-pedidos',
             'cambiar-estado-pedidos',
             'ver-dashboard-cajero',
             'ver-categorias',
             'gestionar-fidelidad',
-            'puntosCajero'
+            'puntosCajero',
+
+            // CU22 - Consultar perfiles de clientes
+            'consultar-perfil-cliente',
+
+            // Turnero - Monitor y cola
+            'ver-monitor-turnero',
+            'ver-cola-turnero',
+
+
         ]);
 
         // 3) CLIENTE
         $cliente->syncPermissions([
             // CU12 - Menú Público
             'ver-menu-publico',
-            
+
             // Dashboard
             'ver-dashboard-cliente',
-            
+
             // Ver sus propios pedidos
             'ver-pedidos',
-            
+
             // Feedback
             'crear-feedback',
+            'ver-mis-feedbacks',
+
+            // CU22 - Perfil de Cliente
+            'ver-mi-perfil',
+            'editar-mi-perfil',
+
+            // Turnero - Ver sus propios pedidos
+            'ver-turnero',
+            'ver-monitor-turnero',
+
+                        //pedidos en linea
+            'crear-pedidos-en-linea',
         ]);
 
         // 4) BARISTA (por el momento no tiene muchos permisos, pero se deja para los proximos casos de uso)

@@ -1,5 +1,5 @@
 <?php
-use App\Http\Controllers\BaristaController;
+use App\Http\Controllers\Personal\BaristaController;
 Route::middleware(['auth', 'permission:gestionar-pedidos-barista'])->prefix('barista')->name('barista.')->group(function () {
     Route::get('pedidos', [BaristaController::class, 'index'])->name('pedidos.index');
     Route::get('pedidos/{pedido}', [BaristaController::class, 'show'])->name('pedidos.show');

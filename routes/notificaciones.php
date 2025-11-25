@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\Inventario\NotificacionController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas de notificaciones para usuarios autenticados

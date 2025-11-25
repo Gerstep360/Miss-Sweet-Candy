@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MesaController;
+use App\Http\Controllers\VentasYCaja\MesaController;
 
 /*
 |--------------------------------------------------------------------------

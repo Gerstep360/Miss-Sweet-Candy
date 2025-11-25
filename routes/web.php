@@ -19,6 +19,7 @@ require __DIR__.'/cierres_caja.php';
 
 // Turnos de caja
 require __DIR__.'/turnos_caja.php';
+require __DIR__.'/turnos.php';
 
 // Fidelidad - NUEVO SISTEMA - AGREGAR ESTA LÍNEA
 require __DIR__ . '/fidelidad.php';
@@ -36,7 +37,7 @@ require __DIR__.'/inventario.php';
 require __DIR__.'/reportes.php';
 
 require __DIR__.'/auth.php';
-//require __DIR__.'/error/error.php';
+require __DIR__.'/error/error.php';
 require __DIR__.'/Bitacora/bitacora.php';
 require __DIR__.'/barista/barista.php';
 
@@ -47,3 +48,8 @@ require __DIR__.'/feedback.php';
 
 
 Route::get('/admin/promociones', [App\Http\Controllers\PromocionController::class, 'index'])->name('promociones.index');
+// Perfil de Cliente (CU22)
+require __DIR__.'/perfil.php';
+
+// Alérgenos (CU22)
+require __DIR__.'/alergenos.php';

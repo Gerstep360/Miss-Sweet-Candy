@@ -16,10 +16,13 @@ public function run(): void
     $this->call([
         RolePermissionSeeder::class,
         UserSeeder::class,
+        ClientePerfilSeeder::class, // CU22 - Perfiles de clientes
         HorarioSeeder::class,
         CategoriaSeeder::class,
         ProductoSeeder::class,
         InventarioSeeder::Class,
+        AlergenoSeeder::class, // CU22 - Alérgenos comunes
+        ProductoAlergenoSeeder::class, // CU22 - Asignar alérgenos a productos
         MesaSeeder::class,
         PedidoSeeder::class,
         CobroCajaSeeder::class,
@@ -29,6 +32,8 @@ public function run(): void
         EspecialDelDiaSeeder::class,
         NotificacionSeeder::class,
         FidelidadConfigSeeder::Class,
+        PromocionSeeder::class, // CU30 - Datos de promociones para reportes
+        ReportesDataSeeder::class, // CU30 - Datos históricos para reportes
     ]);
 }
 }

@@ -1,14 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\HorarioController;
-use App\Http\Controllers\ProductoController;
-use App\Http\Controllers\CategoriaController;
-use App\Http\Controllers\EspecialDelDiaController;
-use App\Http\Controllers\PromocionController;
+use App\Http\Controllers\Usuarios\UserController;
+use App\Http\Controllers\Usuarios\RoleController;
+use App\Http\Controllers\Usuarios\PermissionController;
+use App\Http\Controllers\VentasYCaja\HorarioController;
+use App\Http\Controllers\Inventario\ProductoController;
+use App\Http\Controllers\Inventario\CategoriaController;
+use App\Http\Controller\Promociones\EspecialDelDiaController;
+use App\Http\Controller\Promociones\PromocionController;
 Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     // ===== Usuarios =====
@@ -93,7 +93,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     });
 
     // Rutas para control de acceso
-   Route::controller(\App\Http\Controllers\ControlAccesoController::class)
+   Route::controller(\App\Http\Controllers\Usuarios\ControlAccesoController::class)
     ->prefix('control-acceso')
     ->name('control-acceso.')
     ->group(function () {

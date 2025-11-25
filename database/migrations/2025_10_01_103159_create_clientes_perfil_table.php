@@ -12,9 +12,15 @@ return new class extends Migration
             $table->foreignId('user_id')->primary()->constrained('users')->onUpdate('cascade')->onDelete('cascade');
             $table->string('telefono', 30)->nullable();
             $table->string('direccion', 200)->nullable();
-            $table->text('alergias')->nullable();
-            $table->text('preferencias')->nullable();
+            
+            // Alergias con estructura JSON para nivel de severidad
+            $table->json('alergias')->nullable()->comment('JSON: [{nombre: string, severidad: leve|moderado|grave}]');
+            
+            // Preferencias alimentarias (JSON array)
+            $table->json('preferencias')->nullable()->comment('JSON: [vegetariano, vegano, sin_gluten, sin_lactosa, etc]');
+            
             $table->boolean('acepta_marketing')->default(0);
+            $table->timestamps(); // Registra fecha y hora de última actualización
         });
 
         // Renombrar constraint FK con nombre explícito

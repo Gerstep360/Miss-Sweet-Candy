@@ -1,14 +1,46 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-DCoLL1Jf.css",
+    "file": "assets/app-BhD8ki5A.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
       "app.css"
     ]
   },
+  "resources/css/layouts/app/sidebar.css": {
+    "file": "assets/sidebar-5XwIb4XR.css",
+    "src": "resources/css/layouts/app/sidebar.css",
+    "isEntry": true,
+    "names": [
+      "sidebar.css"
+    ]
+  },
+  "resources/css/turnero/cliente-index.css": {
+    "file": "assets/cliente-index-CZlPIife.css",
+    "src": "resources/css/turnero/cliente-index.css",
+    "isEntry": true,
+    "names": [
+      "cliente-index.css"
+    ]
+  },
+  "resources/css/turnero/cliente.css": {
+    "file": "assets/cliente-B9iS-ozL.css",
+    "src": "resources/css/turnero/cliente.css",
+    "isEntry": true,
+    "names": [
+      "cliente.css"
+    ]
+  },
+  "resources/css/turnero/monitor.css": {
+    "file": "assets/monitor-CgtNvPik.css",
+    "src": "resources/css/turnero/monitor.css",
+    "isEntry": true,
+    "names": [
+      "monitor.css"
+    ]
+  },
   "resources/js/app.js": {
-    "file": "assets/app-BsmyfA_y.js",
+    "file": "assets/app-Cb3mnqJ8.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -26,6 +58,24 @@
     "file": "assets/modal-store-XFpNzzCP.js",
     "name": "modal-store",
     "src": "resources/js/modal-store.js",
+    "isEntry": true
+  },
+  "resources/js/turnero/cliente-index.js": {
+    "file": "assets/cliente-index-U8fBlmq8.js",
+    "name": "cliente-index",
+    "src": "resources/js/turnero/cliente-index.js",
+    "isEntry": true
+  },
+  "resources/js/turnero/cliente.js": {
+    "file": "assets/cliente-BtKJeA2D.js",
+    "name": "cliente",
+    "src": "resources/js/turnero/cliente.js",
+    "isEntry": true
+  },
+  "resources/js/turnero/monitor.js": {
+    "file": "assets/monitor-CvyEo17_.js",
+    "name": "monitor",
+    "src": "resources/js/turnero/monitor.js",
     "isEntry": true
   }
 }

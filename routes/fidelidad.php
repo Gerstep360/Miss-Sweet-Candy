@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\FidelidadController;
+use App\Http\Controllers\Clientes\FidelidadController;
 use Illuminate\Support\Facades\Route;
 
 // Grupo de rutas para el sistema de fidelidad

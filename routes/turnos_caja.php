@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\TurnoCajaController;
+use App\Http\Controllers\Personal\TurnoCajaController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas protegidas con autenticación y permisos

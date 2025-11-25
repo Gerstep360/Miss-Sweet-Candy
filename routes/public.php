@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MenuPublicoController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\VentasYCaja\MenuPublicoController;
+use App\Http\Controllers\Usuarios\UserController;
 use App\Models\Horario;
 
 /*

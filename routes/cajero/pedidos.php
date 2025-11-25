@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PedidoController;
-use App\Http\Controllers\PedidoSelectorController;
+use App\Http\Controllers\VentasYCaja\PedidoController;
+use App\Http\Controllers\VentasYCaja\PedidoSelectorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,4 +31,13 @@ Route::middleware(['auth'])->prefix('cajero')->group(function () {
     // Selector de productos para pedidos
     Route::get('selector-productos', [PedidoSelectorController::class, 'index'])->name('selector.productos.index');
     Route::post('selector-productos/confirmar', [PedidoSelectorController::class, 'confirmar'])->name('selector.productos.confirmar');
+
+    Route::get('pedir-en-linea', [PedidoController::class, 'createWeb'])
+            ->name('pedidos.web.create')
+            ->middleware('permission:crear-pedidos-en-linea');
+    Route::post('pedir-en-linea', [PedidoController::class, 'storeWeb'])
+            ->name('pedidos.web.store')
+            ->middleware('permission:crear-pedidos-en-linea');
+    // Tracking del pedido (Opcional, si usas el token)
+    // Route::get('/pedido/track/{token}', [PedidoController::class, 'track'])->name('cliente.pedidos.track');
 });

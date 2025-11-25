@@ -6,6 +6,7 @@
     'categorias' => [],
     'selectedItems' => [],
     'promociones' => [], // Nuevo: array de promociones activas y vigentes
+    'clienteId' => null, // ID del cliente para validar alergias
 ])
 
 <div x-data="{ open: false }"
@@ -34,7 +35,7 @@
          class="fixed inset-0 flex items-center justify-center lg:p-4 xl:p-6 z-[100]"
          @click.stop>
 
-        <div x-data="productSelector(@js($productos ?? []), @js($categorias ?? []), @js($selectedItems ?? []), @js($promociones ?? []))"
+        <div x-data="productSelector(@js($productos ?? []), @js($categorias ?? []), @js($selectedItems ?? []), @js($promociones ?? []), @js($clienteId ?? null))"
              class="w-full h-full lg:max-w-7xl lg:max-h-[90vh] bg-zinc-900 lg:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
 
             <!-- Header -->
@@ -134,10 +135,11 @@
                         <div class="p-2 lg:p-6 lg:pt-4">
                             <div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 lg:gap-4">
                                 <template x-for="producto in productosFiltrados" :key="producto.id">
-                                    <div @click.stop="productoDisponible(producto) && toggleProducto(producto)"
+                                    <div @click.stop="productoDisponible(producto) && !tieneAlergiasCliente(producto.id) && toggleProducto(producto)"
                                          :class="[
                                             esSeleccionado(producto.id) ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/30' : 'border-zinc-700',
-                                            productoDisponible(producto) ? 'hover:border-amber-500/50 cursor-pointer active:scale-95' : 'opacity-60 cursor-not-allowed',
+                                            tieneAlergiasCliente(producto.id) ? 'opacity-70 border-red-500/50 bg-red-500/5' : '',
+                                            productoDisponible(producto) && !tieneAlergiasCliente(producto.id) ? 'hover:border-amber-500/50 cursor-pointer active:scale-95' : 'cursor-not-allowed',
                                          ]"
                                          class="bg-zinc-800/40 border rounded-lg lg:rounded-xl transition-all duration-200 group relative">
 
@@ -148,6 +150,15 @@
                                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                                                 </svg>
                                                 <span class="hidden lg:inline">AGOTADO</span>
+                                            </span>
+                                        </div>
+
+                                        <!-- Badge alergia PELIGRO -->
+                                        <div x-show="tieneAlergiasCliente(producto.id)" class="absolute top-1 left-1 lg:top-2 lg:left-2 z-10">
+                                            <span class="inline-flex items-center gap-0.5 lg:gap-1 px-1.5 py-0.5 lg:px-2 lg:py-1 text-[9px] lg:text-xs font-bold bg-red-500 text-white rounded-full shadow-lg animate-pulse"
+                                                  :title="getMensajeAlergias(producto.id)">
+                                                🚨
+                                                <span class="hidden lg:inline">ALERGIA</span>
                                             </span>
                                         </div>
 
@@ -183,6 +194,16 @@
                                         <div class="px-1.5 pb-1.5 lg:p-3 lg:pt-0">
                                             <h4 class="text-white font-medium mb-0.5 lg:mb-1 text-[11px] lg:text-sm line-clamp-2 leading-tight" x-text="producto.nombre"></h4>
                                             <p class="text-zinc-400 text-[9px] lg:text-xs mb-1 lg:mb-2 line-clamp-1" x-text="producto.categoria?.nombre || 'Sin categoría'"></p>
+
+                                            <!-- Advertencia de alergia -->
+                                            <div x-show="tieneAlergiasCliente(producto.id)" class="mb-2">
+                                                <template x-for="alergia in getAlergiasProducto(producto.id)" :key="alergia.nombre">
+                                                    <div class="flex items-center gap-1 bg-red-500/20 border border-red-500/30 rounded px-1.5 py-0.5 mb-1">
+                                                        <span class="text-[9px] lg:text-[10px]" x-text="alergia.icono"></span>
+                                                        <span class="text-[9px] lg:text-[10px] font-semibold text-red-400 line-clamp-1" x-text="alergia.nombre"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
 
                                             <div class="flex items-center justify-between gap-1 mb-1">
                                                 <!-- Precios -->
@@ -547,7 +568,7 @@
 </style>
 
 <script>
-function productSelector(productos, categorias, selectedItems, promociones) {
+function productSelector(productos, categorias, selectedItems, promociones, clienteIdInicial) {
   return {
     productos, categorias,
     items: selectedItems || [],
@@ -555,6 +576,9 @@ function productSelector(productos, categorias, selectedItems, promociones) {
     promocionesAplicadas: [],
     categoriaActiva: 'todas',
     busqueda: '',
+    clienteId: clienteIdInicial,
+    clienteAlergias: [],
+    productosConAlergias: {}, // { productoId: [alergenos...] }
 
     init() {
       window.productSelectorData = this;
@@ -598,6 +622,11 @@ function productSelector(productos, categorias, selectedItems, promociones) {
       
       // Recalcular promociones cuando cambian los items
       this.$watch('items', () => this.calcularPromociones());
+
+      // Si hay un cliente inicial, cargar sus alergias
+      if (this.clienteId) {
+        this.validarAlergias();
+      }
     },
 
     /* ==== Especial del Día ==== */
@@ -845,8 +874,95 @@ function productSelector(productos, categorias, selectedItems, promociones) {
     },
 
     /* ==== Carrito ==== */
+    async validarAlergias() {
+      if (!this.clienteId) {
+        this.clienteAlergias = [];
+        this.productosConAlergias = {};
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/clientes/${this.clienteId}/perfil`);
+        if (!response.ok) {
+          console.warn('No se pudieron obtener las alergias del cliente');
+          this.clienteAlergias = [];
+          return;
+        }
+
+        const data = await response.json();
+        this.clienteAlergias = data.data?.alergias || [];
+
+        // Mapear productos que contienen alergias del cliente
+        this.productosConAlergias = {};
+        
+        this.productos.forEach(producto => {
+          const alergenosProducto = producto.alergenos || [];
+          const alergiasEncontradas = [];
+
+          this.clienteAlergias.forEach(alergia => {
+            const nombreAlergia = (alergia.nombre || '').toLowerCase();
+            
+            alergenosProducto.forEach(alergeno => {
+              const nombreAlergeno = (alergeno.nombre || '').toLowerCase();
+              
+              // Comparación case-insensitive
+              if (nombreAlergeno.includes(nombreAlergia) || nombreAlergia.includes(nombreAlergeno)) {
+                alergiasEncontradas.push({
+                  nombre: alergeno.nombre,
+                  severidad: alergia.severidad || 'leve',
+                  nivel_presencia: alergeno.pivot?.nivel_presencia || 'contiene',
+                  icono: alergeno.icono || '⚠️',
+                  color: alergeno.color || 'red',
+                });
+              }
+            });
+          });
+
+          if (alergiasEncontradas.length > 0) {
+            this.productosConAlergias[producto.id] = alergiasEncontradas;
+          }
+        });
+
+      } catch (error) {
+        console.error('Error al validar alergias:', error);
+        this.clienteAlergias = [];
+        this.productosConAlergias = {};
+      }
+    },
+
+    tieneAlergiasCliente(productoId) {
+      return this.productosConAlergias[productoId]?.length > 0;
+    },
+
+    getAlergiasProducto(productoId) {
+      return this.productosConAlergias[productoId] || [];
+    },
+
+    getMensajeAlergias(productoId) {
+      const alergias = this.getAlergiasProducto(productoId);
+      if (alergias.length === 0) return '';
+      
+      const nombres = alergias.map(a => a.nombre).join(', ');
+      const tieneGrave = alergias.some(a => a.severidad === 'grave');
+      
+      if (tieneGrave) {
+        return `🚨 PELIGRO: Contiene ${nombres} (ALERGIA GRAVE)`;
+      }
+      return `⚠️ Contiene ${nombres}`;
+    },
+
     toggleProducto(p) {
-      if (!this.productoDisponible(p)) { alert('⚠️ Este producto está agotado'); return; }
+      // Validar alergias ANTES de permitir selección
+      if (this.tieneAlergiasCliente(p.id)) {
+        alert(this.getMensajeAlergias(p.id) + '\n\n❌ Este producto no puede ser seleccionado para este cliente.');
+        return;
+      }
+
+      if (!this.productoDisponible(p)) { 
+        alert('⚠️ Este producto está agotado'); 
+        return; 
+      }
+      
       const existe = this.items.find(it => it.producto_id === p.id);
       existe ? this.eliminarProducto(p.id) : this.agregarProducto(p);
     },

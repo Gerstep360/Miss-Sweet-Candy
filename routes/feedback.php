@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\Clientes\FeedbackController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,7 +14,8 @@ use App\Http\Controllers\FeedbackController;
 
 Route::middleware(['auth'])->group(function () {
     
-    // Rutas para CLIENTES - Crear y ver su propio feedback
+    // Rutas para CLIENTES - Crear y ver sus propios feedbacks
+    Route::get('/mis-feedbacks', [FeedbackController::class, 'misFeedbacks'])->name('feedback.mis-feedbacks');
     Route::get('/feedback/crear', [FeedbackController::class, 'create'])->name('feedback.create');
     Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
     Route::get('/feedback/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');

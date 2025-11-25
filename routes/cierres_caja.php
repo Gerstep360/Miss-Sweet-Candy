@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\CierreCajaController;
+use App\Http\Controllers\Personal\CierreCajaController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->prefix('m')->name('cierres_caja.')->group(function () {

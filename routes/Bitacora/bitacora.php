@@ -1,5 +1,5 @@
 <?php
-use App\Http\Controllers\BitacoraController;
+use App\Http\Controllers\Usuarios\BitacoraController;
 
 Route::middleware(['auth', 'verified', 'can:ver-bitacora'])->group(function () {
     Route::get('/admin/bitacora', [BitacoraController::class, 'index'])->name('bitacora.index');

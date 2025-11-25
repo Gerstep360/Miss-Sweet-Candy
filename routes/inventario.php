@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\InventarioController;
+use App\Http\Controllers\Inventario\InventarioController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {

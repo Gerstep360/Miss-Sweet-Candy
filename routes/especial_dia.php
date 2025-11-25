@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EspecialDelDiaController;
+use App\Http\Controller\Promociones\EspecialDelDiaController;
 
 // Backend (admin)
 Route::middleware(['web', 'auth'])
