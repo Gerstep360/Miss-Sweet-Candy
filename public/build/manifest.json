@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-BhD8ki5A.css",
+    "file": "assets/app-BDhK8m3E.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -8,7 +8,7 @@
     ]
   },
   "resources/css/layouts/app/sidebar.css": {
-    "file": "assets/sidebar-5XwIb4XR.css",
+    "file": "assets/sidebar-Ok2orsyJ.css",
     "src": "resources/css/layouts/app/sidebar.css",
     "isEntry": true,
     "names": [
@@ -40,7 +40,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-Cb3mnqJ8.js",
+    "file": "assets/app-DLBe1MJT.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -73,7 +73,7 @@
     "isEntry": true
   },
   "resources/js/turnero/monitor.js": {
-    "file": "assets/monitor-CvyEo17_.js",
+    "file": "assets/monitor-BSf1zE5M.js",
     "name": "monitor",
     "src": "resources/js/turnero/monitor.js",
     "isEntry": true

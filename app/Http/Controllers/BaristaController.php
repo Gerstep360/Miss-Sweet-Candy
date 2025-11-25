@@ -1,12 +1,11 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
+use App\Events\PedidoActualizado;
 use App\Models\Pedido;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 
 class BaristaController extends Controller
 {
@@ -46,7 +45,7 @@ class BaristaController extends Controller
         }
 
         // Solo mostrar pedidos que el barista puede gestionar
-        if (!in_array($pedido->estado, ['pendiente', 'en_preparacion', 'preparado'])) {
+        if (! in_array($pedido->estado, ['pendiente', 'en_preparacion', 'preparado'])) {
             return back()->with('error', 'No tienes acceso a este pedido.');
         }
 
@@ -81,15 +80,16 @@ class BaristaController extends Controller
                 'started_at' => now(),
             ]);
             $pedido->items()->update(['estado_item' => 'en_preparacion']);
-            event(new \App\Events\PedidoActualizado($pedido));
-            DB::commit();
 
+            DB::commit();
+            event(new PedidoActualizado($pedido));
             BitacoraController::registrar('cambiar estado a en_preparacion', 'Pedido Barista', $pedido->id, auth()->id());
 
             return back()->with('success', 'Pedido marcado como en preparación.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error al cambiar el estado: ' . $e->getMessage());
+
+            return back()->with('error', 'Error al cambiar el estado: '.$e->getMessage());
         }
     }
 
@@ -118,16 +118,16 @@ class BaristaController extends Controller
             ]);
             $pedido->items()->update(['estado_item' => 'preparado']);
 
-            event(new \App\Events\PedidoActualizado($pedido));
             DB::commit();
-
+            event(new PedidoActualizado($pedido));
             BitacoraController::registrar('cambiar estado a preparado', 'Pedido Barista', $pedido->id, auth()->id());
 
             // Opcional: redirige al index para que "desaparezca" del tablero
             return redirect()->route('barista.pedidos.index')->with('success', 'Pedido marcado como preparado.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error al cambiar el estado: ' . $e->getMessage());
+
+            return back()->with('error', 'Error al cambiar el estado: '.$e->getMessage());
         }
     }
 }

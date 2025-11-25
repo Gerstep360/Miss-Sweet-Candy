@@ -17,6 +17,7 @@ return new class extends Migration
             $table->integer('numero_personas');
             $table->enum('estado', ['pendiente', 'confirmada', 'cancelada', 'cumplida'])->default('pendiente');
             $table->string('observaciones', 255)->nullable();
+            $table->timestamps();
             
             $table->unique(['mesa_id', 'fecha', 'hora'], 'uk_reserva_slot');
             $table->index('cliente_id', 'idx_res_cliente');

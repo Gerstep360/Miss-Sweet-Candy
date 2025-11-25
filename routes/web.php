@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
 // Secciones Web
 require __DIR__.'/welcome.php';
 require __DIR__.'/public.php';
@@ -48,3 +46,7 @@ require __DIR__.'/perfil.php';
 
 // Alérgenos (CU22)
 require __DIR__.'/alergenos.php';
+
+require __DIR__.'/auditoria.php';
+require __DIR__.'/reservas.php';
+require __DIR__.'/cajero/reservas.php';

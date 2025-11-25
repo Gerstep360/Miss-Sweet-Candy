@@ -166,6 +166,17 @@ class RolePermissionSeeder extends Seeder
 
             //pedidos en linea
             'crear-pedidos-en-linea',
+
+            // CU19 reservas
+            'hacer-reserva',  // CU19 - Reservas de Mesa Online
+            'gestionar-reservas-cajero',
+            'crear-reserva-manual',
+            'confirmar-llegada-cliente',
+            'cancelar-reserva-cajero',
+            'marcar-no-show',
+
+            // auditoria
+            'auditoria',
         ];
 
         /* -----------------------------------------------------------------

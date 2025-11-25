@@ -9,7 +9,8 @@
         ->map(fn($n) => [
             'id' => $n->id,
             'mensaje' => $n->mensaje,
-            'time' => $n->created_at->diffForHumans(),
+            // 🔥 CORRECCIÓN AQUÍ: Usamos el operador seguro (?->) y un valor por defecto
+            'time' => $n->created_at?->diffForHumans() ?? 'Hace un momento',
             'url' => '#' 
         ]);
 

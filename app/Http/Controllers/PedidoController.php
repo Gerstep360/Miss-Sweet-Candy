@@ -586,13 +586,12 @@ class PedidoController extends BaseController
 
             // 🔔 NOTIFICAR A CAJEROS (Nuevo pedido web entrante)
             // Es importante notificar al cajero para que "Acepte/Confirme" el pedido
-            \App\Http\Controllers\NotificacionController::notificarNuevoPedidoWeb($pedido);
+            NotificacionController::notificarNuevoPedidoABarista($pedido);
 
             // Retornar a la vista de seguimiento del cliente
             return redirect()
-                ->route('client.pedidos.track', $pedido->token) // Asumiendo que tienes una ruta de tracking
-                ->with('success', '¡Tu pedido ha sido enviado! Espera la confirmación.');
-
+                ->route('turnos.turnero.cliente', ['token' => $pedido->token])
+                ->with('success', '¡Pedido enviado! Sigue el estado de tu orden aquí.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()
@@ -725,7 +724,7 @@ class PedidoController extends BaseController
         }
 
         $validated = $request->validate([
-            'estado' => 'required|in:pendiente,confirmado,en_preparacion,preparado,en_reparto,entregado,servido,retirado,anulado,cancelado',
+            'estado' => 'required|in:pendiente,confirmado,en_preparacion,preparado,listo,en_reparto,entregado,servido,retirado,anulado,cancelado',
             'motivo_anulacion' => 'required_if:estado,anulado,cancelado|nullable|string|max:255',
         ]);
 
@@ -733,10 +732,13 @@ class PedidoController extends BaseController
 
         try {
             $estadoAnterior = $pedido->estado;
-            $pedido->estado = $validated['estado'];
+            
+            // 🔄 NORMALIZAR: "listo" → "preparado" (son equivalentes)
+            $nuevoEstado = $validated['estado'] === 'listo' ? 'preparado' : $validated['estado'];
+            $pedido->estado = $nuevoEstado;
 
             // Si se anula o cancela
-            if (in_array($validated['estado'], ['anulado', 'cancelado'])) {
+            if (in_array($nuevoEstado, ['anulado', 'cancelado'])) {
                 // Marcar items como anulados
                 foreach ($pedido->items as $item) {
                     $item->update(['estado_item' => 'anulado']);
@@ -748,27 +750,43 @@ class PedidoController extends BaseController
                 }
             }
 
+            // ⏱️ TIMESTAMPS: Marcar cuando inicia preparación
+            if ($nuevoEstado === 'en_preparacion' && !$pedido->started_at) {
+                $pedido->started_at = now();
+            }
+
+            // ⏱️ TIMESTAMPS: Marcar cuando está listo
+            if ($nuevoEstado === 'preparado' && !$pedido->ready_at) {
+                $pedido->ready_at = now();
+            }
+
             // Si se completa el pedido (entregado/servido/retirado), liberar mesa
-            if (in_array($validated['estado'], ['retirado','servido','entregado'])) {
+            if (in_array($nuevoEstado, ['retirado','servido','entregado'])) {
                 $pedido->delivered_at = now();
             }
 
             $pedido->save();
-            event(new \App\Events\PedidoActualizado($pedido));
+
+            // ✅ BROADCAST: Disparar evento DESPUÉS del commit
+            DB::afterCommit(function () use ($pedido) {
+                event(new \App\Events\PedidoActualizado($pedido));
+            });
+
+            DB::commit();
 
             // 🔔 NOTIFICACIONES según el cambio de estado
-            if ($validated['estado'] === 'preparado' || $validated['estado'] === 'listo') {
+            if ($nuevoEstado === 'preparado') {
                 // Barista terminó de preparar → Notificar a cajeros
                 NotificacionController::notificarPedidoListo($pedido);
             } else {
                 // Para otros cambios de estado
-                NotificacionController::notificarCambioEstadoPedido($pedido, $estadoAnterior, $validated['estado']);
+                NotificacionController::notificarCambioEstadoPedido($pedido, $estadoAnterior, $nuevoEstado);
             }
 
             // Registrar en bitácora
             BitacoraController::registrar('cambiar estado', 'Pedido', $pedido->id);
 
-            return back()->with('success', "Estado del pedido cambiado de '{$estadoAnterior}' a '{$validated['estado']}'.");
+            return back()->with('success', "Estado del pedido cambiado de '{$estadoAnterior}' a '{$nuevoEstado}'.");
 
         } catch (\Exception $e) {
             DB::rollBack();

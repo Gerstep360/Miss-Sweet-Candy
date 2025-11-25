@@ -38,6 +38,4 @@ Route::middleware(['auth'])->prefix('cajero')->group(function () {
     Route::post('pedir-en-linea', [PedidoController::class, 'storeWeb'])
             ->name('pedidos.web.store')
             ->middleware('permission:crear-pedidos-en-linea');
-    // Tracking del pedido (Opcional, si usas el token)
-    // Route::get('/pedido/track/{token}', [PedidoController::class, 'track'])->name('cliente.pedidos.track');
 });

@@ -41,6 +41,19 @@ class BusinessHours
         return $start && $now->between($start, $end);
     }
 
+    /**
+     * Verificar si una fecha y hora específica está dentro del horario de atención
+     */
+    public function isWithinBusinessHours(string $fecha, string $hora): bool
+    {
+        try {
+            $datetime = Carbon::parse("{$fecha} {$hora}");
+            return $this->isOpenAt($datetime);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
     /** Segundos hasta abrir/cerrar (para TTL de caché) */
     public function secondsUntilNextTransition(Carbon $now): int
     {

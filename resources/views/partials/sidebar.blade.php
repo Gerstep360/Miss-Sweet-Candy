@@ -128,7 +128,12 @@
             @canany(['ver-pedidos', 'ver-cobros', 'iniciar-turno', 'cerrar-caja', 'ver-reporte-caja'])
                 <flux:navlist.group expandable heading="Paquete Ventas y Caja" icon="banknotes" class="group-wrapper">
                     @can('ver-pedidos')
-                        <flux:navlist.item :href="route('pedidos.index')" :current="request()->routeIs('pedidos.*')" wire:navigate class="nav-item-child">Gestión Pedidos</flux:navlist.item>
+                        @if (auth()->user()->hasAnyRole(['admin', 'administrador', 'cajero', 'Cajero']))
+                            <flux:navlist.item :href="route('pedidos.index')" :current="request()->routeIs('pedidos.*')" wire:navigate class="nav-item-child">Gestión Pedidos</flux:navlist.item>
+                        @else
+                            <flux:navlist.item :href="route('pedidos.index')" :current="request()->routeIs('pedidos.*')" wire:navigate class="nav-item-child">Mis Pedidos</flux:navlist.item>
+                        @endif
+                        
                     @endcan
                     @can('ver-cobros')
                         <flux:navlist.item :href="route('cobro_caja.index')" :current="request()->routeIs('cobro_caja.index')" wire:navigate class="nav-item-child">Terminal de Cobro</flux:navlist.item>
@@ -151,6 +156,11 @@
                     @can('ver-reportes')
                         <flux:navlist.item :href="route('reportes.ventas.index')" :current="request()->routeIs('reportes.ventas.*')" wire:navigate class="nav-item-child">Ventas Globales</flux:navlist.item>
                         <flux:navlist.item :href="route('reportes.exportar.index')" :current="request()->routeIs('reportes.exportar.*')" wire:navigate class="nav-item-child">Exportar Datos</flux:navlist.item>
+                    @endcan
+                    @can('auditoria')
+                        <flux:navlist.item icon="document-text" :href="route('auditoria.index')" :current="request()->routeIs('auditoria.*')" wire:navigate class="nav-item-child">
+                            Auditoría
+                        </flux:navlist.item>
                     @endcan
                     @can('ver-bitacora')
                         <flux:navlist.item :href="route('bitacora.index')" :current="request()->routeIs('bitacora.*')" wire:navigate class="nav-item-child">Bitácora Sistema</flux:navlist.item>
@@ -175,6 +185,11 @@
                 <flux:navlist.group expandable heading="Paquete Clientes" icon="face-smile" class="group-wrapper">
                     @can('consultar-perfil-cliente')
                         <flux:navlist.item :href="route('perfil.consultar.todos')" :current="request()->routeIs('perfil.consultar.todos')" wire:navigate class="nav-item-child">Directorio Clientes</flux:navlist.item>
+                    @endcan
+                    @can('gestionar-reservas-cajero')
+                        <flux:navlist.item icon="calendar" :href="route('cajero.reservas.index')" :current="request()->routeIs('cajero.reservas.*')" wire:navigate class="nav-item-child">
+                            Reservas
+                        </flux:navlist.item>
                     @endcan
                     @can('ver-mesas')
                         <flux:navlist.item :href="route('mesas.index')" :current="request()->routeIs('mesas.*')" wire:navigate class="nav-item-child">Gestión Mesas</flux:navlist.item>
