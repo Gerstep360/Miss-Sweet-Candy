@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Auditoria;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class BitacoraController extends Controller
 {
@@ -70,10 +69,10 @@ class BitacoraController extends Controller
 
         // Obtener registros relacionados (mismo usuario, misma entidad, mismo día)
         $relacionados = Auditoria::where('id', '!=', $id)
-            ->where(function($q) use ($auditoria) {
+            ->where(function ($q) use ($auditoria) {
                 $q->where('usuario_id', $auditoria->usuario_id)
-                  ->orWhere('entidad', $auditoria->entidad)
-                  ->orWhere('ip', $auditoria->ip);
+                    ->orWhere('entidad', $auditoria->entidad)
+                    ->orWhere('ip', $auditoria->ip);
             })
             ->whereDate('created_at', $auditoria->created_at->toDateString())
             ->orderByDesc('created_at')
@@ -90,17 +89,23 @@ class BitacoraController extends Controller
     {
         // TODO: Implementar usando Maatwebsite/Excel
         $query = Auditoria::with('usuario');
-        
+
         // Aplicar los mismos filtros que index()
-        if ($request->filled('usuario_id')) $query->porUsuario($request->usuario_id);
-        if ($request->filled('accion')) $query->porAccion($request->accion);
-        if ($request->filled('entidad')) $query->porEntidad($request->entidad);
-        
+        if ($request->filled('usuario_id')) {
+            $query->porUsuario($request->usuario_id);
+        }
+        if ($request->filled('accion')) {
+            $query->porAccion($request->accion);
+        }
+        if ($request->filled('entidad')) {
+            $query->porEntidad($request->entidad);
+        }
+
         $auditorias = $query->limit(10000)->get();
 
         return response()->json([
             'message' => 'Exportación Excel pendiente de implementar',
-            'registros' => $auditorias->count()
+            'registros' => $auditorias->count(),
         ]);
     }
 
@@ -111,16 +116,20 @@ class BitacoraController extends Controller
     {
         // TODO: Implementar usando DomPDF
         $query = Auditoria::with('usuario');
-        
+
         // Aplicar filtros
-        if ($request->filled('usuario_id')) $query->porUsuario($request->usuario_id);
-        if ($request->filled('accion')) $query->porAccion($request->accion);
-        
+        if ($request->filled('usuario_id')) {
+            $query->porUsuario($request->usuario_id);
+        }
+        if ($request->filled('accion')) {
+            $query->porAccion($request->accion);
+        }
+
         $auditorias = $query->limit(10000)->get();
 
         return response()->json([
             'message' => 'Exportación PDF pendiente de implementar',
-            'registros' => $auditorias->count()
+            'registros' => $auditorias->count(),
         ]);
     }
 
@@ -152,12 +161,12 @@ class BitacoraController extends Controller
         if ($ip = $request->header('CF-Connecting-IP')) {
             return $ip;
         }
-        
+
         // Nginx proxy o similar
         if ($ip = $request->header('X-Real-IP')) {
             return $ip;
         }
-        
+
         // Proxy estándar (puede tener múltiples IPs)
         if ($forwarded = $request->header('X-Forwarded-For')) {
             $ips = array_map('trim', explode(',', $forwarded));
@@ -167,10 +176,10 @@ class BitacoraController extends Controller
                 return $ip;
             }
         }
-        
+
         // Obtener IP del servidor
         $ip = $request->ip();
-        
+
         // Si es localhost, intentar obtener la IP de red local
         if ($ip === '127.0.0.1' || $ip === '::1') {
             // En Windows, intentar obtener la IP local
@@ -180,7 +189,7 @@ class BitacoraController extends Controller
                     // Retornar la primera IP local encontrada
                     $localIp = $matches[1];
                     if ($localIp !== '127.0.0.1') {
-                        return $localIp . ' (Local)';
+                        return $localIp.' (Local)';
                     }
                 }
             } else {
@@ -189,14 +198,14 @@ class BitacoraController extends Controller
                 if ($output) {
                     $localIp = trim($output);
                     if ($localIp && $localIp !== '127.0.0.1') {
-                        return $localIp . ' (Local)';
+                        return $localIp.' (Local)';
                     }
                 }
             }
-            
+
             return '127.0.0.1 (localhost)';
         }
-        
+
         return $ip;
     }
 
@@ -205,34 +214,34 @@ class BitacoraController extends Controller
      */
     private static function formatearUserAgent($userAgent)
     {
-        if (!$userAgent) {
+        if (! $userAgent) {
             return 'Desconocido';
         }
 
         // Detectar navegador
         $navegador = 'Desconocido';
         $version = '';
-        
+
         if (preg_match('/OPR\/(\d+)/', $userAgent, $matches)) {
             $navegador = 'Opera';
-            $version = 'ver.' . $matches[1];
+            $version = 'ver.'.$matches[1];
         } elseif (preg_match('/Edg\/(\d+)/', $userAgent, $matches)) {
             $navegador = 'Edge';
-            $version = 'ver.' . $matches[1];
-        } elseif (preg_match('/Chrome\/(\d+)/', $userAgent, $matches) && !strpos($userAgent, 'Edg')) {
+            $version = 'ver.'.$matches[1];
+        } elseif (preg_match('/Chrome\/(\d+)/', $userAgent, $matches) && ! strpos($userAgent, 'Edg')) {
             $navegador = 'Chrome';
-            $version = 'ver.' . $matches[1];
+            $version = 'ver.'.$matches[1];
         } elseif (preg_match('/Firefox\/(\d+)/', $userAgent, $matches)) {
             $navegador = 'Firefox';
-            $version = 'ver.' . $matches[1];
-        } elseif (preg_match('/Safari\/(\d+)/', $userAgent, $matches) && !strpos($userAgent, 'Chrome')) {
+            $version = 'ver.'.$matches[1];
+        } elseif (preg_match('/Safari\/(\d+)/', $userAgent, $matches) && ! strpos($userAgent, 'Chrome')) {
             $navegador = 'Safari';
-            $version = 'ver.' . $matches[1];
+            $version = 'ver.'.$matches[1];
         }
 
         // Detectar sistema operativo
         $so = 'Desconocido';
-        
+
         if (preg_match('/Windows NT 10\.0/', $userAgent)) {
             $so = 'Windows 10/11';
         } elseif (preg_match('/Windows NT 6\.3/', $userAgent)) {

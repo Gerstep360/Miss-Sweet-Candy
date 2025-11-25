@@ -30,8 +30,10 @@ public function run(): void
         InventarioProductoSeeder::class,
         EspecialDelDiaSeeder::class,
         NotificacionSeeder::class,
+        FidelidadConfigSeeder::Class,
         PromocionSeeder::class, // CU30 - Datos de promociones para reportes
         ReportesDataSeeder::class, // CU30 - Datos históricos para reportes
+        SanitarioSeeder::class, // CU25 - Cumplimiento Sanitario
     ]);
 }
 }

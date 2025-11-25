@@ -29,8 +29,8 @@ class AuditoriaController extends Controller
      */
     public function index(Request $request)
     {
-        // 🔒 Solo administradores pueden acceder
-        if (! auth()->check() || ! auth()->user()->hasRole('administrador')) {
+        // 🔒 Solo usuarios con permiso pueden acceder
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -92,8 +92,8 @@ class AuditoriaController extends Controller
      */
     public function show($id)
     {
-        // 🔒 Solo administradores pueden acceder
-        if (! auth()->check() || ! auth()->user()->hasRole('administrador')) {
+        // 🔒 Solo usuarios con permiso pueden acceder
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -120,8 +120,8 @@ class AuditoriaController extends Controller
      */
     public function exportarPdf(Request $request)
     {
-        // 🔒 Solo administradores pueden exportar
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden exportar
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -145,8 +145,8 @@ class AuditoriaController extends Controller
      */
     public function exportarExcel(Request $request)
     {
-        // 🔒 Solo administradores pueden exportar
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden exportar
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -170,8 +170,8 @@ class AuditoriaController extends Controller
      */
     public function backups(Request $request)
     {
-        // 🔒 Solo administradores pueden acceder
-        if (! auth()->check() || ! auth()->user()->hasRole('administrador')) {
+        // 🔒 Solo usuarios con permiso pueden acceder
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -188,8 +188,8 @@ class AuditoriaController extends Controller
      */
     public function crearBackup(Request $request)
     {
-        // 🔒 Solo administradores pueden crear backups
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden crear backups
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -215,8 +215,8 @@ class AuditoriaController extends Controller
      */
     public function descargarBackup($archivo)
     {
-        // 🔒 Solo administradores pueden descargar backups
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden descargar backups
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -242,8 +242,8 @@ class AuditoriaController extends Controller
      */
     public function eliminarBackup(Request $request, $archivo)
     {
-        // 🔒 Solo administradores pueden eliminar backups
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden eliminar backups
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -265,8 +265,8 @@ class AuditoriaController extends Controller
      */
     public function restaurarBackup(Request $request, $archivo)
     {
-        // 🔒 Solo administradores pueden restaurar backups
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden restaurar backups
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -298,8 +298,8 @@ class AuditoriaController extends Controller
      */
     public function configurarBackups(Request $request)
     {
-        // 🔒 Solo administradores pueden configurar backups
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden configurar backups
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -329,8 +329,8 @@ class AuditoriaController extends Controller
      */
     public function anomalias(Request $request)
     {
-        // 🔒 Solo administradores pueden ver anomalías
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden ver anomalías
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -346,8 +346,8 @@ class AuditoriaController extends Controller
      */
     public function detectarAnomalias()
     {
-        // 🔒 Solo administradores pueden ejecutar detección
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden ejecutar detección
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 
@@ -369,8 +369,8 @@ class AuditoriaController extends Controller
      */
     public function intentosLogin(Request $request)
     {
-        // 🔒 Solo administradores pueden ver intentos de login
-        if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
+        // 🔒 Solo usuarios con permiso pueden ver intentos de login
+        if (! auth()->check() || ! auth()->user()->can('auditoria')) {
             return redirect()->route('403');
         }
 

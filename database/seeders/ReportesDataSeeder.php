@@ -17,125 +17,95 @@ use Illuminate\Support\Facades\DB;
 
 class ReportesDataSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     * Este seeder crea datos realistas para los últimos 60 días
-     * para poder generar reportes completos y útiles.
-     */
+    // CONFIGURACIÓN "LITE" PARA AHORRAR ESPACIO
+    protected $diasParaGenerar = 15; // Antes 60. 15 es suficiente para pruebas.
+    protected $minPedidosDia = 1;
+    protected $maxPedidosDia = 3;    // Mantenemos bajo volumen diario.
+
     public function run(): void
     {
-        try {
-            $this->command->info('🚀 Iniciando generación de datos para reportes...');
-
-            // Obtener datos base
-            $cajeros = User::role(['cajero', 'administrador'])->get();
-            $clientes = User::role('cliente')->get();
-            $mesas = Mesa::all();
-            $productos = Producto::all();
-
-            if ($cajeros->isEmpty() || $clientes->isEmpty() || $productos->isEmpty()) {
-                $this->command->warn('⚠️  Faltan datos base (usuarios, productos). Ejecuta los seeders base primero.');
-                return;
-            }
-
-            // Asegurarse de que tengamos al menos un cliente
-            if ($clientes->isEmpty()) {
-                $this->command->warn('⚠️  No hay clientes en la base de datos.');
-                return;
-            }
-
-            $pedidosCreados = 0;
-            $cobrosCreados = 0;
-            $turnosCreados = 0;
-            $cierresCreados = 0;
-
-            // Generar datos para los últimos 60 días
-            for ($dia = 60; $dia >= 0; $dia--) {
-                $fecha = Carbon::now()->subDays($dia);
-
-                // Solo generar datos para días pasados
-                if ($fecha->isFuture()) {
-                    continue;
-                }
-
-                // Generar entre 5 y 15 pedidos por día
-                $numPedidos = rand(5, 15);
-
-                for ($i = 0; $i < $numPedidos; $i++) {
-                    $pedido = $this->crearPedidoAleatorio(
-                        $fecha,
-                        $cajeros,
-                        $clientes,
-                        $mesas,
-                        $productos
-                    );
-
-                    if ($pedido) {
-                        $pedidosCreados++;
-
-                        // 80% de los pedidos tienen cobro
-                        if (rand(1, 100) <= 80) {
-                            $cobro = $this->crearCobroPedido($pedido, $cajeros, $fecha);
-                            if ($cobro) {
-                                $cobrosCreados++;
-                            }
-                        }
-                    }
-                }
-
-                // Crear turnos y cierres de caja (2 turnos por día: mañana y tarde)
-                if ($dia > 0 && $fecha->isPast()) {
-                    // Turno de mañana
-                    $turnoManana = $this->crearTurno($fecha, 'mañana', $cajeros);
-                    if ($turnoManana) {
-                        $turnosCreados++;
-                        if (rand(1, 100) <= 90) { // 90% de los turnos tienen cierre
-                            $cierre = $this->crearCierre($turnoManana, $fecha);
-                            if ($cierre) {
-                                $cierresCreados++;
-                            }
-                        }
-                    }
-
-                    // Turno de tarde
-                    $turnoTarde = $this->crearTurno($fecha, 'tarde', $cajeros);
-                    if ($turnoTarde) {
-                        $turnosCreados++;
-                        if (rand(1, 100) <= 90) {
-                            $cierre = $this->crearCierre($turnoTarde, $fecha);
-                            if ($cierre) {
-                                $cierresCreados++;
-                            }
-                        }
-                    }
-                }
-            }
-
-            $this->command->info('✅ Datos de reportes generados exitosamente:');
-            $this->command->info("   - Pedidos: $pedidosCreados");
-            $this->command->info("   - Cobros: $cobrosCreados");
-            $this->command->info("   - Turnos: $turnosCreados");
-            $this->command->info("   - Cierres de caja: $cierresCreados");
-        } catch (\Exception $e) {
-            $this->command->error('Error al generar datos de reportes: ' . $e->getMessage());
-            $this->command->error($e->getTraceAsString());
+        // Prevenir ejecución en producción para no ensuciar la DB
+        if (app()->environment('production')) {
+            $this->command->warn('⚠️  Este seeder no debe correrse en producción.');
+            return;
         }
+
+        DB::transaction(function () {
+            try {
+                $this->command->info("🚀 Generando datos 'LITE' para los últimos {$this->diasParaGenerar} días...");
+
+                // Cargar datos en memoria una sola vez
+                $cajeros = User::role(['cajero', 'administrador'])->get();
+                $clientes = User::role('cliente')->get();
+                $mesas = Mesa::all();
+                $productos = Producto::all();
+
+                if ($cajeros->isEmpty() || $clientes->isEmpty() || $productos->isEmpty()) {
+                    $this->command->warn('⚠️  Faltan datos base (usuarios/productos).');
+                    return;
+                }
+
+                $stats = [
+                    'pedidos' => 0,
+                    'cobros' => 0,
+                    'turnos' => 0,
+                    'cierres' => 0
+                ];
+
+                // Recorrer días
+                for ($dia = $this->diasParaGenerar; $dia >= 0; $dia--) {
+                    $fecha = Carbon::now()->subDays($dia);
+
+                    // 1. GENERAR PEDIDOS (Pocos por día)
+                    $numPedidos = rand($this->minPedidosDia, $this->maxPedidosDia);
+
+                    for ($i = 0; $i < $numPedidos; $i++) {
+                        $pedido = $this->crearPedidoAleatorio($fecha, $cajeros, $clientes, $mesas, $productos);
+                        
+                        if ($pedido) {
+                            $stats['pedidos']++;
+                            // Solo el 60% tiene cobro para ahorrar espacio en tabla cobros
+                            if (rand(1, 100) <= 60) {
+                                $cobro = $this->crearCobroPedido($pedido, $cajeros, $fecha);
+                                if ($cobro) $stats['cobros']++;
+                            }
+                        }
+                    }
+
+                    // 2. GENERAR TURNOS (Solo si hubo actividad ese día)
+                    // Reducimos a 1 turno por día aleatorio (mañana O tarde) para ahorrar espacio
+                    if ($dia > 0) {
+                        $tipoTurno = rand(0, 1) ? 'mañana' : 'tarde';
+                        $turno = $this->crearTurno($fecha, $tipoTurno, $cajeros);
+                        
+                        if ($turno) {
+                            $stats['turnos']++;
+                            // Solo generamos cierre si el turno se creó
+                            $cierre = $this->crearCierre($turno, $fecha);
+                            if ($cierre) $stats['cierres']++;
+                        }
+                    }
+                }
+
+                $this->command->info('✅ Datos generados (Modo Ahorro):');
+                $this->command->table(['Entidad', 'Cantidad'], [
+                    ['Pedidos', $stats['pedidos']],
+                    ['Cobros', $stats['cobros']],
+                    ['Turnos', $stats['turnos']],
+                    ['Cierres', $stats['cierres']],
+                ]);
+
+            } catch (\Exception $e) {
+                $this->command->error('Error: ' . $e->getMessage());
+                throw $e; // Revertir transacción
+            }
+        });
     }
 
-    /**
-     * Crear un pedido aleatorio
-     */
     private function crearPedidoAleatorio($fecha, $cajeros, $clientes, $mesas, $productos)
     {
-        $tipos = ['mesa', 'mostrador', 'web'];
-        $tipo = $tipos[array_rand($tipos)];
-        
-        // Estados válidos según la migración: pendiente, en_preparacion, preparado, cancelado, anulado
-        $estados = ['pendiente', 'en_preparacion', 'preparado', 'cancelado', 'anulado'];
-        
-        // Peso para estados (más pedidos preparados que son los completados)
-        $estadosPesados = ['preparado', 'preparado', 'preparado', 'preparado', 'preparado', 'preparado', 'pendiente'];
-        $estado = $estadosPesados[array_rand($estadosPesados)];
+        $tipo = ['mesa', 'mostrador', 'web'][rand(0, 2)];
+        $estado = ['preparado', 'preparado', 'pendiente'][rand(0, 2)]; // Mayor probabilidad de completado
 
         $datoPedido = [
             'tipo' => $tipo,
@@ -143,186 +113,116 @@ class ReportesDataSeeder extends Seeder
             'atendido_por' => $cajeros->random()->id,
             'estado' => $estado,
             'canal' => $tipo === 'web' ? 'web' : 'local',
-            'created_at' => $fecha->copy()->setTime(rand(8, 22), rand(0, 59)),
-            'updated_at' => $fecha->copy()->setTime(rand(8, 22), rand(0, 59)),
+            'created_at' => $fecha->copy()->setTime(rand(9, 21), rand(0, 59)),
+            'updated_at' => $fecha->copy()->setTime(rand(9, 21), rand(0, 59)),
         ];
 
         if ($tipo === 'mesa' && $mesas->isNotEmpty()) {
             $datoPedido['mesa_id'] = $mesas->random()->id;
         }
 
+        // Simplificamos la lógica web para ahorrar espacio en DB (strings más cortos)
         if ($tipo === 'web') {
-            $modalidades = ['click_collect', 'delivery'];
-            $datoPedido['modalidad'] = $modalidades[array_rand($modalidades)];
-
+            $datoPedido['modalidad'] = rand(0, 1) ? 'click_collect' : 'delivery';
             if ($datoPedido['modalidad'] === 'delivery') {
-                $direcciones = [
-                    'Av. Libertador 1234, La Paz',
-                    'Calle Potosí 567, Zona Sur',
-                    'Av. Arce 890, Sopocachi',
-                    'Calle Sucre 321, Centro',
-                    'Av. 6 de Agosto 456, San Miguel',
-                ];
-                $datoPedido['direccion_entrega'] = $direcciones[array_rand($direcciones)];
+                $datoPedido['direccion_entrega'] = 'Dirección Genérica #' . rand(1, 100);
             }
         }
 
         $pedido = Pedido::create($datoPedido);
 
-        // Crear items del pedido (2-5 items)
-        $numItems = rand(2, 5);
+        // MENOS ITEMS por pedido (1 a 3) para ahorrar filas en pedido_items
+        $numItems = rand(1, 3);
         $totalPedido = 0;
 
+        $itemsData = [];
         for ($j = 0; $j < $numItems; $j++) {
             $producto = $productos->random();
-            $cantidad = rand(1, 3);
-            $precioUnitario = $producto->precio ?? rand(20, 80);
-            $descuentoItem = rand(0, 1) === 1 ? rand(0, 10) : 0;
-            $subtotal = ($precioUnitario * $cantidad) - $descuentoItem;
-            $totalPedido += $subtotal;
-
-            PedidoItem::create([
+            $cantidad = rand(1, 2);
+            $precio = $producto->precio ?? rand(20, 50);
+            $subtotal = $precio * $cantidad;
+            
+            $itemsData[] = [
                 'pedido_id' => $pedido->id,
                 'producto_id' => $producto->id,
                 'cantidad' => $cantidad,
-                'precio_unitario' => $precioUnitario,
-                'descuento_item' => $descuentoItem,
+                'precio_unitario' => $precio,
+                'descuento_item' => 0,
                 'subtotal_item' => $subtotal,
                 'estado_item' => $estado === 'anulado' ? 'cancelado' : $estado,
-                'destino' => rand(0, 1) === 1 ? 'cocina' : 'barra',
-            ]);
+                'destino' => rand(0, 1) ? 'cocina' : 'barra',
+                'created_at' => $datoPedido['created_at'],
+                'updated_at' => $datoPedido['updated_at'],
+            ];
         }
-
-        // El total es un atributo calculado, no se guarda en la tabla pedidos
-        // $pedido->update(['total' => $totalPedido]);
+        
+        // Insertar items en lote (Bulk Insert) es mucho más rápido y ligero
+        PedidoItem::insert($itemsData);
 
         return $pedido;
     }
 
-    /**
-     * Crear cobro para un pedido
-     */
     private function crearCobroPedido($pedido, $cajeros, $fecha)
     {
-        $metodos = ['efectivo', 'pos', 'qr'];
-        $metodo = $metodos[array_rand($metodos)];
-        
-        // Peso hacia efectivo y POS (más comunes)
-        $metodosPesados = ['efectivo', 'efectivo', 'pos', 'pos', 'pos', 'qr'];
-        $metodo = $metodosPesados[array_rand($metodosPesados)];
-
-        $estados = ['cobrado', 'cancelado'];
-        // 95% cobrados, 5% cancelados
-        $estado = rand(1, 100) <= 95 ? 'cobrado' : 'cancelado';
+        // Cálculo simplificado del total (ya que no actualizamos el pedido padre en el paso anterior)
+        $totalEstimado = PedidoItem::where('pedido_id', $pedido->id)->sum('subtotal_item');
 
         return CobroCaja::create([
             'pedido_id' => $pedido->id,
-            'importe' => $pedido->total,
-            'metodo' => $metodo,
-            'estado' => $estado,
-            'comprobante' => 'CAJA-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+            'importe' => $totalEstimado,
+            'metodo' => ['efectivo', 'pos', 'qr'][rand(0, 2)],
+            'estado' => 'cobrado',
+            'comprobante' => 'T-' . rand(1000, 9999),
             'cajero_id' => $cajeros->random()->id,
             'created_at' => $fecha->copy()->addMinutes(rand(5, 30)),
         ]);
     }
 
-    /**
-     * Crear un turno de caja
-     */
     private function crearTurno($fecha, $tipoTurno, $cajeros)
     {
-        if ($tipoTurno === 'mañana') {
-            $inicio = $fecha->copy()->setTime(8, 0);
-            $fin = $fecha->copy()->setTime(14, 0);
-        } else { // tarde
-            $inicio = $fecha->copy()->setTime(14, 0);
-            $fin = $fecha->copy()->setTime(20, 0);
-        }
+        $inicio = $tipoTurno === 'mañana' 
+            ? $fecha->copy()->setTime(8, 0) 
+            : $fecha->copy()->setTime(14, 0);
+            
+        $fin = $inicio->copy()->addHours(6);
 
-        try {
-            return TurnoCaja::create([
-                'cajero_id' => $cajeros->random()->id,
-                'inicio' => $inicio,
-                'fin' => $fin,
-                'monto_inicial' => rand(50, 200),
-                'estado' => 'cerrado',
-                // 'created_at' y 'updated_at' no existen en la tabla turnos_caja
-            ]);
-        } catch (\Exception $e) {
-            // Si ya existe un turno para este cajero en este horario, retornar null
-            return null;
-        }
+        // Usar firstOrCreate para evitar errores de duplicados y ahorrar lógica
+        return TurnoCaja::firstOrCreate([
+            'cajero_id' => $cajeros->random()->id,
+            'inicio' => $inicio,
+        ], [
+            'fin' => $fin,
+            'monto_inicial' => 100, // Monto fijo para ahorrar random()
+            'estado' => 'cerrado',
+        ]);
     }
 
-    /**
-     * Crear cierre de caja
-     */
     private function crearCierre($turno, $fecha)
     {
-        // Calcular montos
-        $totalSistema = rand(500, 2000);
-        $totalDeclarado = $totalSistema + rand(-50, 50); // Puede haber diferencias
-        $diferencia = $totalDeclarado - $totalSistema;
+        // Verificar si ya existe cierre para no duplicar
+        if (CierreCaja::where('turno_id', $turno->id)->exists()) return null;
 
-        // 'tipo_diferencia' y 'duracion_turno' no existen en la tabla cierres_caja
-        // 'created_at' no existe en la tabla cierres_caja
-
+        $total = rand(500, 1500);
+        
         $cierre = CierreCaja::create([
             'turno_id' => $turno->id,
             'cajero_id' => $turno->cajero_id,
             'inicio' => $turno->inicio,
             'fin' => $turno->fin,
-            'total_sistema' => $totalSistema,
-            'total_declarado' => $totalDeclarado,
-            'diferencia' => $diferencia,
-            'observaciones' => $diferencia != 0 
-                ? "Diferencia de Bs. " . abs($diferencia) 
-                : "Cierre cuadrado sin diferencias",
+            'total_sistema' => $total,
+            'total_declarado' => $total, // Cuadrado perfecto para ahorrar texto en observaciones
+            'diferencia' => 0,
+            'observaciones' => null,
         ]);
 
-        // Crear detalles del cierre
-        $this->crearDetallesCierre($cierre, $totalDeclarado);
+        // Solo creamos detalle de Efectivo para ahorrar espacio en DB
+        CierreCajaDetalle::create([
+            'cierre_caja_id' => $cierre->id,
+            'metodo' => 'efectivo',
+            'monto_sistema' => $total,
+            'monto_declarado' => $total,
+        ]);
 
         return $cierre;
-    }
-
-    /**
-     * Crear detalles de cierre (efectivo, POS, QR)
-     */
-    private function crearDetallesCierre($cierre, $totalDeclarado)
-    {
-        // Distribuir el total entre los diferentes métodos de pago
-        $efectivo = rand(100, $totalDeclarado * 0.4);
-        $pos = rand(100, $totalDeclarado * 0.4);
-        $qr = $totalDeclarado - $efectivo - $pos;
-
-        if ($qr < 0) {
-            $qr = 0;
-            $efectivo = $totalDeclarado * 0.6;
-            $pos = $totalDeclarado * 0.4;
-        }
-
-        CierreCajaDetalle::create([
-            'cierre_caja_id' => $cierre->id,
-            'metodo' => 'efectivo', // Corregido de metodo_pago a metodo
-            'monto_sistema' => $efectivo + rand(-20, 20),
-            'monto_declarado' => $efectivo,
-        ]);
-
-        CierreCajaDetalle::create([
-            'cierre_caja_id' => $cierre->id,
-            'metodo' => 'pos', // Corregido de metodo_pago a metodo
-            'monto_sistema' => $pos + rand(-10, 10),
-            'monto_declarado' => $pos,
-        ]);
-
-        if ($qr > 0) {
-            CierreCajaDetalle::create([
-                'cierre_caja_id' => $cierre->id,
-                'metodo' => 'qr', // Corregido de metodo_pago a metodo
-                'monto_sistema' => $qr + rand(-5, 5),
-                'monto_declarado' => $qr,
-            ]);
-        }
     }
 }

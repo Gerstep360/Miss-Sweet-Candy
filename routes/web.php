@@ -50,3 +50,5 @@ require __DIR__.'/alergenos.php';
 require __DIR__.'/auditoria.php';
 require __DIR__.'/reservas.php';
 require __DIR__.'/cajero/reservas.php';
+require __DIR__.'/sanitario.php';
+require __DIR__.'/fidelidad.php';

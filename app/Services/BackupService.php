@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class BackupService
 {
     protected $directorioBackups = 'backups';
+
     protected $configFile = 'backup_config.json';
 
     /**
@@ -33,7 +33,7 @@ class BackupService
                     throw new Exception("Tipo de backup no válido: {$tipo}");
             }
         } catch (Exception $e) {
-            Log::error('Error al crear backup: ' . $e->getMessage());
+            Log::error('Error al crear backup: '.$e->getMessage());
             throw $e;
         }
     }
@@ -43,8 +43,8 @@ class BackupService
      */
     protected function crearBackupCompleto(string $nombreBase): array
     {
-        $dbBackup = $this->crearBackupBaseDatos($nombreBase . '_db');
-        $filesBackup = $this->crearBackupArchivos($nombreBase . '_files');
+        $dbBackup = $this->crearBackupBaseDatos($nombreBase.'_db');
+        $filesBackup = $this->crearBackupArchivos($nombreBase.'_files');
 
         return [
             'archivo' => $nombreBase,
@@ -61,8 +61,8 @@ class BackupService
      */
     protected function crearBackupBaseDatos(string $nombreBase): array
     {
-        $nombreArchivo = $nombreBase . '.sql';
-        $rutaCompleta = $this->directorioBackups . '/' . $nombreArchivo;
+        $nombreArchivo = $nombreBase.'.sql';
+        $rutaCompleta = $this->directorioBackups.'/'.$nombreArchivo;
 
         // Obtener configuración de base de datos
         $database = config('database.connections.mysql.database');
@@ -72,12 +72,12 @@ class BackupService
         $port = config('database.connections.mysql.port', 3306);
 
         // Crear directorio si no existe
-        if (!Storage::exists($this->directorioBackups)) {
+        if (! Storage::exists($this->directorioBackups)) {
             Storage::makeDirectory($this->directorioBackups);
         }
 
         // Ruta temporal para el dump
-        $rutaTemporal = storage_path('app/temp_' . $nombreArchivo);
+        $rutaTemporal = storage_path('app/temp_'.$nombreArchivo);
 
         // Ejecutar mysqldump
         $comando = sprintf(
@@ -93,36 +93,94 @@ class BackupService
         exec($comando, $output, $returnCode);
 
         if ($returnCode !== 0) {
-            throw new Exception('Error al ejecutar mysqldump: ' . implode("\n", $output));
+            throw new Exception('Error al ejecutar mysqldump: '.implode("\n", $output));
         }
 
-        // Comprimir el archivo SQL
-        $rutaComprimida = $rutaTemporal . '.gz';
-        $archivo = gzopen($rutaComprimida, 'w9');
-        gzwrite($archivo, file_get_contents($rutaTemporal));
-        gzclose($archivo);
+        // Comprimir el archivo SQL usando streaming (por chunks)
+        $rutaComprimida = $rutaTemporal.'.gz';
+
+        // Verificar espacio disponible antes de comprimir
+        $tamañoSQL = filesize($rutaTemporal);
+        $espacioDisponible = disk_free_space(storage_path('app'));
+
+        if ($espacioDisponible < ($tamañoSQL * 1.5)) {
+            unlink($rutaTemporal);
+            throw new Exception('Espacio insuficiente en disco. Se requieren al menos '.round($tamañoSQL * 1.5 / 1024 / 1024, 2).' MB libres.');
+        }
+
+        // Comprimir por chunks (8MB a la vez) para optimizar memoria
+        $chunkSize = 8388608; // 8MB
+        $archivoOrigen = fopen($rutaTemporal, 'rb');
+        $archivoComprimido = gzopen($rutaComprimida, 'wb9'); // Máxima compresión
+
+        if (! $archivoOrigen || ! $archivoComprimido) {
+            if ($archivoOrigen) {
+                fclose($archivoOrigen);
+            }
+            if ($archivoComprimido) {
+                gzclose($archivoComprimido);
+            }
+            unlink($rutaTemporal);
+            throw new Exception('No se pudo abrir el archivo para compresión');
+        }
+
+        $bytesProcessed = 0;
+        while (! feof($archivoOrigen)) {
+            $chunk = fread($archivoOrigen, $chunkSize);
+            if ($chunk === false) {
+                break;
+            }
+
+            gzwrite($archivoComprimido, $chunk);
+            $bytesProcessed += strlen($chunk);
+
+            // Log de progreso cada 50MB para debugging
+            if ($bytesProcessed % 52428800 === 0) {
+                Log::info('Backup progreso: '.round($bytesProcessed / 1024 / 1024, 2).' MB procesados');
+            }
+        }
+
+        fclose($archivoOrigen);
+        gzclose($archivoComprimido);
         unlink($rutaTemporal);
 
-        // Mover a storage
-        $contenido = file_get_contents($rutaComprimida);
-        Storage::put($rutaCompleta . '.gz', $contenido);
-        unlink($rutaComprimida);
+        Log::info('Backup comprimido exitosamente: '.round($bytesProcessed / 1024 / 1024, 2).' MB → '.round(filesize($rutaComprimida) / 1024 / 1024, 2).' MB');
+
+        // Mover a storage directamente (sin cargar en memoria)
+        $rutaStorage = $this->directorioBackups.'/'.$nombreArchivo.'.gz';
+        $moved = rename($rutaComprimida, storage_path('app/'.$rutaStorage));
+
+        if (! $moved) {
+            // Si rename falla (diferentes sistemas de archivos), copiar por chunks
+            $origen = fopen($rutaComprimida, 'rb');
+            $destino = Storage::disk('local')->path($rutaStorage);
+            $destinoHandle = fopen($destino, 'wb');
+
+            while (! feof($origen)) {
+                $chunk = fread($origen, 8388608);
+                fwrite($destinoHandle, $chunk);
+            }
+
+            fclose($origen);
+            fclose($destinoHandle);
+            unlink($rutaComprimida);
+        }
 
         // Calcular checksum
-        $checksum = md5_file(storage_path('app/' . $rutaCompleta . '.gz'));
+        $checksum = md5_file(storage_path('app/'.$rutaStorage));
 
         // Guardar metadata
         $metadata = [
             'tipo' => 'base_datos',
             'fecha' => Carbon::now()->toIso8601String(),
             'checksum' => $checksum,
-            'tamaño' => Storage::size($rutaCompleta . '.gz'),
+            'tamaño' => Storage::size($rutaStorage),
         ];
 
-        Storage::put($rutaCompleta . '.meta.json', json_encode($metadata));
+        Storage::put($rutaStorage.'.meta.json', json_encode($metadata));
 
         return [
-            'archivo' => $nombreArchivo . '.gz',
+            'archivo' => $nombreArchivo.'.gz',
             'tipo' => 'base_datos',
             'tamaño' => $metadata['tamaño'],
             'checksum' => $checksum,
@@ -135,8 +193,8 @@ class BackupService
      */
     protected function crearBackupArchivos(string $nombreBase): array
     {
-        $nombreArchivo = $nombreBase . '.tar.gz';
-        $rutaCompleta = $this->directorioBackups . '/' . $nombreArchivo;
+        $nombreArchivo = $nombreBase.'.tar.gz';
+        $rutaCompleta = $this->directorioBackups.'/'.$nombreArchivo;
 
         // Directorios a respaldar
         $directorios = [
@@ -146,12 +204,12 @@ class BackupService
         ];
 
         // Crear directorio si no existe
-        if (!Storage::exists($this->directorioBackups)) {
+        if (! Storage::exists($this->directorioBackups)) {
             Storage::makeDirectory($this->directorioBackups);
         }
 
         // Ruta temporal
-        $rutaTemporal = storage_path('app/temp_' . $nombreArchivo);
+        $rutaTemporal = storage_path('app/temp_'.$nombreArchivo);
 
         // Crear archivo tar.gz
         $comando = sprintf(
@@ -164,16 +222,29 @@ class BackupService
         exec($comando, $output, $returnCode);
 
         if ($returnCode !== 0) {
-            throw new Exception('Error al crear backup de archivos: ' . implode("\n", $output));
+            throw new Exception('Error al crear backup de archivos: '.implode("\n", $output));
         }
 
-        // Mover a storage
-        $contenido = file_get_contents($rutaTemporal);
-        Storage::put($rutaCompleta, $contenido);
-        unlink($rutaTemporal);
+        // Mover a storage directamente (sin cargar en memoria)
+        $moved = rename($rutaTemporal, storage_path('app/'.$rutaCompleta));
+
+        if (! $moved) {
+            // Si rename falla, copiar por chunks
+            $origen = fopen($rutaTemporal, 'rb');
+            $destino = fopen(storage_path('app/'.$rutaCompleta), 'wb');
+
+            while (! feof($origen)) {
+                $chunk = fread($origen, 8388608); // 8MB chunks
+                fwrite($destino, $chunk);
+            }
+
+            fclose($origen);
+            fclose($destino);
+            unlink($rutaTemporal);
+        }
 
         // Calcular checksum
-        $checksum = md5_file(storage_path('app/' . $rutaCompleta));
+        $checksum = md5_file(storage_path('app/'.$rutaCompleta));
 
         // Guardar metadata
         $metadata = [
@@ -183,7 +254,7 @@ class BackupService
             'tamaño' => Storage::size($rutaCompleta),
         ];
 
-        Storage::put($rutaCompleta . '.meta.json', json_encode($metadata));
+        Storage::put($rutaCompleta.'.meta.json', json_encode($metadata));
 
         return [
             'archivo' => $nombreArchivo,
@@ -199,7 +270,7 @@ class BackupService
      */
     public function listarBackups(): array
     {
-        if (!Storage::exists($this->directorioBackups)) {
+        if (! Storage::exists($this->directorioBackups)) {
             return [];
         }
 
@@ -212,7 +283,7 @@ class BackupService
                 continue;
             }
 
-            $metadataPath = $archivo . '.meta.json';
+            $metadataPath = $archivo.'.meta.json';
             $metadata = Storage::exists($metadataPath)
                 ? json_decode(Storage::get($metadataPath), true)
                 : null;
@@ -228,7 +299,7 @@ class BackupService
         }
 
         // Ordenar por fecha más reciente
-        usort($backups, function($a, $b) {
+        usort($backups, function ($a, $b) {
             return strtotime($b['fecha']) - strtotime($a['fecha']);
         });
 
@@ -246,6 +317,7 @@ class BackupService
         if (str_contains($archivo, '_files') || str_ends_with($archivo, '.tar.gz')) {
             return 'archivos';
         }
+
         return 'completo';
     }
 
@@ -254,7 +326,7 @@ class BackupService
      */
     public function obtenerRutaBackup(string $archivo): string
     {
-        return $this->directorioBackups . '/' . basename($archivo);
+        return $this->directorioBackups.'/'.basename($archivo);
     }
 
     /**
@@ -263,15 +335,15 @@ class BackupService
     public function eliminarBackup(string $archivo): bool
     {
         $ruta = $this->obtenerRutaBackup($archivo);
-        
-        if (!Storage::exists($ruta)) {
+
+        if (! Storage::exists($ruta)) {
             throw new Exception('Backup no encontrado');
         }
 
         Storage::delete($ruta);
-        
+
         // Eliminar metadata si existe
-        $metadataPath = $ruta . '.meta.json';
+        $metadataPath = $ruta.'.meta.json';
         if (Storage::exists($metadataPath)) {
             Storage::delete($metadataPath);
         }
@@ -285,17 +357,17 @@ class BackupService
     public function restaurarBackup(string $archivo): bool
     {
         $ruta = $this->obtenerRutaBackup($archivo);
-        
-        if (!Storage::exists($ruta)) {
+
+        if (! Storage::exists($ruta)) {
             throw new Exception('Backup no encontrado');
         }
 
         // Verificar integridad
-        $metadataPath = $ruta . '.meta.json';
+        $metadataPath = $ruta.'.meta.json';
         if (Storage::exists($metadataPath)) {
             $metadata = json_decode(Storage::get($metadataPath), true);
-            $checksumActual = md5_file(storage_path('app/' . $ruta));
-            
+            $checksumActual = md5_file(storage_path('app/'.$ruta));
+
             if ($checksumActual !== $metadata['checksum']) {
                 throw new Exception('El archivo de backup está corrupto (checksum no coincide)');
             }
@@ -318,18 +390,60 @@ class BackupService
      */
     protected function restaurarBaseDatos(string $ruta): bool
     {
-        // Descomprimir
+        // Descomprimir usando streaming (por chunks)
         $rutaTemporal = storage_path('app/temp_restore.sql');
-        $archivoComprimido = storage_path('app/' . $ruta);
-        
-        $archivo = gzopen($archivoComprimido, 'r');
-        $contenido = '';
-        while (!gzeof($archivo)) {
-            $contenido .= gzread($archivo, 8192);
+        $archivoComprimido = storage_path('app/'.$ruta);
+
+        // Verificar que el archivo comprimido existe
+        if (! file_exists($archivoComprimido)) {
+            throw new Exception('Archivo de backup no encontrado: '.$archivoComprimido);
         }
-        gzclose($archivo);
-        
-        file_put_contents($rutaTemporal, $contenido);
+
+        // Verificar espacio disponible
+        $tamañoComprimido = filesize($archivoComprimido);
+        $espacioDisponible = disk_free_space(storage_path('app'));
+
+        // Estimar tamaño descomprimido (típicamente 5-10x el comprimido para SQL)
+        $tamañoEstimado = $tamañoComprimido * 10;
+        if ($espacioDisponible < $tamañoEstimado) {
+            throw new Exception('Espacio insuficiente para descomprimir. Se requieren aprox. '.round($tamañoEstimado / 1024 / 1024, 2).' MB libres.');
+        }
+
+        // Descomprimir por chunks directamente a archivo (sin usar memoria)
+        $chunkSize = 8388608; // 8MB
+        $archivoGz = gzopen($archivoComprimido, 'rb');
+        $archivoDestino = fopen($rutaTemporal, 'wb');
+
+        if (! $archivoGz || ! $archivoDestino) {
+            if ($archivoGz) {
+                gzclose($archivoGz);
+            }
+            if ($archivoDestino) {
+                fclose($archivoDestino);
+            }
+            throw new Exception('No se pudo abrir el archivo para descompresión');
+        }
+
+        $bytesProcessed = 0;
+        while (! gzeof($archivoGz)) {
+            $chunk = gzread($archivoGz, $chunkSize);
+            if ($chunk === false) {
+                break;
+            }
+
+            fwrite($archivoDestino, $chunk);
+            $bytesProcessed += strlen($chunk);
+
+            // Log de progreso cada 100MB
+            if ($bytesProcessed % 104857600 === 0) {
+                Log::info('Restauración progreso: '.round($bytesProcessed / 1024 / 1024, 2).' MB descomprimidos');
+            }
+        }
+
+        gzclose($archivoGz);
+        fclose($archivoDestino);
+
+        Log::info('Backup descomprimido exitosamente: '.round($bytesProcessed / 1024 / 1024, 2).' MB');
 
         // Obtener configuración de base de datos
         $database = config('database.connections.mysql.database');
@@ -353,7 +467,7 @@ class BackupService
         unlink($rutaTemporal);
 
         if ($returnCode !== 0) {
-            throw new Exception('Error al restaurar base de datos: ' . implode("\n", $output));
+            throw new Exception('Error al restaurar base de datos: '.implode("\n", $output));
         }
 
         return true;
@@ -364,8 +478,8 @@ class BackupService
      */
     protected function restaurarArchivos(string $ruta): bool
     {
-        $rutaCompleta = storage_path('app/' . $ruta);
-        
+        $rutaCompleta = storage_path('app/'.$ruta);
+
         // Extraer archivos
         $comando = sprintf(
             'cd %s && tar -xzf %s 2>&1',
@@ -376,7 +490,7 @@ class BackupService
         exec($comando, $output, $returnCode);
 
         if ($returnCode !== 0) {
-            throw new Exception('Error al restaurar archivos: ' . implode("\n", $output));
+            throw new Exception('Error al restaurar archivos: '.implode("\n", $output));
         }
 
         return true;
@@ -387,7 +501,7 @@ class BackupService
      */
     public function obtenerConfiguracion(): array
     {
-        if (!Storage::exists($this->configFile)) {
+        if (! Storage::exists($this->configFile)) {
             return [
                 'frecuencia' => 'diaria',
                 'hora' => '02:00',
@@ -408,6 +522,7 @@ class BackupService
     {
         $config['activo'] = true;
         Storage::put($this->configFile, json_encode($config));
+
         return true;
     }
 
@@ -430,4 +545,3 @@ class BackupService
         ];
     }
 }
-

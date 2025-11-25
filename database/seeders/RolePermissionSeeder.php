@@ -163,8 +163,7 @@ class RolePermissionSeeder extends Seeder
             'eliminar-alergenos',
             'gestionar-alergenos-productos',
 
-
-            //pedidos en linea
+            // pedidos en linea
             'crear-pedidos-en-linea',
 
             // CU19 reservas
@@ -177,6 +176,14 @@ class RolePermissionSeeder extends Seeder
 
             // auditoria
             'auditoria',
+
+            // CU25 - Cumplimiento Sanitario (SENASAG)
+            'ver-sanitario',
+            'registrar-sanitario',
+
+            // fidelidad
+            'ver-fidelidad',  
+            'gestionar-fidelidad',  
         ];
 
         /* -----------------------------------------------------------------
@@ -273,7 +280,13 @@ class RolePermissionSeeder extends Seeder
             'ver-monitor-turnero',
             'ver-cola-turnero',
 
+            // Turnero - Monitor y cola
+            'ver-monitor-turnero',
+            'ver-cola-turnero',
 
+            // CU25 - Sanitario
+            'ver-sanitario',
+            'registrar-sanitario',
         ]);
 
         // 3) CLIENTE
@@ -299,7 +312,7 @@ class RolePermissionSeeder extends Seeder
             'ver-turnero',
             'ver-monitor-turnero',
 
-                        //pedidos en linea
+            // pedidos en linea
             'crear-pedidos-en-linea',
         ]);
 
@@ -307,6 +320,11 @@ class RolePermissionSeeder extends Seeder
         $barista->syncPermissions([
             'ver-productos',
             'gestionar-pedidos-barista',
+            'ver-productos',
+            'gestionar-pedidos-barista',
+            // CU25 - Sanitario
+            'ver-sanitario',
+            'registrar-sanitario',
         ]);
     }
 }

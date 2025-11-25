@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers;
 
-
-use App\Models\InventarioProducto;
-use App\Models\CobroCaja;
+use App\Models\Categoria;
 use App\Models\CierreCaja;
+use App\Models\CobroCaja;
+use App\Models\InventarioProducto;
 use App\Models\Pedido;
 use App\Models\Promocion;
 use App\Models\User;
-use App\Models\Categoria;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ReporteExportController extends Controller
 {
@@ -22,7 +20,7 @@ class ReporteExportController extends Controller
      */
     public function index()
     {
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -38,7 +36,7 @@ class ReporteExportController extends Controller
      */
     public function inventarioForm()
     {
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -57,7 +55,7 @@ class ReporteExportController extends Controller
         set_time_limit(300);
 
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -73,11 +71,11 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros personalizados
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['estado_stock'])) {
+                if (! empty($validated['estado_stock'])) {
                     $query->porEstado($validated['estado_stock']);
                 }
 
-                if (!empty($validated['categoria_id'])) {
+                if (! empty($validated['categoria_id'])) {
                     $query->whereHas('producto', function ($q) use ($validated) {
                         $q->where('categoria_id', $validated['categoria_id']);
                     });
@@ -103,9 +101,7 @@ class ReporteExportController extends Controller
 
             $pdf->setPaper('letter', 'portrait');
 
-            $nombreArchivo = 'reporte-inventario-' . now()->format('Y-m-d-His') . '.pdf';
-
-
+            $nombreArchivo = 'reporte-inventario-'.now()->format('Y-m-d-His').'.pdf';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar PDF', 'ReporteInventario');
@@ -113,7 +109,7 @@ class ReporteExportController extends Controller
             return $pdf->download($nombreArchivo);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 
@@ -123,7 +119,7 @@ class ReporteExportController extends Controller
     public function inventarioExcel(Request $request)
     {
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -139,11 +135,11 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros personalizados
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['estado_stock'])) {
+                if (! empty($validated['estado_stock'])) {
                     $query->porEstado($validated['estado_stock']);
                 }
 
-                if (!empty($validated['categoria_id'])) {
+                if (! empty($validated['categoria_id'])) {
                     $query->whereHas('producto', function ($q) use ($validated) {
                         $q->where('categoria_id', $validated['categoria_id']);
                     });
@@ -152,23 +148,21 @@ class ReporteExportController extends Controller
 
             $inventarios = $query->orderBy('stock_actual', 'asc')->get();
 
-            $nombreArchivo = 'reporte-inventario-' . now()->format('Y-m-d-His') . '.csv';
-
-
+            $nombreArchivo = 'reporte-inventario-'.now()->format('Y-m-d-His').'.csv';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar Excel', 'ReporteInventario');
 
             $headers = [
                 'Content-Type' => 'text/csv; charset=utf-8',
-                'Content-Disposition' => 'attachment; filename="' . $nombreArchivo . '"',
+                'Content-Disposition' => 'attachment; filename="'.$nombreArchivo.'"',
             ];
 
             $callback = function () use ($inventarios) {
                 $file = fopen('php://output', 'w');
 
                 // BOM para UTF-8
-                fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
                 // Encabezados
                 fputcsv($file, [
@@ -179,7 +173,7 @@ class ReporteExportController extends Controller
                     'Stock Mínimo',
                     'Punto Reposición',
                     'Estado',
-                    'Ubicación'
+                    'Ubicación',
                 ]);
 
                 // Datos
@@ -192,7 +186,7 @@ class ReporteExportController extends Controller
                         $inv->stock_minimo,
                         $inv->punto_reposicion,
                         $inv->estado_stock,
-                        $inv->ubicacion ?? ''
+                        $inv->ubicacion ?? '',
                     ]);
                 }
 
@@ -202,7 +196,7 @@ class ReporteExportController extends Controller
             return response()->stream($callback, 200, $headers);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 
@@ -215,7 +209,7 @@ class ReporteExportController extends Controller
      */
     public function cobroCajaForm()
     {
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -234,7 +228,7 @@ class ReporteExportController extends Controller
         set_time_limit(300);
 
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -253,29 +247,29 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['fecha_inicio']) && !empty($validated['fecha_fin'])) {
+                if (! empty($validated['fecha_inicio']) && ! empty($validated['fecha_fin'])) {
                     $query->whereBetween('created_at', [
                         Carbon::parse($validated['fecha_inicio'])->startOfDay(),
-                        Carbon::parse($validated['fecha_fin'])->endOfDay()
+                        Carbon::parse($validated['fecha_fin'])->endOfDay(),
                     ]);
                 }
 
-                if (!empty($validated['metodo_pago'])) {
+                if (! empty($validated['metodo_pago'])) {
                     $query->where('metodo', $validated['metodo_pago']);
                 }
 
-                if (!empty($validated['cajero_id'])) {
+                if (! empty($validated['cajero_id'])) {
                     $query->where('cajero_id', $validated['cajero_id']);
                 }
 
-                if (!empty($validated['estado'])) {
+                if (! empty($validated['estado'])) {
                     $query->where('estado', $validated['estado']);
                 }
             } else {
                 // Por defecto, del último mes
                 $query->whereBetween('created_at', [
                     now()->subMonth()->startOfDay(),
-                    now()->endOfDay()
+                    now()->endOfDay(),
                 ]);
             }
 
@@ -298,9 +292,7 @@ class ReporteExportController extends Controller
 
             $pdf->setPaper('letter', 'landscape');
 
-            $nombreArchivo = 'reporte-cobros-' . now()->format('Y-m-d-His') . '.pdf';
-
-
+            $nombreArchivo = 'reporte-cobros-'.now()->format('Y-m-d-His').'.pdf';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar PDF', 'ReporteCobros');
@@ -308,7 +300,7 @@ class ReporteExportController extends Controller
             return $pdf->download($nombreArchivo);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 
@@ -318,7 +310,7 @@ class ReporteExportController extends Controller
     public function cobroCajaExcel(Request $request)
     {
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -337,51 +329,49 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['fecha_inicio']) && !empty($validated['fecha_fin'])) {
+                if (! empty($validated['fecha_inicio']) && ! empty($validated['fecha_fin'])) {
                     $query->whereBetween('created_at', [
                         Carbon::parse($validated['fecha_inicio'])->startOfDay(),
-                        Carbon::parse($validated['fecha_fin'])->endOfDay()
+                        Carbon::parse($validated['fecha_fin'])->endOfDay(),
                     ]);
                 }
 
-                if (!empty($validated['metodo_pago'])) {
+                if (! empty($validated['metodo_pago'])) {
                     $query->where('metodo', $validated['metodo_pago']);
                 }
 
-                if (!empty($validated['cajero_id'])) {
+                if (! empty($validated['cajero_id'])) {
                     $query->where('cajero_id', $validated['cajero_id']);
                 }
 
-                if (!empty($validated['estado'])) {
+                if (! empty($validated['estado'])) {
                     $query->where('estado', $validated['estado']);
                 }
             } else {
                 // Por defecto, del último mes
                 $query->whereBetween('created_at', [
                     now()->subMonth()->startOfDay(),
-                    now()->endOfDay()
+                    now()->endOfDay(),
                 ]);
             }
 
             $cobros = $query->orderBy('created_at', 'desc')->get();
 
-            $nombreArchivo = 'reporte-cobros-' . now()->format('Y-m-d-His') . '.csv';
-
-
+            $nombreArchivo = 'reporte-cobros-'.now()->format('Y-m-d-His').'.csv';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar Excel', 'ReporteCobros');
 
             $headers = [
                 'Content-Type' => 'text/csv; charset=utf-8',
-                'Content-Disposition' => 'attachment; filename="' . $nombreArchivo . '"',
+                'Content-Disposition' => 'attachment; filename="'.$nombreArchivo.'"',
             ];
 
             $callback = function () use ($cobros) {
                 $file = fopen('php://output', 'w');
 
                 // BOM para UTF-8
-                fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
                 // Encabezados
                 fputcsv($file, [
@@ -393,7 +383,7 @@ class ReporteExportController extends Controller
                     'Cajero',
                     'Importe (Bs)',
                     'Estado',
-                    'Comprobante'
+                    'Comprobante',
                 ]);
 
                 // Datos
@@ -407,7 +397,7 @@ class ReporteExportController extends Controller
                         $cobro->cajero->name ?? '',
                         number_format((float) $cobro->importe, 2, '.', ''),
                         ucfirst($cobro->estado),
-                        $cobro->comprobante ?? ''
+                        $cobro->comprobante ?? '',
                     ]);
                 }
 
@@ -417,7 +407,7 @@ class ReporteExportController extends Controller
             return response()->stream($callback, 200, $headers);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 
@@ -430,7 +420,7 @@ class ReporteExportController extends Controller
      */
     public function arqueosForm()
     {
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -449,7 +439,7 @@ class ReporteExportController extends Controller
         set_time_limit(300);
 
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -467,25 +457,25 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['fecha_inicio']) && !empty($validated['fecha_fin'])) {
+                if (! empty($validated['fecha_inicio']) && ! empty($validated['fecha_fin'])) {
                     $query->whereBetween('fin', [
                         Carbon::parse($validated['fecha_inicio'])->startOfDay(),
-                        Carbon::parse($validated['fecha_fin'])->endOfDay()
+                        Carbon::parse($validated['fecha_fin'])->endOfDay(),
                     ]);
                 }
 
-                if (!empty($validated['cajero_id'])) {
+                if (! empty($validated['cajero_id'])) {
                     $query->where('cajero_id', $validated['cajero_id']);
                 }
 
-                if (!empty($validated['con_diferencias'])) {
+                if (! empty($validated['con_diferencias'])) {
                     $query->conDiferencias();
                 }
             } else {
                 // Por defecto, del último mes
                 $query->whereBetween('fin', [
                     now()->subMonth()->startOfDay(),
-                    now()->endOfDay()
+                    now()->endOfDay(),
                 ]);
             }
 
@@ -510,9 +500,7 @@ class ReporteExportController extends Controller
 
             $pdf->setPaper('letter', 'landscape');
 
-            $nombreArchivo = 'reporte-arqueos-' . now()->format('Y-m-d-His') . '.pdf';
-
-
+            $nombreArchivo = 'reporte-arqueos-'.now()->format('Y-m-d-His').'.pdf';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar PDF', 'ReporteArqueos');
@@ -520,7 +508,7 @@ class ReporteExportController extends Controller
             return $pdf->download($nombreArchivo);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 
@@ -530,7 +518,7 @@ class ReporteExportController extends Controller
     public function arqueosExcel(Request $request)
     {
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -548,47 +536,45 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['fecha_inicio']) && !empty($validated['fecha_fin'])) {
+                if (! empty($validated['fecha_inicio']) && ! empty($validated['fecha_fin'])) {
                     $query->whereBetween('fin', [
                         Carbon::parse($validated['fecha_inicio'])->startOfDay(),
-                        Carbon::parse($validated['fecha_fin'])->endOfDay()
+                        Carbon::parse($validated['fecha_fin'])->endOfDay(),
                     ]);
                 }
 
-                if (!empty($validated['cajero_id'])) {
+                if (! empty($validated['cajero_id'])) {
                     $query->where('cajero_id', $validated['cajero_id']);
                 }
 
-                if (!empty($validated['con_diferencias'])) {
+                if (! empty($validated['con_diferencias'])) {
                     $query->conDiferencias();
                 }
             } else {
                 // Por defecto, del último mes
                 $query->whereBetween('fin', [
                     now()->subMonth()->startOfDay(),
-                    now()->endOfDay()
+                    now()->endOfDay(),
                 ]);
             }
 
             $arqueos = $query->orderBy('fin', 'desc')->get();
 
-            $nombreArchivo = 'reporte-arqueos-' . now()->format('Y-m-d-His') . '.csv';
-
-
+            $nombreArchivo = 'reporte-arqueos-'.now()->format('Y-m-d-His').'.csv';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar Excel', 'ReporteArqueos');
 
             $headers = [
                 'Content-Type' => 'text/csv; charset=utf-8',
-                'Content-Disposition' => 'attachment; filename="' . $nombreArchivo . '"',
+                'Content-Disposition' => 'attachment; filename="'.$nombreArchivo.'"',
             ];
 
             $callback = function () use ($arqueos) {
                 $file = fopen('php://output', 'w');
 
                 // BOM para UTF-8
-                fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
                 // Encabezados
                 fputcsv($file, [
@@ -601,7 +587,7 @@ class ReporteExportController extends Controller
                     'Total Declarado (Bs)',
                     'Diferencia (Bs)',
                     'Tipo Diferencia',
-                    'Observaciones'
+                    'Observaciones',
                 ]);
 
                 // Datos
@@ -616,7 +602,7 @@ class ReporteExportController extends Controller
                         number_format((float) $arqueo->total_declarado, 2, '.', ''),
                         number_format((float) $arqueo->diferencia, 2, '.', ''),
                         $arqueo->tipo_diferencia,
-                        $arqueo->observaciones ?? ''
+                        $arqueo->observaciones ?? '',
                     ]);
                 }
 
@@ -626,7 +612,7 @@ class ReporteExportController extends Controller
             return response()->stream($callback, 200, $headers);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 
@@ -639,7 +625,7 @@ class ReporteExportController extends Controller
      */
     public function pedidosForm()
     {
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -656,7 +642,7 @@ class ReporteExportController extends Controller
         set_time_limit(300);
 
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -675,29 +661,29 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['fecha_inicio']) && !empty($validated['fecha_fin'])) {
+                if (! empty($validated['fecha_inicio']) && ! empty($validated['fecha_fin'])) {
                     $query->whereBetween('created_at', [
                         Carbon::parse($validated['fecha_inicio'])->startOfDay(),
-                        Carbon::parse($validated['fecha_fin'])->endOfDay()
+                        Carbon::parse($validated['fecha_fin'])->endOfDay(),
                     ]);
                 }
 
-                if (!empty($validated['tipo_pedido'])) {
+                if (! empty($validated['tipo_pedido'])) {
                     $query->where('tipo', $validated['tipo_pedido']);
                 }
 
-                if (!empty($validated['estado'])) {
+                if (! empty($validated['estado'])) {
                     $query->where('estado', $validated['estado']);
                 }
 
-                if (!empty($validated['cliente_id'])) {
+                if (! empty($validated['cliente_id'])) {
                     $query->where('cliente_id', $validated['cliente_id']);
                 }
             } else {
                 // Por defecto, del último mes
                 $query->whereBetween('created_at', [
                     now()->subMonth()->startOfDay(),
-                    now()->endOfDay()
+                    now()->endOfDay(),
                 ]);
             }
 
@@ -706,7 +692,7 @@ class ReporteExportController extends Controller
             // Estadísticas
             $estadisticas = [
                 'total_pedidos' => $pedidos->count(),
-                'total_items' => $pedidos->sum(fn($p) => $p->items->sum('cantidad')),
+                'total_items' => $pedidos->sum(fn ($p) => $p->items->sum('cantidad')),
                 'total_importe' => $pedidos->sum('total'),
                 'por_estado' => $pedidos->groupBy('estado')->map->count(),
             ];
@@ -720,9 +706,7 @@ class ReporteExportController extends Controller
 
             $pdf->setPaper('letter', 'landscape');
 
-            $nombreArchivo = 'reporte-pedidos-' . now()->format('Y-m-d-His') . '.pdf';
-
-
+            $nombreArchivo = 'reporte-pedidos-'.now()->format('Y-m-d-His').'.pdf';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar PDF', 'ReportePedidos');
@@ -730,7 +714,7 @@ class ReporteExportController extends Controller
             return $pdf->download($nombreArchivo);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 
@@ -740,7 +724,7 @@ class ReporteExportController extends Controller
     public function pedidosExcel(Request $request)
     {
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -759,51 +743,49 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['fecha_inicio']) && !empty($validated['fecha_fin'])) {
+                if (! empty($validated['fecha_inicio']) && ! empty($validated['fecha_fin'])) {
                     $query->whereBetween('created_at', [
                         Carbon::parse($validated['fecha_inicio'])->startOfDay(),
-                        Carbon::parse($validated['fecha_fin'])->endOfDay()
+                        Carbon::parse($validated['fecha_fin'])->endOfDay(),
                     ]);
                 }
 
-                if (!empty($validated['tipo_pedido'])) {
+                if (! empty($validated['tipo_pedido'])) {
                     $query->where('tipo', $validated['tipo_pedido']);
                 }
 
-                if (!empty($validated['estado'])) {
+                if (! empty($validated['estado'])) {
                     $query->where('estado', $validated['estado']);
                 }
 
-                if (!empty($validated['cliente_id'])) {
+                if (! empty($validated['cliente_id'])) {
                     $query->where('cliente_id', $validated['cliente_id']);
                 }
             } else {
                 // Por defecto, del último mes
                 $query->whereBetween('created_at', [
                     now()->subMonth()->startOfDay(),
-                    now()->endOfDay()
+                    now()->endOfDay(),
                 ]);
             }
 
             $pedidos = $query->orderBy('created_at', 'desc')->get();
 
-            $nombreArchivo = 'reporte-pedidos-' . now()->format('Y-m-d-His') . '.csv';
-
-
+            $nombreArchivo = 'reporte-pedidos-'.now()->format('Y-m-d-His').'.csv';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar Excel', 'ReportePedidos');
 
             $headers = [
                 'Content-Type' => 'text/csv; charset=utf-8',
-                'Content-Disposition' => 'attachment; filename="' . $nombreArchivo . '"',
+                'Content-Disposition' => 'attachment; filename="'.$nombreArchivo.'"',
             ];
 
             $callback = function () use ($pedidos) {
                 $file = fopen('php://output', 'w');
 
                 // BOM para UTF-8
-                fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
                 // Encabezados
                 fputcsv($file, [
@@ -818,7 +800,7 @@ class ReporteExportController extends Controller
                     'Cant. Items',
                     'Total (Bs)',
                     'Modalidad',
-                    'Notas'
+                    'Notas',
                 ]);
 
                 // Datos
@@ -835,7 +817,7 @@ class ReporteExportController extends Controller
                         $pedido->items->sum('cantidad'),
                         number_format($pedido->total, 2, '.', ''),
                         ucfirst($pedido->modalidad ?? ''),
-                        $pedido->notas ?? ''
+                        $pedido->notas ?? '',
                     ]);
                 }
 
@@ -845,7 +827,7 @@ class ReporteExportController extends Controller
             return response()->stream($callback, 200, $headers);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 
@@ -858,7 +840,7 @@ class ReporteExportController extends Controller
      */
     public function promocionesForm()
     {
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -875,7 +857,7 @@ class ReporteExportController extends Controller
         set_time_limit(300);
 
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -892,16 +874,16 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['estado'])) {
+                if (! empty($validated['estado'])) {
                     $activo = $validated['estado'] === 'activo';
                     $query->where('activo', $activo);
                 }
 
-                if (!empty($validated['tipo_promocion'])) {
+                if (! empty($validated['tipo_promocion'])) {
                     $query->where('tipo', $validated['tipo_promocion']);
                 }
 
-                if (!empty($validated['vigencia'])) {
+                if (! empty($validated['vigencia'])) {
                     $hoy = now();
                     switch ($validated['vigencia']) {
                         case 'vigente':
@@ -934,11 +916,17 @@ class ReporteExportController extends Controller
                 'activas' => $promociones->where('activo', true)->count(),
                 'inactivas' => $promociones->where('activo', false)->count(),
                 'vigentes' => $promociones->filter(function ($promo) use ($hoy) {
-                    if (!$promo->fecha_inicio || !$promo->fecha_fin) return false;
+                    if (! $promo->fecha_inicio || ! $promo->fecha_fin) {
+                        return false;
+                    }
+
                     return $promo->fecha_inicio <= $hoy && $promo->fecha_fin >= $hoy && $promo->activo;
                 })->count(),
                 'vencidas' => $promociones->filter(function ($promo) use ($hoy) {
-                    if (!$promo->fecha_fin) return false;
+                    if (! $promo->fecha_fin) {
+                        return false;
+                    }
+
                     return $promo->fecha_fin < $hoy;
                 })->count(),
             ];
@@ -952,9 +940,7 @@ class ReporteExportController extends Controller
 
             $pdf->setPaper('letter', 'landscape');
 
-            $nombreArchivo = 'reporte-promociones-' . now()->format('Y-m-d-His') . '.pdf';
-
-
+            $nombreArchivo = 'reporte-promociones-'.now()->format('Y-m-d-His').'.pdf';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar PDF', 'ReportePromociones');
@@ -962,7 +948,7 @@ class ReporteExportController extends Controller
             return $pdf->download($nombreArchivo);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 
@@ -972,7 +958,7 @@ class ReporteExportController extends Controller
     public function promocionesExcel(Request $request)
     {
         // VALIDACIÓN
-        if (!auth()->user()->can('ver-reportes')) {
+        if (! auth()->user()->can('ver-reportes')) {
             abort(403, 'No tienes permiso para exportar reportes.');
         }
 
@@ -989,16 +975,16 @@ class ReporteExportController extends Controller
 
             // Aplicar filtros
             if ($validated['tipo'] === 'personalizado') {
-                if (!empty($validated['estado'])) {
+                if (! empty($validated['estado'])) {
                     $activo = $validated['estado'] === 'activo';
                     $query->where('activo', $activo);
                 }
 
-                if (!empty($validated['tipo_promocion'])) {
+                if (! empty($validated['tipo_promocion'])) {
                     $query->where('tipo', $validated['tipo_promocion']);
                 }
 
-                if (!empty($validated['vigencia'])) {
+                if (! empty($validated['vigencia'])) {
                     $hoy = now();
                     switch ($validated['vigencia']) {
                         case 'vigente':
@@ -1024,23 +1010,21 @@ class ReporteExportController extends Controller
 
             $promociones = $query->orderBy('prioridad', 'desc')->get();
 
-            $nombreArchivo = 'reporte-promociones-' . now()->format('Y-m-d-His') . '.csv';
-
-
+            $nombreArchivo = 'reporte-promociones-'.now()->format('Y-m-d-His').'.csv';
 
             // Registrar en bitácora
             BitacoraController::registrar('Exportar Excel', 'ReportePromociones');
 
             $headers = [
                 'Content-Type' => 'text/csv; charset=utf-8',
-                'Content-Disposition' => 'attachment; filename="' . $nombreArchivo . '"',
+                'Content-Disposition' => 'attachment; filename="'.$nombreArchivo.'"',
             ];
 
             $callback = function () use ($promociones) {
                 $file = fopen('php://output', 'w');
 
                 // BOM para UTF-8
-                fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
                 // Encabezados
                 fputcsv($file, [
@@ -1057,7 +1041,7 @@ class ReporteExportController extends Controller
                     'Días Semana',
                     'Prioridad',
                     'Activo',
-                    'Vigente'
+                    'Vigente',
                 ]);
 
                 // Datos
@@ -1076,7 +1060,7 @@ class ReporteExportController extends Controller
                         implode(', ', $promo->dias_semana ?? []),
                         $promo->prioridad,
                         $promo->activo ? 'Sí' : 'No',
-                        $promo->esta_vigente ? 'Sí' : 'No'
+                        $promo->esta_vigente ? 'Sí' : 'No',
                     ]);
                 }
 
@@ -1086,7 +1070,7 @@ class ReporteExportController extends Controller
             return response()->stream($callback, 200, $headers);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar el reporte: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el reporte: '.$e->getMessage());
         }
     }
 }

@@ -1,13 +1,22 @@
 // ========================================
 // 1. ALPINE.JS (PRIMERO - Antes de todo)
 // ========================================
+// ========================================
+// 1. ALPINE.JS (PRIMERO - Antes de todo)
+// ========================================
 import Alpine from 'alpinejs';
+import registerAlpineComponents from './alpine-components.js';
 
-// Exponer Alpine globalmente
-window.Alpine = Alpine;
-
-// Iniciar Alpine
-Alpine.start();
+// Lógica robusta para inicializar Alpine y evitar conflictos con Livewire
+if (window.Alpine) {
+    console.log('Alpine loaded by Livewire/Other. Registering components on existing instance.');
+    registerAlpineComponents(window.Alpine);
+} else {
+    console.log('Alpine not detected. Initializing custom instance.');
+    window.Alpine = Alpine;
+    registerAlpineComponents(Alpine);
+    Alpine.start();
+}
 
 // ========================================
 // 2. MODAL STORE (Depende de Alpine)

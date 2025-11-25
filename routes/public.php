@@ -18,3 +18,7 @@ Route::get('/menu', [MenuPublicoController::class, 'index'])->name('menu.publico
 // Activación de cuentas (sin autenticación)
 Route::get('/activate/{token}', [UserController::class, 'activateAccount'])->name('users.activate');
 Route::post('/set-password/{token}', [UserController::class, 'setPassword'])->name('users.set-password');
+
+// Sanitario Público
+use App\Http\Controllers\SanitarioController;
+Route::get('/sanitario-publico', [SanitarioController::class, 'publico'])->name('sanitario.publico');

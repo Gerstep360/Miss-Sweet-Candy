@@ -58,7 +58,37 @@ class User extends Authenticatable implements MustVerifyEmail
         'password_set' => true,
         'temporal_token' => null,
     ];
+    /**
+     * Relación con autenticación de dos factores
+     */
+    public function twoFactor()
+    {
+        return $this->hasOne(UserTwoFactor::class, 'user_id');
+    }
 
+    /**
+     * Relación con whitelist de IPs
+     */
+    public function ipWhitelists()
+    {
+        return $this->hasMany(IpWhitelist::class);
+    }
+
+    /**
+     * Relación con intentos de login
+     */
+    public function loginAttempts()
+    {
+        return $this->hasMany(LoginIntento::class, 'email', 'email');
+    }
+
+    /**
+     * Relación con auditorías
+     */
+    public function auditorias()
+    {
+        return $this->hasMany(Auditoria::class, 'usuario_id');
+    }
     /**
      * Get the user's initials
      */

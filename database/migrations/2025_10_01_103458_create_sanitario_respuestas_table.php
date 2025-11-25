@@ -17,6 +17,7 @@ return new class extends Migration
             $table->decimal('valor_numero', 10, 2)->nullable();
             $table->boolean('valor_check')->nullable();
             $table->string('foto_ruta', 255)->nullable();
+            $table->timestamps();
             
             $table->index(['lista_id', 'item_id'], 'idx_sresp_li_it');
             $table->index('usuario_id', 'idx_sresp_user');

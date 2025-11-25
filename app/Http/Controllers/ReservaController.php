@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reserva;
-use App\Models\Mesa;
 use App\Support\ReservaService;
-use App\Http\Controllers\BitacoraController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,9 +21,9 @@ class ReservaController extends Controller
      */
     public function index()
     {
-        // 🔒 Solo clientes pueden ver sus reservas
-        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
-            abort(403, 'Solo los clientes pueden acceder a esta sección.');
+        // 🔒 Solo usuarios con permiso pueden ver sus reservas
+        if (! auth()->check() || ! auth()->user()->can('hacer-reserva')) {
+            abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 
         $reservas = Reserva::delCliente(Auth::id())
@@ -36,9 +34,9 @@ class ReservaController extends Controller
 
         BitacoraController::registrar('ver lista', 'Reserva', null);
 
-        return view('reservas.index', [
+        return view('cajero.reservas.index', [
             'reservas' => $reservas,
-            'reservaService' => $this->reservaService
+            'reservaService' => $this->reservaService,
         ]);
     }
 
@@ -47,14 +45,14 @@ class ReservaController extends Controller
      */
     public function create()
     {
-        // 🔒 Solo clientes pueden crear reservas online
-        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
-            abort(403, 'Solo los clientes pueden crear reservas online.');
+        // 🔒 Solo usuarios con permiso pueden crear reservas online
+        if (! auth()->check() || ! auth()->user()->can('hacer-reserva')) {
+            abort(403, 'No tienes permiso para crear reservas online.');
         }
 
         BitacoraController::registrar('crear', 'Reserva', null);
 
-        return view('reservas.create');
+        return view('cajero.reservas.create');
     }
 
     /**
@@ -65,7 +63,7 @@ class ReservaController extends Controller
         $request->validate([
             'fecha' => 'required|date|after_or_equal:today',
             'hora' => 'required|date_format:H:i',
-            'numero_personas' => 'required|integer|min:1|max:20'
+            'numero_personas' => 'required|integer|min:1|max:20',
         ]);
 
         $mesasDisponibles = $this->reservaService->verificarDisponibilidad(
@@ -76,7 +74,7 @@ class ReservaController extends Controller
 
         return response()->json([
             'disponible' => $mesasDisponibles->isNotEmpty(),
-            'mesas' => $mesasDisponibles
+            'mesas' => $mesasDisponibles,
         ]);
     }
 
@@ -85,9 +83,9 @@ class ReservaController extends Controller
      */
     public function store(Request $request)
     {
-        // 🔒 Solo clientes pueden crear reservas online
-        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
-            abort(403, 'Solo los clientes pueden crear reservas online.');
+        // 🔒 Solo usuarios con permiso pueden crear reservas online
+        if (! auth()->check() || ! auth()->user()->can('hacer-reserva')) {
+            abort(403, 'No tienes permiso para crear reservas online.');
         }
 
         $request->validate([
@@ -95,7 +93,7 @@ class ReservaController extends Controller
             'hora' => 'required|date_format:H:i',
             'numero_personas' => 'required|integer|min:1|max:20',
             'mesa_id' => 'required|exists:mesas,id',
-            'observaciones' => 'nullable|string|max:255'
+            'observaciones' => 'nullable|string|max:255',
         ]);
 
         try {
@@ -117,7 +115,7 @@ class ReservaController extends Controller
 
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Error al crear la reserva: ' . $e->getMessage())
+                ->with('error', 'Error al crear la reserva: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -127,9 +125,9 @@ class ReservaController extends Controller
      */
     public function show(Reserva $reserva)
     {
-        // 🔒 Solo clientes pueden ver sus reservas
-        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
-            abort(403, 'Solo los clientes pueden acceder a esta sección.');
+        // 🔒 Solo usuarios con permiso pueden ver sus reservas
+        if (! auth()->check() || ! auth()->user()->can('hacer-reserva')) {
+            abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 
         // Verificar que el cliente solo vea sus propias reservas
@@ -141,9 +139,9 @@ class ReservaController extends Controller
 
         BitacoraController::registrar('ver', 'Reserva', $reserva->id);
 
-        return view('reservas.show', [
+        return view('cajero.reservas.show', [
             'reserva' => $reserva,
-            'reservaService' => $this->reservaService
+            'reservaService' => $this->reservaService,
         ]);
     }
 
@@ -152,23 +150,23 @@ class ReservaController extends Controller
      */
     public function edit(Reserva $reserva)
     {
-        // 🔒 Solo clientes pueden editar sus reservas
-        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
-            abort(403, 'Solo los clientes pueden editar reservas.');
+        // 🔒 Solo usuarios con permiso pueden editar sus reservas
+        if (! auth()->check() || ! auth()->user()->can('hacer-reserva')) {
+            abort(403, 'No tienes permiso para editar reservas.');
         }
 
         if ($reserva->cliente_id !== Auth::id()) {
             abort(403, 'No tienes permiso para editar esta reserva.');
         }
 
-        if (!$reserva->estaActiva()) {
+        if (! $reserva->estaActiva()) {
             return redirect()->route('reservas.show', $reserva->id)
                 ->with('error', 'No puedes modificar una reserva cancelada o cumplida.');
         }
 
         BitacoraController::registrar('editar', 'Reserva', $reserva->id);
 
-        return view('reservas.edit', compact('reserva'));
+        return view('cajero.reservas.edit', compact('reserva'));
     }
 
     /**
@@ -176,9 +174,9 @@ class ReservaController extends Controller
      */
     public function update(Request $request, Reserva $reserva)
     {
-        // 🔒 Solo clientes pueden actualizar sus reservas
-        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
-            abort(403, 'Solo los clientes pueden actualizar reservas.');
+        // 🔒 Solo usuarios con permiso pueden actualizar sus reservas
+        if (! auth()->check() || ! auth()->user()->can('hacer-reserva')) {
+            abort(403, 'No tienes permiso para actualizar reservas.');
         }
 
         if ($reserva->cliente_id !== Auth::id()) {
@@ -189,7 +187,7 @@ class ReservaController extends Controller
             'fecha' => 'required|date|after_or_equal:today',
             'hora' => 'required|date_format:H:i',
             'numero_personas' => 'required|integer|min:1|max:20',
-            'observaciones' => 'nullable|string|max:255'
+            'observaciones' => 'nullable|string|max:255',
         ]);
 
         try {
@@ -208,7 +206,7 @@ class ReservaController extends Controller
 
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Error al actualizar la reserva: ' . $e->getMessage())
+                ->with('error', 'Error al actualizar la reserva: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -218,9 +216,9 @@ class ReservaController extends Controller
      */
     public function destroy(Reserva $reserva)
     {
-        // 🔒 Solo clientes pueden cancelar sus reservas
-        if (!auth()->check() || !auth()->user()->hasRole('cliente')) {
-            abort(403, 'Solo los clientes pueden cancelar reservas.');
+        // 🔒 Solo usuarios con permiso pueden cancelar sus reservas
+        if (! auth()->check() || ! auth()->user()->can('hacer-reserva')) {
+            abort(403, 'No tienes permiso para cancelar reservas.');
         }
 
         if ($reserva->cliente_id !== Auth::id()) {
@@ -237,7 +235,7 @@ class ReservaController extends Controller
 
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Error al cancelar la reserva: ' . $e->getMessage());
+                ->with('error', 'Error al cancelar la reserva: '.$e->getMessage());
         }
     }
 }

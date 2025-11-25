@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('equipo', 80);
             $table->decimal('temperatura', 5, 2);
             $table->foreignId('usuario_id')->constrained('users')->onUpdate('cascade')->onDelete('restrict');
+            $table->timestamps();
             
             $table->index('usuario_id', 'idx_stemp_user');
         });
